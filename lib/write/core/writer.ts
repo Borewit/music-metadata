@@ -82,8 +82,13 @@ export async function writeChunks(
   );
 
   let mode: number | undefined;
+  let uid: number | undefined;
+  let gid: number | undefined;
   try {
-    mode = (await fs.stat(filePath)).mode;
+    const stat = await fs.stat(filePath);
+    mode = stat.mode;
+    uid = stat.uid;
+    gid = stat.gid;
   } catch {
     // Destination does not exist yet; use the process default.
   }
@@ -110,6 +115,14 @@ export async function writeChunks(
     await handle.close();
     handle = undefined;
 
+    // Preserve the destination's ownership before replacement; fail before
+    // the rename if it cannot be preserved.
+    if (uid !== undefined && gid !== undefined) {
+      await fs.chown(temporaryPath, uid, gid);
+    }
+
+    // Apply the saved mode after ownership changes so its permission bits
+    // remain intact.
     if (mode !== undefined) {
       await fs.chmod(temporaryPath, mode & 0o7777);
     }
