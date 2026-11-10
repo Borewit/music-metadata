@@ -51,7 +51,7 @@
     "description": "_ToDo, see [issues #13](https://github.com/Borewit/music-metadata/issues/13)_"
   },
   "date": {
-    "description": "Date, formatted like: YYYY-MM-DD"
+    "description": "Date, such as YYYY-MM-DD or a partial date like YYYY"
   },
   "originaldate": {
     "description": "Original (initial) release date, formatted like: YYYY-MM-DD"
