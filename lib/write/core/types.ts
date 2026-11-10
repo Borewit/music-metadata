@@ -1,4 +1,4 @@
-import type { IComment, ICommonTagsResult, ILyricsText, IPicture } from '../../type.js';
+import type { IChapter, IComment, ICommonTagsResult, ILyricsText, IPicture } from '../../type.js';
 
 /**
  * A tag value that may be set, replaced, or removed.
@@ -157,6 +157,15 @@ interface CustomTagPatch {
   mood?: TextPatch;
   grouping?: TextPatch;
   subtitle?: TextPatch;
+  /**
+   * MP4 Nero chapters: undefined preserves, null/[] removes, an array replaces.
+   * Uses each chapter's timeScale (default 1). Supports at most 255 chapters
+   * and 255 UTF-8 bytes per title, with increasing starts before movie duration.
+   * Explicit ends must match the next start or movie duration; URLs/images are
+   * unsupported. Replacing/removing chapters retires dedicated QuickTime chapter
+   * tracks, but leaves their media bytes intact. No QuickTime tracks are written.
+   */
+  chapters?: readonly IChapter[] | null;
   website?: TextPatch;
   lyrics?: LyricsPatch;
   picture?: readonly Picture[] | null;

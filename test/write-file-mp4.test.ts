@@ -5,14 +5,18 @@ import { fileURLToPath } from 'node:url';
 import * as Token from 'token-types';
 import { describe, expect, it, vi } from 'vitest';
 import {
+  type IChapter,
   InvalidFileError,
   InvalidPatchError,
   orderTags,
+  parseBuffer,
+  parseFile,
   UnsupportedFeatureError,
   updateBuffer,
   updateFile,
   WriteError
 } from '../lib/index.js';
+import { updateBuffer as updateBrowserBuffer } from '../lib/write/browser.js';
 import * as sources from '../lib/write/core/source.js';
 import { openSource } from '../lib/write/core/source.js';
 import { buildMp4Update } from '../lib/write/mp4/mp4.js';
@@ -432,6 +436,630 @@ describe('MP4 structure variants', () => {
       atom('name', Buffer.concat([Buffer.alloc(4), Buffer.from(name)])),
       ...data
     ]);
+
+  describe('Nero chapters', () => {
+    const chapterFixture = (name = 'chapters-leading') =>
+      fs.readFile(fileURLToPath(new URL(`./samples/mp4/${name}.m4b`, import.meta.url)));
+    const movieChildren = (bytes: Uint8Array) => {
+      const movie = boxes(bytes).find(box => box.type === 'moov')!;
+      return boxes(bytes, movie.start + movie.header, movie.end);
+    };
+    const chapterLists = (bytes: Uint8Array) =>
+      movieChildren(bytes)
+        .filter(box => box.type === 'udta')
+        .flatMap(box => boxes(bytes, box.start + box.header, box.end).filter(child => child.type === 'chpl'));
+    const tracks = (bytes: Uint8Array) => movieChildren(bytes).filter(box => box.type === 'trak');
+    const chapterRefs = (bytes: Uint8Array) =>
+      tracks(bytes).flatMap(track =>
+        boxes(bytes, track.start + track.header, track.end)
+          .filter(box => box.type === 'tref')
+          .flatMap(box => boxes(bytes, box.start + box.header, box.end).filter(child => child.type === 'chap'))
+      );
+    const readChapters = async (bytes: Uint8Array) =>
+      (await parseBuffer(bytes, 'audio/mp4', { includeChapters: true })).format.chapters;
+    const replacement: readonly IChapter[] = Object.freeze([
+      Object.freeze({ title: '序章 🎵', start: 0, end: 3000, timeScale: 1000 }),
+      Object.freeze({ title: '', start: 3, end: 7 }),
+      Object.freeze({ title: 'Finale', start: 70_000_000, timeScale: 10_000_000 })
+    ]);
+    const expected = [
+      { title: '序章 🎵', start: 0, timeScale: 10_000_000 },
+      { title: '', start: 30_000_000, timeScale: 10_000_000 },
+      { title: 'Finale', start: 70_000_000, timeScale: 10_000_000 }
+    ];
+    // These transformations affect moov only. Keep the playable fixture's media
+    // references valid when its leading moov grows or shrinks.
+    const alter = (input: Uint8Array, transform: Parameters<typeof rewrite>[1]) => {
+      const modified = rewrite(input, transform);
+      const movie = boxes(input).find(box => box.type === 'moov')!;
+      const media = boxes(input).find(box => box.type === 'mdat')!;
+      const delta = movie.end <= media.start ? modified.length - input.length : 0;
+      return rewrite(modified, (box, body) => {
+        if (box.type === 'stco') {
+          const updated = Buffer.from(body);
+          for (let p = 8; p < updated.length; p += 4) {
+            updated.writeUInt32BE(updated.readUInt32BE(p) + delta, p);
+          }
+          return updated;
+        }
+        return body;
+      });
+    };
+
+    it.each(['chapters-leading', 'chapters-nero'])('preserves omitted chapters while editing %s tags', async name => {
+      const input = await chapterFixture(name);
+      const output = await updateBuffer(input, { title: 'Unrelated', chapters: undefined });
+      expect(await readChapters(output)).toEqual(await readChapters(input));
+      expect(chapterRefs(output)).toHaveLength(chapterRefs(input).length);
+      expect(chapterLists(output)).toHaveLength(chapterLists(input).length);
+      expect(chunkHeads(output)).toEqual(chunkHeads(input));
+      expect(Buffer.from(mdat(output))).toEqual(Buffer.from(mdat(input)));
+    });
+
+    it.each(['chapters-leading', 'chapters-nero'])(
+      'replaces %s chapters and preserves media and ownership',
+      async name => {
+        const input = await chapterFixture(name);
+        const copy = Buffer.from(input);
+        const output = await updateBuffer(input, { chapters: replacement, title: 'Edited' });
+        expect(input).toEqual(copy);
+        expect(await readChapters(output)).toEqual(expected);
+        expect((await readTags(output)).common.title).toBe('Edited');
+        expect(chapterLists(output)).toHaveLength(1);
+        expect(chapterRefs(output)).toHaveLength(0);
+        expect(tracks(output)).toHaveLength(1);
+        expect(chunkHeads(output)).toEqual(chunkHeads(input).slice(0, offsets(output).length));
+        expect(Buffer.from(mdat(output))).toEqual(Buffer.from(mdat(input)));
+        const again = await updateBuffer(output, { chapters: [{ title: 'Only', start: 0 }] });
+        expect(await readChapters(again)).toEqual([{ title: 'Only', start: 0, timeScale: 10_000_000 }]);
+        expect(chapterLists(again)).toHaveLength(1);
+        expect(Buffer.from(mdat(again))).toEqual(Buffer.from(mdat(input)));
+      }
+    );
+
+    for (const name of ['chapters-leading', 'chapters-nero']) {
+      it.each([{ chapters: null }, { chapters: [] }] as const)(
+        `removes ${name} chapters with %j`,
+        async ({ chapters }) => {
+          const input = await chapterFixture(name);
+          const output = await updateBuffer(input, { chapters });
+          expect(await readChapters(output)).toBeUndefined();
+          expect(chapterLists(output)).toHaveLength(0);
+          expect(chapterRefs(output)).toHaveLength(0);
+          expect(tracks(output)).toHaveLength(1);
+          expect(chunkHeads(output)).toEqual(chunkHeads(input).slice(0, offsets(output).length));
+          expect(Buffer.from(mdat(output))).toEqual(Buffer.from(mdat(input)));
+        }
+      );
+    }
+
+    it.each(['existing', 'without meta', 'without udta', 'root meta', 'multiple udta'])(
+      'inserts one list into %s metadata',
+      async shape => {
+        let input: Buffer = await chapterFixture('chapters-nero');
+        if (shape === 'without meta' || shape === 'without udta') {
+          input = alter(input, (box, body) =>
+            box.type === (shape === 'without meta' ? 'meta' : 'udta') ? null : body
+          );
+        } else if (shape === 'root meta') {
+          const udta = movieChildren(input).find(box => box.type === 'udta')!;
+          const meta = boxes(input, udta.start + udta.header, udta.end).find(box => box.type === 'meta')!;
+          const raw = input.subarray(meta.start, meta.end);
+          input = alter(input, (box, body) =>
+            box.type === 'udta' ? null : box.type === 'moov' ? Buffer.concat([body, raw]) : body
+          );
+        } else if (shape === 'multiple udta') {
+          const old = atom('chpl', Buffer.from([0, 0, 0, 0, 0]));
+          input = alter(input, (box, body) =>
+            box.type === 'moov' ? Buffer.concat([body, atom('udta', old), atom('udta', old)]) : body
+          );
+        }
+        const output = await updateBuffer(input, { chapters: replacement, title: 'Created' });
+        expect(await readChapters(output)).toEqual(expected);
+        expect(chapterLists(output)).toHaveLength(1);
+        expect((await readTags(output)).common.title).toBe('Created');
+        expect(Buffer.from(mdat(output))).toEqual(Buffer.from(mdat(input)));
+        expect(chunkHeads(output)).toEqual(chunkHeads(input));
+      }
+    );
+
+    it.each(['bytes', 'blob'])('supports browser %s updates from a borrowed view', async kind => {
+      const input = await chapterFixture('chapters-nero');
+      const backing = Buffer.concat([Buffer.alloc(17, 0xa5), input, Buffer.alloc(19, 0x5a)]);
+      const copy = Buffer.from(backing);
+      const view = backing.subarray(17, 17 + input.length);
+      const output = await updateBrowserBuffer(kind === 'bytes' ? view : new Blob([view]), { chapters: replacement });
+      expect(backing).toEqual(copy);
+      expect(await readChapters(output)).toEqual(expected);
+      expect(Buffer.from(mdat(output))).toEqual(Buffer.from(mdat(input)));
+    });
+
+    it('supports file backup, dry-run and rejection without side effects', async () => {
+      const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'mp4-chapters-'));
+      try {
+        const input = await chapterFixture();
+        const file = path.join(dir, 'book.m4b');
+        await fs.writeFile(file, input);
+        const dry = await updateFile(file, { chapters: replacement }, { dryRun: true, backup: true });
+        expect(await fs.readFile(file)).toEqual(input);
+        expect(await fs.readdir(dir)).toEqual(['book.m4b']);
+        await expect(
+          updateFile(file, { chapters: [{ title: 'Bad', start: -1 }] }, { backup: true })
+        ).rejects.toBeInstanceOf(InvalidPatchError);
+        expect(await fs.readFile(file)).toEqual(input);
+        expect(await fs.readdir(dir)).toEqual(['book.m4b']);
+        const written = await updateFile(file, { chapters: replacement }, { backup: true });
+        expect(written.bytesWritten).toBe(dry.bytesWritten);
+        expect((await parseFile(file, { includeChapters: true })).format.chapters).toEqual(expected);
+        expect(await fs.readFile(`${file}.bak`)).toEqual(input);
+      } finally {
+        await fs.rm(dir, { recursive: true, force: true });
+      }
+    });
+
+    it('accepts exactly 255 chapters and 255 UTF-8 title bytes', async () => {
+      const input = await chapterFixture('chapters-nero');
+      const title = '界'.repeat(85);
+      const chapters = Array.from({ length: 255 }, (_, i) => ({ title, start: i / 100 }));
+      const output = await updateBuffer(input, { chapters });
+      expect(await readChapters(output)).toEqual(
+        chapters.map(chapter => ({ ...chapter, start: Math.round(chapter.start * 10_000_000), timeScale: 10_000_000 }))
+      );
+      expect(chapterLists(output)).toHaveLength(1);
+    });
+
+    it('round-trips reader chapter units and accepts matching explicit ends', async () => {
+      const input = await chapterFixture();
+      const metadata = await parseBuffer(input, 'audio/mp4', { includeChapters: true });
+      const chapters = metadata.format.chapters!.map((chapter, i, all) => ({
+        ...chapter,
+        end: all[i + 1]?.start ?? metadata.format.containerDuration! * chapter.timeScale!
+      }));
+      const output = await updateBuffer(input, { chapters });
+      expect(await readChapters(output)).toEqual([
+        { title: 'Opening Credits', start: 0, timeScale: 10_000_000 },
+        { title: 'Chapter 1', start: 30_000_000, timeScale: 10_000_000 },
+        { title: 'Chapter 2', start: 70_000_000, timeScale: 10_000_000 }
+      ]);
+    });
+
+    const wideHeader = (type: string, body: Uint8Array) => {
+      const wide = Buffer.alloc(body.length + 12);
+      wide.set(body.subarray(0, 4));
+      wide[0] = 1;
+      wide.writeBigUInt64BE(BigInt(Token.UINT32_BE.get(body, 4)), 4);
+      wide.writeBigUInt64BE(BigInt(Token.UINT32_BE.get(body, 8)), 12);
+      if (type === 'mvhd') {
+        wide.set(body.subarray(12, 16), 20);
+        wide.writeBigUInt64BE(BigInt(Token.UINT32_BE.get(body, 16)), 24);
+        wide.set(body.subarray(20), 32);
+      } else {
+        wide.set(body.subarray(12, 20), 20);
+        wide.writeBigUInt64BE(BigInt(Token.UINT32_BE.get(body, 20)), 28);
+        wide.set(body.subarray(24), 36);
+      }
+      return wide;
+    };
+
+    it.each(['text', 'sbtl'])('retires %s chapter tracks with version-1 movie and track headers', async handler => {
+      const input = alter(await chapterFixture(), (box, body) => {
+        if (box.type === 'mvhd' || box.type === 'tkhd') {
+          return wideHeader(box.type, body);
+        }
+        if (box.type === 'hdlr' && Buffer.from(body.subarray(8, 12)).toString('latin1') === 'text') {
+          const changed = Buffer.from(body);
+          changed.write(handler, 8, 'latin1');
+          return changed;
+        }
+        return body;
+      });
+      const output = await updateBuffer(input, { chapters: replacement });
+      expect(await readChapters(output)).toEqual(expected);
+      expect(tracks(output)).toHaveLength(1);
+      expect(chapterRefs(output)).toHaveLength(0);
+      expect(Buffer.from(mdat(output))).toEqual(Buffer.from(mdat(input)));
+      expect(chunkHeads(output)).toEqual(chunkHeads(input).slice(0, offsets(output).length));
+    });
+
+    it.each([
+      { version: 0, handler: 'text', flags: 1 },
+      { version: 0, handler: 'sbtl', flags: 3 },
+      { version: 1, handler: 'text', flags: 5 },
+      { version: 1, handler: 'sbtl', flags: 7 }
+    ])('preserves enabled $handler tracks with v$version tkhd flags $flags', async ({ version, handler, flags }) => {
+      const input = alter(await chapterFixture(), (box, body) => {
+        if (box.type === 'tkhd' && Token.UINT32_BE.get(body, 12) === 2) {
+          const header = version === 1 ? wideHeader(box.type, body) : Buffer.from(body);
+          header.writeUIntBE(flags, 1, 3);
+          return header;
+        }
+        if (box.type === 'hdlr' && Buffer.from(body.subarray(8, 12)).toString('latin1') === 'text') {
+          const changed = Buffer.from(body);
+          changed.write(handler, 8, 'latin1');
+          return changed;
+        }
+        return body;
+      });
+      const copy = Buffer.from(input);
+      for (const chapters of [replacement, null, []]) {
+        await expect(updateBuffer(input, { chapters })).rejects.toBeInstanceOf(UnsupportedFeatureError);
+        expect(input).toEqual(copy);
+      }
+      const output = await updateBuffer(input, { title: 'Unrelated' });
+      expect(tracks(output)).toHaveLength(2);
+      expect(chapterRefs(output)).toHaveLength(1);
+      expect(Buffer.from(mdat(output))).toEqual(Buffer.from(mdat(input)));
+      const track = tracks(output)[1];
+      const header = boxes(output, track.start + track.header, track.end).find(box => box.type === 'tkhd')!;
+      expect(Buffer.from(output).readUIntBE(header.start + header.header + 1, 3)).toBe(flags);
+    });
+
+    it('preserves exact Nero ticks near the safe-integer limit', async () => {
+      const input = alter(await chapterFixture('chapters-nero'), (box, body) => {
+        if (box.type !== 'mvhd') {
+          return body;
+        }
+        const wide = wideHeader(box.type, body);
+        wide.writeUInt32BE(10_000_000, 20);
+        wide.writeBigUInt64BE(BigInt(Number.MAX_SAFE_INTEGER), 24);
+        return wide;
+      });
+      const chapters = [{ title: 'Exact', start: Number.MAX_SAFE_INTEGER - 1, timeScale: 10_000_000 }];
+      const output = await updateBuffer(input, { chapters });
+      expect(await readChapters(output)).toEqual(chapters);
+    });
+
+    it('plans chapter edits without reading media or taking ownership of a borrowed source', async () => {
+      const input = await chapterFixture();
+      const before = Buffer.from(input);
+      const movie = boxes(input).find(box => box.type === 'moov')!;
+      const backing = await openSource(input);
+      const source: sources.ByteSource = {
+        size: input.length,
+        tokenizer: backing.tokenizer,
+        read: vi.fn(async (offset, length) => {
+          if (length > 16 && (offset !== movie.start || length !== movie.end - movie.start)) {
+            throw new Error('Unexpected media payload read');
+          }
+          return input.subarray(offset, offset + length);
+        }),
+        close: vi.fn(async () => {
+          // A borrowed source remains owned by the caller.
+        })
+      };
+      try {
+        const position = backing.tokenizer.position;
+        const plan = await buildMp4Update(source, { chapters: replacement }, {});
+        expect(source.close).not.toHaveBeenCalled();
+        expect(backing.tokenizer.position).toBe(position);
+        expect(input).toEqual(before);
+        const output = Buffer.concat(
+          plan.chunks.map(chunk =>
+            chunk instanceof Uint8Array ? chunk : input.subarray(chunk.offset, chunk.offset + chunk.length)
+          )
+        );
+        expect(await readChapters(output)).toEqual(expected);
+        for (const chunk of plan.chunks) {
+          if (!(chunk instanceof Uint8Array)) {
+            expect(chunk.source).toBe(source);
+          }
+        }
+        expect(Buffer.from(mdat(output))).toEqual(Buffer.from(mdat(input)));
+        await expect(buildMp4Update(source, { chapters: [{ title: '', start: -1 }] }, {})).rejects.toBeInstanceOf(
+          InvalidPatchError
+        );
+        expect(source.close).not.toHaveBeenCalled();
+        expect(input).toEqual(before);
+      } finally {
+        await backing.close();
+      }
+    });
+
+    it('bounds chapter-reference traversal before rebuilding the movie', async () => {
+      const input = alter(await chapterFixture(), (box, body) => {
+        if (box.type !== 'tref') {
+          return body;
+        }
+        const targets = Buffer.alloc(4 * 100_000);
+        for (let p = 0; p < targets.length; p += 4) {
+          targets.writeUInt32BE(2, p);
+        }
+        return atom('chap', targets);
+      });
+      const copy = Buffer.from(input);
+      await expect(updateBuffer(input, { chapters: null })).rejects.toThrow(
+        'MP4 chapter reference count exceeds limit'
+      );
+      expect(input).toEqual(copy);
+    });
+
+    it.each([
+      ['non-array', { length: 0 }],
+      ['too many chapters', Array.from({ length: 256 }, () => ({ title: '', start: 0 }))],
+      ['sparse array', new Array(1)],
+      ['null entry', [null]],
+      ['primitive entry', [1]],
+      ['array entry', [[]]],
+      ['missing start', [{ title: '' }]],
+      ['negative start', [{ title: '', start: -1 }]],
+      ['non-finite start', [{ title: '', start: Number.POSITIVE_INFINITY }]],
+      ['unsafe start', [{ title: '', start: Number.MAX_SAFE_INTEGER }]],
+      ['zero timescale', [{ title: '', start: 0, timeScale: 0 }]],
+      ['fractional timescale', [{ title: '', start: 0, timeScale: 0.5 }]],
+      ['unsafe timescale', [{ title: '', start: 0, timeScale: Number.MAX_SAFE_INTEGER + 1 }]],
+      [
+        'duplicate starts',
+        [
+          { title: 'A', start: 0 },
+          { title: 'B', start: 0 }
+        ]
+      ],
+      [
+        'descending starts',
+        [
+          { title: 'A', start: 2 },
+          { title: 'B', start: 1 }
+        ]
+      ],
+      [
+        'rounded duplicate starts',
+        [
+          { title: 'A', start: 0 },
+          { title: 'B', start: 0.00000001 }
+        ]
+      ],
+      ['past duration', [{ title: '', start: 11 }]],
+      ['at duration', [{ title: '', start: 10.008 }]],
+      ['missing title', [{ start: 0 }]],
+      ['non-string title', [{ title: 1, start: 0 }]],
+      ['long ASCII title', [{ title: 'a'.repeat(256), start: 0 }]],
+      ['long UTF-8 title', [{ title: '界'.repeat(86), start: 0 }]],
+      ['invalid end', [{ title: '', start: 0, end: -1 }]]
+    ])('rejects %s patches as InvalidPatchError', async (_name, chapters) => {
+      const input = await chapterFixture('chapters-nero');
+      const copy = Buffer.from(input);
+      await expect(updateBuffer(input, { chapters: chapters as readonly IChapter[] })).rejects.toBeInstanceOf(
+        InvalidPatchError
+      );
+      expect(input).toEqual(copy);
+    });
+
+    it.each([
+      { title: '', start: 0, url: { url: 'https://example.com', description: '' } },
+      { title: '', start: 0, image: { format: 'image/png', data: new Uint8Array() } },
+      { title: '', start: 0, end: 0 },
+      { title: '', start: 0, end: 5 }
+    ])('rejects unrepresentable chapter fields: %j', async chapter => {
+      await expect(updateBuffer(await chapterFixture(), { chapters: [chapter] })).rejects.toBeInstanceOf(
+        UnsupportedFeatureError
+      );
+    });
+
+    it('retains non-chapter references but refuses shared chapter targets', async () => {
+      const original = await chapterFixture();
+      const reference = Buffer.alloc(4);
+      reference.writeUInt32BE(1);
+      const other = atom('hint', reference);
+      const independent = alter(original, (box, body) =>
+        box.type === 'trak' && !boxes(body).some(child => child.type === 'tref')
+          ? Buffer.concat([body, atom('tref', other)])
+          : body
+      );
+      const output = await updateBuffer(independent, { chapters: replacement });
+      expect(await readChapters(output)).toEqual(expected);
+      reference.writeUInt32BE(2);
+      const shared = alter(original, (box, body) =>
+        box.type === 'trak' && boxes(body).some(child => child.type === 'tref')
+          ? Buffer.concat([body, atom('tref', atom('hint', reference))])
+          : body
+      );
+      const copy = Buffer.from(shared);
+      await expect(updateBuffer(shared, { chapters: null })).rejects.toBeInstanceOf(UnsupportedFeatureError);
+      expect(shared).toEqual(copy);
+      const retained = alter(original, (box, body) => (box.type === 'tref' ? Buffer.concat([body, other]) : body));
+      const cleared = await updateBuffer(retained, { chapters: null });
+      expect(Buffer.from(cleared).includes(other)).toBe(true);
+      expect(chapterRefs(cleared)).toHaveLength(0);
+      expect(Buffer.from(mdat(cleared))).toEqual(Buffer.from(mdat(retained)));
+    });
+
+    it.each(['soun', 'vide'])('refuses to delete a %s track referenced as a chapter', async handler => {
+      const input = await chapterFixture();
+      const at = input.indexOf(Buffer.from('text'), input.indexOf(Buffer.from('hdlr')) + 4);
+      input.write(handler, at);
+      await expect(updateBuffer(input, { chapters: null })).rejects.toBeInstanceOf(UnsupportedFeatureError);
+    });
+
+    it.each([
+      { version: 0, length: 16 },
+      { version: 0, length: 37 },
+      { version: 1, length: 24 },
+      { version: 1, length: 49 }
+    ])('rejects v$version tkhd payloads of $length bytes', async ({ version, length }) => {
+      const input = alter(await chapterFixture(), (box, body) =>
+        box.type === 'tkhd' ? (version === 1 ? wideHeader(box.type, body) : body).subarray(0, length) : body
+      );
+      const copy = Buffer.from(input);
+      for (const chapters of [replacement, null, []]) {
+        await expect(updateBuffer(input, { chapters })).rejects.toBeInstanceOf(InvalidFileError);
+        expect(input).toEqual(copy);
+      }
+    });
+
+    it.each([
+      { version: 0, length: 38 },
+      { version: 1, length: 50 }
+    ])('accepts v$version tkhd payloads at the $length-byte reader boundary', async ({ version, length }) => {
+      const input = alter(await chapterFixture(), (box, body) =>
+        box.type === 'tkhd' ? (version === 1 ? wideHeader(box.type, body) : body).subarray(0, length) : body
+      );
+      expect(await readChapters(input)).toHaveLength(3);
+      const output = await updateBuffer(input, { chapters: replacement });
+      expect(await readChapters(output)).toEqual(expected);
+      expect(tracks(output)).toHaveLength(1);
+      expect(Buffer.from(mdat(output))).toEqual(Buffer.from(mdat(input)));
+    });
+
+    it.each([
+      { version: 0, length: 20 },
+      { version: 0, length: 99 },
+      { version: 1, length: 32 },
+      { version: 1, length: 100 },
+      { version: 1, length: 111 }
+    ])('rejects v$version mvhd payloads of $length bytes', async ({ version, length }) => {
+      const input = alter(await chapterFixture('chapters-nero'), (box, body) =>
+        box.type === 'mvhd' ? (version === 1 ? wideHeader(box.type, body) : body).subarray(0, length) : body
+      );
+      const copy = Buffer.from(input);
+      await expect(updateBuffer(input, { chapters: replacement })).rejects.toBeInstanceOf(InvalidFileError);
+      expect(input).toEqual(copy);
+    });
+
+    it.each([
+      { version: 0, length: 100 },
+      { version: 1, length: 112 }
+    ])('accepts v$version mvhd payloads at the $length-byte reader boundary', async ({ version, length }) => {
+      const input = alter(await chapterFixture('chapters-nero'), (box, body) =>
+        box.type === 'mvhd' ? (version === 1 ? wideHeader(box.type, body) : body).subarray(0, length) : body
+      );
+      expect(await readChapters(input)).toHaveLength(3);
+      const output = await updateBuffer(input, { chapters: replacement });
+      expect(await readChapters(output)).toEqual(expected);
+      expect(Buffer.from(mdat(output))).toEqual(Buffer.from(mdat(input)));
+    });
+
+    it.each([
+      'missing tkhd',
+      'duplicate tkhd',
+      'zero ID',
+      'duplicate ID',
+      'bad tkhd version',
+      'truncated tkhd',
+      'missing target',
+      'bad reference length',
+      'missing handler',
+      'truncated handler',
+      'duplicate handler',
+      'duplicate media'
+    ])('rejects malformed chapter structure: %s', async kind => {
+      let input: Buffer = await chapterFixture();
+      if (kind === 'duplicate tkhd') {
+        input = alter(input, (box, body) =>
+          box.type === 'trak' ? Buffer.concat([body, body.subarray(0, boxes(body)[0]!.end)]) : body
+        );
+      } else if (kind === 'duplicate handler' || kind === 'duplicate media') {
+        input = alter(input, (box, body) => {
+          const target = kind === 'duplicate media' ? 'trak' : 'mdia';
+          const childType = kind === 'duplicate media' ? 'mdia' : 'hdlr';
+          if (box.type !== target) {
+            return body;
+          }
+          const child = boxes(body).find(c => c.type === childType)!;
+          return Buffer.concat([body, body.subarray(child.start, child.end)]);
+        });
+      } else if (kind === 'truncated tkhd' || kind === 'truncated handler' || kind === 'bad reference length') {
+        const type = kind === 'truncated tkhd' ? 'tkhd' : kind === 'truncated handler' ? 'mdia' : 'tref';
+        input = alter(input, (box, body) => {
+          if (box.type !== type) {
+            return body;
+          }
+          if (type === 'tkhd') {
+            return body.subarray(0, 15);
+          }
+          if (type === 'tref') {
+            return atom('chap', Buffer.alloc(3));
+          }
+          return Buffer.concat(
+            boxes(body).map(child =>
+              child.type === 'hdlr' ? atom('hdlr', Buffer.alloc(11)) : body.subarray(child.start, child.end)
+            )
+          );
+        });
+      } else {
+        const header = input.indexOf(Buffer.from('tkhd'));
+        const secondHeader = input.indexOf(Buffer.from('tkhd'), header + 4);
+        if (kind === 'missing tkhd') {
+          input.write('free', header);
+        }
+        if (kind === 'zero ID') {
+          input.writeUInt32BE(0, header + 16);
+        }
+        if (kind === 'duplicate ID') {
+          input.writeUInt32BE(1, secondHeader + 16);
+        }
+        if (kind === 'bad tkhd version') {
+          input[header + 4] = 2;
+        }
+        if (kind === 'missing target') {
+          input.writeUInt32BE(99, input.indexOf(Buffer.from('chap')) + 4);
+        }
+        if (kind === 'missing handler') {
+          input.write('free', input.indexOf(Buffer.from('hdlr'), secondHeader));
+        }
+      }
+      await expect(updateBuffer(input, { chapters: null })).rejects.toBeInstanceOf(InvalidFileError);
+    });
+
+    it.each([
+      'missing',
+      'duplicate',
+      'bad version',
+      'truncated',
+      'zero timescale',
+      'unknown duration',
+      'unsafe duration',
+      'unsafe ticks'
+    ])('rejects a %s movie header when writing chapters', async kind => {
+      let input: Buffer = await chapterFixture('chapters-nero');
+      if (kind === 'duplicate') {
+        input = alter(input, (box, body) => {
+          if (box.type !== 'moov') {
+            return body;
+          }
+          const header = boxes(body).find(c => c.type === 'mvhd')!;
+          return Buffer.concat([body, body.subarray(header.start, header.end)]);
+        });
+      } else if (kind === 'truncated' || kind === 'unsafe duration' || kind === 'unsafe ticks') {
+        input = alter(input, (box, body) => {
+          if (box.type !== 'mvhd') {
+            return body;
+          }
+          if (kind === 'truncated') {
+            return body.subarray(0, 19);
+          }
+          const wide = wideHeader(box.type, body);
+          wide.writeUInt32BE(1000, 20);
+          wide.writeBigUInt64BE(
+            kind === 'unsafe duration' ? BigInt(Number.MAX_SAFE_INTEGER) + 1n : 1_000_000_000_000n,
+            24
+          );
+          return wide;
+        });
+      } else {
+        const at = input.indexOf(Buffer.from('mvhd'));
+        if (kind === 'missing') {
+          input.write('free', at);
+        }
+        if (kind === 'bad version') {
+          input[at + 4] = 2;
+        }
+        if (kind === 'zero timescale') {
+          input.writeUInt32BE(0, at + 16);
+        }
+        if (kind === 'unknown duration') {
+          input.writeUInt32BE(0xffffffff, at + 20);
+        }
+      }
+      await expect(updateBuffer(input, { chapters: [{ title: '', start: 0 }] })).rejects.toBeInstanceOf(
+        ['unknown duration', 'unsafe duration', 'unsafe ticks'].includes(kind)
+          ? UnsupportedFeatureError
+          : InvalidFileError
+      );
+      // Removal does not need a duration header.
+      const cleared = await updateBuffer(input, { chapters: [] });
+      expect(chapterLists(cleared)).toHaveLength(0);
+    });
+  });
 
   it.each(['text', 'freeform'])('preserves duplicate %s items and replaces or deletes every occurrence', async kind => {
     const key = kind === 'text' ? '©grp' : '----:com.apple.iTunes:DUPLICATE';

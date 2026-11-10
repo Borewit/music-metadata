@@ -59,6 +59,32 @@ MP4 writing supports non-fragmented, self-contained files with iTunes metadata.
 Consumers migrating from `music-metadata-editor` should import the write functions
 and types from `music-metadata`.
 
+### MP4 chapters
+
+Use `chapters` to replace MP4/M4A/M4B chapters with a Nero `chpl` list:
+
+```js
+await updateFile('audiobook.m4b', {
+  chapters: [
+    { title: 'Opening', start: 0 },
+    { title: 'Chapter 1', start: 30 }
+  ]
+});
+```
+
+Timestamps use each chapter's `timeScale`, defaulting to seconds when omitted.
+Chapter arrays returned by `parseFile` with `includeChapters: true` can be passed
+directly. Omitted `chapters` preserves existing chapters; `null` or `[]` removes
+them. Lists support at most 255 chapters and 255 UTF-8 bytes per title. Starts
+must increase and precede the movie duration. Explicit ends must match the next
+start or the movie duration; chapter URLs and pictures are unsupported.
+
+Replacement/removal also retires referenced, dedicated QuickTime chapter tracks,
+but does not erase their payload bytes from `mdat`. Tracks shared with other
+purposes are rejected rather than deleted. The writer does not generate
+QuickTime chapter tracks, so Nero replacements may not display in QuickTime-only
+players.
+
 
 ## Compatibility
 

@@ -159,6 +159,7 @@ export function editItems(
       aliases.has(field) ||
       value === undefined ||
       field === 'native' ||
+      field === 'chapters' ||
       field === 'picture' ||
       field === 'lyrics' ||
       field === 'track' ||

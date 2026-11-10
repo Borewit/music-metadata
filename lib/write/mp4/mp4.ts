@@ -4,6 +4,7 @@ import type { ByteSource } from '../core/source.js';
 import type { TagPatch, WriteOptions } from '../core/types.js';
 import type { WriteChunk } from '../core/writer.js';
 import { type AtomBudget, atom, type Box, boxes, copyBox, fourcc, header, limit, maxAtoms, zeros } from './atoms.js';
+import { chapterUpdate } from './chapters.js';
 import { editItems } from './tags.js';
 
 /**
@@ -65,6 +66,10 @@ export async function buildMp4Update(
     throw new UnsupportedFeatureError('MP4 movie metadata exceeds 64 MiB');
   }
   const original = await source.read(movie.start, movie.end - movie.start);
+  const chapterEdit =
+    patch.chapters === undefined
+      ? undefined
+      : chapterUpdate(original, header(original, 0, original.length), patch.chapters);
   const containers = new Set(['moov', 'trak', 'mdia', 'minf', 'stbl', 'edts', 'dinf', 'udta']);
   let metadataCount = 0;
   let budget: AtomBudget = { remaining: maxAtoms };
@@ -108,6 +113,18 @@ export async function buildMp4Update(
     path = `${path}/${box.type}`;
     if (depth > 32) {
       throw new InvalidFileError('MP4 nesting exceeds limit');
+    }
+    if (chapterEdit) {
+      if (path === '/moov/trak' && chapterEdit.removedTrackStarts.has(box.start)) {
+        return new Uint8Array();
+      }
+      if (path === '/moov/udta/chpl') {
+        return new Uint8Array();
+      }
+      if (path === '/moov/trak/tref') {
+        const references = boxes(bytes, box.start + box.header, box.end, budget).filter(ref => ref.type !== 'chap');
+        return references.length ? atom('tref', ...references.map(ref => copyBox(bytes, ref))) : new Uint8Array();
+      }
     }
     if (['mvex', 'iloc', 'saio', 'cmov', 'meco'].includes(box.type)) {
       throw new UnsupportedFeatureError(`Unsupported MP4 offset structure: ${box.type}`);
@@ -216,11 +233,18 @@ export async function buildMp4Update(
       const parts = boxes(bytes, box.start + box.header, box.end, budget).map(c =>
         rebuild(bytes, c, delta, depth + 1, path)
       );
-      if (!existingMeta && path === '/moov/udta' && box.start === userData[0]?.start) {
-        parts.push(newMeta());
+      if (path === '/moov/udta' && box.start === userData[0]?.start) {
+        if (!existingMeta) {
+          parts.push(newMeta());
+        }
+        if (chapterEdit?.list) {
+          parts.push(chapterEdit.list);
+        }
       }
-      if (!existingMeta && path === '/moov' && userData.length === 0) {
-        parts.push(atom('udta', newMeta()));
+      if (path === '/moov' && userData.length === 0 && (chapterEdit?.list || !existingMeta)) {
+        parts.push(
+          atom('udta', ...(chapterEdit?.list ? [chapterEdit.list] : []), ...(!existingMeta ? [newMeta()] : []))
+        );
       }
       return atom(box.type, ...parts);
     }
