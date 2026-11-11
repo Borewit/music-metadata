@@ -7,7 +7,8 @@ const filename = fileURLToPath(import.meta.url);
 
 /**
  * Run a self-contained callback in a separate process, with a cancellable worker on Node.js.
- * Process isolation also contains heap exhaustion and blocked libuv file operations.
+ * Process isolation also contains heap exhaustion and blocked libuv file operations. Deno
+ * evaluates the callback without make-asynchronous, so the parent timeout remains the limit.
  * Like make-asynchronous, callbacks must import dependencies internally and receive
  * external values as arguments. Arguments must be JSON-serializable.
  */
@@ -16,6 +17,15 @@ export async function runIsolatedRegression<Args extends unknown[]>(
   args: Args,
   options: { timeout: number; baseUrl: string }
 ): Promise<void> {
+  if (process.versions.deno) {
+    // Deno's CLI does not execute this Node.js entry-point invocation.
+    const source = `const regression = (${regression.toString()}); await regression(...${JSON.stringify(args)});`;
+    await promisify(execFile)(process.execPath, ['eval', '--v8-flags=--max-old-space-size=512', source], {
+      timeout: options.timeout,
+      killSignal: 'SIGKILL'
+    });
+    return;
+  }
   await promisify(execFile)(
     process.execPath,
     [
