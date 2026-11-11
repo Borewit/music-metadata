@@ -1,4 +1,6 @@
+import { readFile } from 'node:fs/promises';
 import path from 'node:path';
+import { Readable } from 'node:stream';
 import { fromFile } from 'strtok3';
 import { assert } from 'vitest';
 import * as mm from '../lib/index.js';
@@ -22,6 +24,88 @@ const durationSleepAwayMp3 = 200.3;
 
 describe('Parse MP3 files', () => {
   const mp3SamplePath = path.join(samplePath, 'mp3');
+
+  describe('APEv2 ReplayGain fallback', () => {
+    const ids = [
+      'replaygain_track_gain',
+      'replaygain_album_gain',
+      'replaygain_track_peak',
+      'replaygain_album_peak'
+    ] as const;
+    const id3Values = ['-6.00 dB', '-3.00 dB', '0.75', '0.5'];
+    const validApeValues = ['-3.00 dB', '0 dB', '0', '1.25'];
+    const invalidApeValues = ['', 'not-a-number', 'Infinity', '-1'];
+    const ratios = (values: number[]) =>
+      values.map((value, index) =>
+        index < 2 ? { dB: value, ratio: 10 ** (value / 10) } : { dB: 10 * Math.log10(value), ratio: value }
+      );
+    const id3Ratios = ratios([-6, -3, 0.75, 0.5]);
+    // APE album gain/peak remain native-only; ID3 supplies their common values.
+    const apeRatios = ratios([-3, -3, 0, 0.5]);
+
+    for (const kind of ['invalid', 'invalid-only', 'valid'] as const) {
+      // Trailing APE tags remain unavailable to sequential streams, even with a known size.
+      const readers = [
+        ...Parsers,
+        {
+          description: 'parseStream (Node.js, known size)',
+          parse: async (_skip: () => void, filePath: string) => {
+            const data = await readFile(filePath);
+            const stream = Readable.from([data], { objectMode: false });
+            try {
+              return await mm.parseStream(stream, { mimeType: 'audio/mpeg', size: data.length }, { duration: true });
+            } finally {
+              stream.destroy();
+            }
+          }
+        }
+      ];
+      for (const parser of readers) {
+        it(`${kind} gain/peak values (${parser.description})`, async context => {
+          const metadata = await parser.parse(
+            () => context.skip(),
+            path.join(mp3SamplePath, `replaygain-ape-${kind}.mp3`),
+            'audio/mpeg',
+            { duration: true }
+          );
+          const readsApe = 'randomRead' in parser && parser.randomRead === true;
+          assert.equal(metadata.common.title, 'ReplayGain fallback tone');
+          assert.equal(metadata.format.codec, 'MPEG 1 Layer 3');
+          assert.equal(metadata.format.sampleRate, 44100);
+          assert.equal(metadata.format.numberOfChannels, 2);
+          assert.equal(metadata.format.numberOfSamples, 14976);
+          for (const [index, id] of ids.entries()) {
+            const expected =
+              kind === 'invalid-only' ? undefined : kind === 'valid' && readsApe ? apeRatios[index] : id3Ratios[index];
+            assert.deepEqual(metadata.common[id], expected, id);
+            const id3 = metadata.native['ID3v2.4'].find(tag => tag.id === `TXXX:${id.toUpperCase()}`);
+            if (kind === 'invalid-only') {
+              assert.isUndefined(id3);
+            } else {
+              assert.equal(id3?.value, id3Values[index]);
+            }
+          }
+          if (readsApe) {
+            assert.deepEqual(
+              metadata.native.APEv2,
+              ids.map((id, index) => ({
+                id: id.toUpperCase(),
+                value: (kind === 'valid' ? validApeValues : invalidApeValues)[index]
+              }))
+            );
+          } else {
+            assert.isUndefined(metadata.native.APEv2);
+          }
+          assert.deepEqual(
+            metadata.quality.warnings,
+            readsApe && kind !== 'valid'
+              ? [ids[0], ids[2]].map(id => ({ message: `Invalid ReplayGain value for APEv2.${id}` }))
+              : []
+          );
+        });
+      }
+    }
+  });
 
   it('should handle MP3 without any tags', async () => {
     const filePath = path.join(mp3SamplePath, 'notags.mp3');

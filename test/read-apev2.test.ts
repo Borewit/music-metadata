@@ -11,6 +11,41 @@ import { Parsers } from './helpers/metadata-parsers.js';
 import { samplePath } from './helpers/util.js';
 
 describe('APEv2 tags', () => {
+  describe('ReplayGain source priority', () => {
+    for (const id of [
+      'replaygain_track_gain',
+      'replaygain_album_gain',
+      'replaygain_track_peak',
+      'replaygain_album_peak'
+    ] as const) {
+      for (const invalidFirst of [false, true]) {
+        it(`ignores invalid ${id} without claiming priority (invalid first=${invalidFirst})`, async () => {
+          const events: unknown[] = [];
+          const collector = new MetadataCollector({
+            observer: event => {
+              if (event.tag.type === 'common') {
+                events.push(event.tag);
+              }
+            }
+          });
+          // APE maps track values only; use ID3 for the supported album mappings.
+          const invalidType = id.includes('_track_') ? 'APEv2' : 'ID3v2.4';
+          const invalidId = invalidType === 'APEv2' ? id.toUpperCase() : `TXXX:${id.toUpperCase()}`;
+          const invalid = () => collector.addTag(invalidType, invalidId, 'not-a-number');
+          const valid = () => collector.addTag('ID3v2.3', `TXXX:${id.toUpperCase()}`, '0 dB');
+          await (invalidFirst ? invalid() : valid());
+          await (invalidFirst ? valid() : invalid());
+          assert.deepEqual(collector.common[id], { dB: 0, ratio: 1 });
+          assert.deepEqual(events, [{ type: 'common', id, value: { dB: 0, ratio: 1 } }]);
+          assert.deepEqual(collector.native[invalidType], [{ id: invalidId, value: 'not-a-number' }]);
+          assert.deepEqual(collector.quality.warnings, [
+            { message: `Invalid ReplayGain value for ${invalidType}.${id}` }
+          ]);
+        });
+      }
+    }
+  });
+
   describe('Parse APEv2 Date tag', () => {
     // Derived from monkeysaudio.ape, replacing all tags and artwork with Date=2021-06-15.
     // No Year tag is present, so it cannot mask a missing Date mapping.

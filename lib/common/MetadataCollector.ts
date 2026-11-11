@@ -269,9 +269,15 @@ export class MetadataCollector implements INativeMetadataCollector {
       case 'replaygain_track_gain':
       case 'replaygain_track_peak':
       case 'replaygain_album_gain':
-      case 'replaygain_album_peak':
-        tag.value = toRatio(tag.value as string);
+      case 'replaygain_album_peak': {
+        const ratio = toRatio(tag.value as string);
+        if (!ratio) {
+          this.addWarning(`Invalid ReplayGain value for ${tagType}.${tag.id}`);
+          return;
+        }
+        tag.value = ratio;
         break;
+      }
 
       case 'replaygain_track_minmax':
         tag.value = (tag.value as string).split(',', 2).map(v => Number.parseInt(v, 10));

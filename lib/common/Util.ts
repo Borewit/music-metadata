@@ -198,19 +198,20 @@ export function dbToRatio(dB: number): number {
  * @param value string holding a ratio like '0.034' or '-7.54 dB'
  */
 export function toRatio(value: string): IRatio | undefined {
-  const ps = value.split(' ', 2).map(p => p.trim().toLowerCase());
-  if (ps.length >= 1) {
-    const v = Number.parseFloat(ps[0]);
-    return ps.length === 2 && ps[1] === 'db'
-      ? {
-          dB: v,
-          ratio: dbToRatio(v)
-        }
-      : {
-          dB: ratioToDb(v),
-          ratio: v
-        };
+  const match = value.trim().match(/^([+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:e[+-]?\d+)?)\s*(dB)?$/i);
+  if (!match) {
+    return;
   }
+  const number = Number(match[1]);
+  if (!Number.isFinite(number)) {
+    return;
+  }
+  const ratio = match[2] ? dbToRatio(number) : number;
+  if (!Number.isFinite(ratio) || ratio < 0) {
+    return;
+  }
+  // Zero is a valid silent peak, represented by -Infinity dB.
+  return { dB: match[2] ? number : ratioToDb(ratio), ratio };
 }
 
 /**

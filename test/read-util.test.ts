@@ -177,7 +177,33 @@ describe('shared utility functionality', () => {
         dB: -7.03,
         ratio: 0.1981527025805098
       });
-      assert.deepEqual(toRatio('xxx'), { dB: Number.NaN, ratio: Number.NaN });
+      assert.isUndefined(toRatio('xxx'));
+    });
+
+    for (const value of [
+      '',
+      ' ',
+      'NaN',
+      'Infinity',
+      '-Infinity',
+      '1e309',
+      '1e309 dB',
+      '4000 dB',
+      '-1',
+      '1garbage',
+      '1 dB garbage'
+    ]) {
+      it(`rejects invalid ReplayGain ${JSON.stringify(value)}`, () => {
+        assert.isUndefined(toRatio(value));
+      });
+    }
+
+    it('preserves zero dB, silent peaks and ratios above one', () => {
+      assert.deepEqual(toRatio('0 dB'), { dB: 0, ratio: 1 });
+      assert.deepEqual(toRatio('0'), { dB: Number.NEGATIVE_INFINITY, ratio: 0 });
+      assert.deepEqual(toRatio('1.25'), { dB: 10 * Math.log10(1.25), ratio: 1.25 });
+      assert.deepEqual(toRatio(' \t-3.00\tDB\n'), { dB: -3, ratio: 10 ** (-3 / 10) });
+      assert.deepEqual(toRatio('+1.e-1'), { dB: -10, ratio: 0.1 });
     });
   });
 });
