@@ -24,6 +24,34 @@ import { Parsers } from './helpers/metadata-parsers.js';
 import { samplePath } from './helpers/util.js';
 
 describe('ID3v2', () => {
+  describe('Unterminated user-text descriptions', () => {
+    for (const major of [3, 4]) {
+      for (const parser of Parsers) {
+        it(`preserves later text, ReplayGain and Latin-1 GEOB after malformed TXXX in v2.${major} (${parser.description})`, async context => {
+          const metadata = await parser.parse(
+            () => context.skip(),
+            path.join(samplePath, 'mp3', `id3v2.${major}-unterminated-user-text.mp3`),
+            'audio/mpeg'
+          );
+          assert.include(metadata.format.tagTypes, `ID3v2.${major}`);
+          assert.equal(metadata.format.codec, 'MPEG 1 Layer 3');
+          assert.equal(metadata.format.sampleRate, 44100);
+          assert.equal(metadata.format.numberOfChannels, 2);
+          assert.equal(metadata.common.title, 'TagLib parity tone');
+          assert.equal(metadata.common.replaygain_track_gain?.dB, -6);
+          assert.approximately(metadata.common.replaygain_track_gain!.ratio, 10 ** (-6 / 10), 1e-12);
+          assert.deepEqual(metadata.native[`ID3v2.${major}`].find(tag => tag.id === 'GEOB')?.value, {
+            type: 'application/octet-stream',
+            filename: 'object.bin',
+            description: 'Latin-1 object',
+            data: new Uint8Array([0, 255, 1, 2])
+          });
+          assert.isEmpty(metadata.quality.warnings);
+        });
+      }
+    }
+  });
+
   describe('Credit role names', () => {
     for (const [major, frame] of [
       [2, 'IPL'],
