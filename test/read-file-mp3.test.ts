@@ -107,6 +107,53 @@ describe('Parse MP3 files', () => {
     }
   });
 
+  describe('MPEG sync after leading non-audio bytes', () => {
+    for (const length of [1024, 65535]) {
+      for (const parser of Parsers) {
+        it(`recovers after ${length} bytes following ID3 (${parser.description})`, async context => {
+          const metadata = await parser.parse(
+            () => context.skip(),
+            path.join(mp3SamplePath, `leading-junk-${length}.mp3`),
+            'audio/mpeg',
+            { duration: true }
+          );
+          assert.equal(metadata.common.title, 'TagLib parity tone');
+          assert.equal(metadata.format.container, 'MPEG');
+          assert.equal(metadata.format.codec, 'MPEG 1 Layer 3');
+          assert.equal(metadata.format.sampleRate, 44100);
+          assert.equal(metadata.format.numberOfChannels, 2);
+          assert.equal(metadata.format.bitrate, 128000);
+          assert.equal(metadata.format.numberOfSamples, 14976);
+          assert.equal(metadata.format.duration, 14976 / 44100);
+          assert.isEmpty(metadata.quality.warnings);
+        });
+      }
+    }
+
+    it('recovers a sync word split across tiny unknown-size stream chunks', async () => {
+      const data = await readFile(path.join(mp3SamplePath, 'leading-junk-65535.mp3'));
+      const stream = Readable.from(
+        (function* () {
+          // The first sync byte is at offset 65574: the last byte of a 25-byte chunk.
+          for (let offset = 0; offset < data.length; offset += 25) {
+            yield data.subarray(offset, offset + 25);
+          }
+        })(),
+        { objectMode: false }
+      );
+      try {
+        const metadata = await mm.parseStream(stream, 'audio/mpeg', { duration: true });
+        assert.equal(metadata.common.title, 'TagLib parity tone');
+        assert.equal(metadata.format.codec, 'MPEG 1 Layer 3');
+        assert.equal(metadata.format.numberOfSamples, 14976);
+        assert.equal(metadata.format.duration, 14976 / 44100);
+        assert.isEmpty(metadata.quality.warnings);
+      } finally {
+        stream.destroy();
+      }
+    });
+  });
+
   it('should handle MP3 without any tags', async () => {
     const filePath = path.join(mp3SamplePath, 'notags.mp3');
     const { format, native } = await mm.parseFile(filePath, { includeChapters: true });
