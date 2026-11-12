@@ -55,7 +55,7 @@ export async function updateBuffer(
     const format = await detectFormat(source);
     assertSupported(format);
     if (format === 'flac' && options.replaceId3) {
-      throw new UnsupportedFeatureError('replaceId3 is only supported for MP3 and WAV');
+      throw new UnsupportedFeatureError('replaceId3 is only supported for MP3, ADTS AAC and WAV');
     }
 
     if (format === 'wav' || format === 'mp4' || format === 'ogg') {

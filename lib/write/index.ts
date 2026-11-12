@@ -52,7 +52,7 @@ export async function updateFile(filePath: string, patch: TagPatch, options: Wri
     const format = await detectFormat(source);
     assertSupported(format);
     if (format === 'flac' && options.replaceId3) {
-      throw new UnsupportedFeatureError('replaceId3 is only supported for MP3 and WAV');
+      throw new UnsupportedFeatureError('replaceId3 is only supported for MP3, ADTS AAC and WAV');
     }
 
     if (format === 'wav' || format === 'mp4' || format === 'ogg') {
@@ -66,7 +66,10 @@ export async function updateFile(filePath: string, patch: TagPatch, options: Wri
       });
       return { format, ...result, paddingBytes: update.paddingBytes };
     }
-    const update = await (format === 'flac' ? buildFlacUpdate : buildId3Update)(source, patch, options);
+    const update =
+      format === 'flac'
+        ? { ...(await buildFlacUpdate(source, patch, options)), format: 'flac' as const }
+        : await buildId3Update(source, patch, options);
     const result = await writeChunks(
       filePath,
       [update.metadata, { source, offset: update.audioOffset, length: update.audioLength }],
@@ -79,7 +82,7 @@ export async function updateFile(filePath: string, patch: TagPatch, options: Wri
     );
 
     return {
-      format: format === 'flac' ? 'flac' : 'mp3',
+      format: update.format,
       bytesWritten: result.bytesWritten,
       paddingBytes: update.paddingBytes,
       atomic: result.atomic
@@ -102,7 +105,7 @@ export async function updateBuffer(data: Uint8Array, patch: TagPatch, options: W
     const format = await detectFormat(source);
     assertSupported(format);
     if (format === 'flac' && options.replaceId3) {
-      throw new UnsupportedFeatureError('replaceId3 is only supported for MP3 and WAV');
+      throw new UnsupportedFeatureError('replaceId3 is only supported for MP3, ADTS AAC and WAV');
     }
 
     if (format === 'wav' || format === 'mp4' || format === 'ogg') {

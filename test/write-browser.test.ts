@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import * as browserRoot from '../lib/core.js';
 import { updateBuffer } from '../lib/core.js';
 import { type IAudioMetadata, type IPicture, parseBlob, parseBuffer } from '../lib/index.js';
+import { syncSafe } from '../lib/write/id3v2/frames.js';
 import { makeFlac } from './helpers/flac.js';
 
 interface ReadTags {
@@ -89,5 +90,47 @@ describe('browser root entry', () => {
     const updated = await updateBuffer(mp3, { title: 'Browser Test' });
     const after = await readTags(updated);
     expect(after.common.title).toBe('Browser Test');
+  });
+});
+
+describe('browser ADTS AAC writing', () => {
+  it.each(['Uint8Array', 'Blob'])('writes and clears AAC tags from a %s without modifying its input', async kind => {
+    const original = new Uint8Array(await readFile('test/samples/aac/adts-mpeg4-2.aac'));
+    const snapshot = original.slice();
+    const source = kind === 'Blob' ? toBlob(original) : original;
+    const updated = await updateBuffer(source, { title: 'Browser AAC', artist: 'AAC artist' }, { padding: 0 });
+    const before = await parseBuffer(original, undefined, { duration: true });
+    const after = await parseBuffer(updated, undefined, { duration: true });
+    expect(after.format).toEqual({
+      ...before.format,
+      tagTypes: ['ID3v2.4'],
+      overallBitrate: (8 * updated.length) / before.format.duration!
+    });
+    expect(updated.subarray(10 + syncSafe(updated, 6))).toEqual(original);
+    expect(after.common.title).toBe('Browser AAC');
+    expect(after.common.artist).toBe('AAC artist');
+    expect(original).toEqual(snapshot);
+    if (source instanceof Blob) {
+      expect(new Uint8Array(await source.arrayBuffer())).toEqual(snapshot);
+    }
+    const cleared = await updateBuffer(toBlob(updated), { title: null }, { padding: 0 });
+    const tags = await parseBuffer(cleared);
+    expect(tags.common.title).toBeUndefined();
+    expect(tags.common.artist).toBe('AAC artist');
+    expect(cleared.subarray(10 + syncSafe(cleared, 6))).toEqual(original);
+  });
+
+  it('explicitly replaces legacy AAC ID3 tags from a Blob', async () => {
+    const original = new Uint8Array(await readFile('test/samples/aac/id3v23-mpeg2.aac'));
+    const before = await parseBuffer(original);
+    const source = toBlob(original);
+    const updated = await updateBuffer(source, { ...before.common, title: 'Browser legacy AAC' }, { replaceId3: true });
+    const after = await parseBuffer(updated);
+    expect(after.format.container).toBe('ADTS/MPEG-2');
+    expect(after.format.tagTypes).toEqual(['ID3v2.4']);
+    expect(after.common.title).toBe('Browser legacy AAC');
+    expect(after.common.artist).toBe(before.common.artist);
+    expect(updated.subarray(10 + syncSafe(updated, 6))).toEqual(original.subarray(10 + syncSafe(original, 6), -128));
+    expect(new Uint8Array(await source.arrayBuffer())).toEqual(original);
   });
 });

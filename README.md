@@ -21,7 +21,7 @@ common tag names.
 
 Key features:
 - **Read Many Audio Formats**: Read metadata from MP3, MP4, FLAC, Ogg, WAV, AIFF, and more.
-- **Write Tags and Cover Art**: Edit FLAC, Ogg Vorbis/Opus, MP3, WAV and MP4/M4A/M4B metadata while preserving encoded audio. Update files in Node.js or return new buffers in Node.js and browsers.
+- **Write Tags and Cover Art**: Edit FLAC, Ogg Vorbis/Opus, MP3, ADTS AAC, WAV and MP4/M4A/M4B metadata while preserving encoded audio. Update files in Node.js or return new buffers in Node.js and browsers.
 - **Extensive Metadata Extraction**: Extracts detailed metadata, including ID3v1, ID3v2, APE, Vorbis, and iTunes/MP4 tags.
 - **Streaming Support**: Efficiently handles large audio files by reading metadata from streams, making it suitable for server-side and browser-based applications.
 - **Promise-Based API**: Provides a modern, promise-based API for easy integration into asynchronous workflows.
@@ -32,7 +32,7 @@ The [`music-metadata`](https://github.com/Borewit/music-metadata) module is idea
 ## Writing metadata
 
 Import the write API from `music-metadata` to edit FLAC, Ogg Vorbis/Opus,
-MP3, WAV and MP4/M4A/M4B metadata without re-encoding audio.
+MP3, ADTS AAC, WAV and MP4/M4A/M4B metadata without re-encoding audio.
 
 ```js
 import { updateFile, updateBuffer } from 'music-metadata';
@@ -54,7 +54,13 @@ appropriate implementation; named imports allow bundlers to remove unused readin
 or writing code.
 Read metadata using `parseFile`, `parseBuffer` or `parseBlob`.
 
-MP3 and WAV write ID3v2.4; replacing ID3v2.2/2.3 requires `replaceId3: true`.
+MP3, ADTS AAC and WAV write ID3v2.4; replacing ID3v2.2/2.3 requires `replaceId3: true`.
+For raw `.aac` files, writing supports ADTS MPEG-2/MPEG-4 streams, not ADIF or
+LOAS/LATM. The writer validates the first ADTS frame header and copies the audio
+unchanged; it does not decode frames or validate audio CRCs. `WriteResult.format`
+is `'aac'` for ADTS AAC, including files with a leading ID3 tag.
+`replaceId3: true` discards unspecified ID3v2 fields and, for MP3/ADTS AAC,
+removes a trailing ID3v1 tag; other trailing metadata is preserved unchanged.
 MP4 writing supports non-fragmented, self-contained files with iTunes metadata.
 Consumers migrating from `music-metadata-editor` should import the write functions
 and types from `music-metadata`.

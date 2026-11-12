@@ -1,5 +1,6 @@
 import { TokenWriter } from 'strtok3';
 import { UINT8 } from 'token-types';
+import { AdtsFrameHeader } from '../../mpeg/AdtsFrameHeader.js';
 import { UINT32SYNCSAFE } from '../../tokens/id3v2.js';
 import {
   InvalidFileError,
@@ -13,6 +14,39 @@ import { applyId3Patch } from '../mapping/id3v2.js';
 import { decodeText, encodeFrame, type Frame, makeFrames, syncSafe } from './frames.js';
 
 const MAX_TAG_SIZE = 64 * 1024 * 1024;
+
+/** Validate the first audio header without interpreting or rewriting the payload. */
+function validateAudioHeader(audio: Uint8Array, audioLength: number): 'mp3' | 'aac' {
+  if (audio.length >= 2 && audio[0] === 255 && (audio[1] & 0xf6) === 0xf0) {
+    if (audio.length < 7) {
+      throw new InvalidFileError('Truncated ADTS header');
+    }
+    const header = new AdtsFrameHeader(audio);
+    if (header.samplingRate === null) {
+      throw new InvalidFileError('Invalid ADTS sampling-frequency index');
+    }
+    const frameLength = header.frameLength | (audio[4] << 3) | (audio[5] >> 5);
+    if (frameLength <= header.headerLength) {
+      throw new InvalidFileError('Invalid ADTS frame length');
+    }
+    if (frameLength > audioLength) {
+      throw new InvalidFileError('ADTS frame exceeds file size');
+    }
+    return 'aac';
+  }
+  if (
+    audio.length < 4 ||
+    audio[0] !== 255 ||
+    (audio[1] & 0xe0) !== 0xe0 ||
+    (audio[1] & 0x18) === 0x08 ||
+    (audio[1] & 0x06) === 0 ||
+    (audio[2] & 0xf0) === 0xf0 ||
+    (audio[2] & 0x0c) === 0x0c
+  ) {
+    throw new UnsupportedFormatError('ID3 tag is not followed by MPEG audio or ADTS AAC');
+  }
+  return 'mp3';
+}
 
 export async function buildId3Update(source: ByteSource, patch: TagPatch, options: WriteOptions, embedded = false) {
   let audioOffset = 0;
@@ -108,19 +142,9 @@ export async function buildId3Update(source: ByteSource, patch: TagPatch, option
       }
     }
   }
-  const audio = await source.read(audioOffset, Math.min(4, audioEnd - audioOffset));
-  if (
-    !embedded &&
-    (audio.length < 4 ||
-      audio[0] !== 255 ||
-      (audio[1] & 0xe0) !== 0xe0 ||
-      (audio[1] & 0x18) === 0x08 ||
-      (audio[1] & 0x06) === 0 ||
-      (audio[2] & 0xf0) === 0xf0 ||
-      (audio[2] & 0x0c) === 0x0c)
-  ) {
-    throw new UnsupportedFormatError('ID3 tag is not followed by MPEG audio');
-  }
+  const format: 'mp3' | 'aac' | 'wav' = embedded
+    ? 'wav'
+    : validateAudioHeader(await source.read(audioOffset, Math.min(7, audioEnd - audioOffset)), audioEnd - audioOffset);
   const replace = (key: string, value: unknown) => {
     const [id, ...description] = key.split(':');
     const matches = (frame: Frame) => {
@@ -164,6 +188,7 @@ export async function buildId3Update(source: ByteSource, patch: TagPatch, option
   }
   writer.writeZeros(bodyLength - length);
   return {
+    format,
     metadata: writer.toUint8Array(),
     audioOffset,
     audioLength: audioEnd - audioOffset,
