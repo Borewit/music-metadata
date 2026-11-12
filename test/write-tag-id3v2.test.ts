@@ -659,8 +659,7 @@ describe('ADTS AAC ID3v2.4 writing', () => {
       await writeFile(target, legacy);
       const before = await parseFile(target, { duration: true });
       expect(before.format.container).toBe('ADTS/MPEG-2');
-      // The AAC reader does not expose the trailing ID3v1 tag.
-      expect(before.format.tagTypes).toEqual(['ID3v2.3']);
+      expect(before.format.tagTypes).toEqual(['ID3v2.3', 'ID3v1']);
       expect(legacy.subarray(-128, -125).toString('ascii')).toBe('TAG');
       expect(before.common.title).toBe('Legacy AAC title');
       await expect(updateFile(target, { title: 'New title' })).rejects.toThrow('Only ID3v2.4');

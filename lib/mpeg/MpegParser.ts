@@ -133,6 +133,7 @@ export class MpegParser extends AbstractID3Parser {
           this.audioEnd = end - 128;
         }
       }
+      const audioEndReached = this.audioEnd !== undefined && this.tokenizer.position >= this.audioEnd;
       const fullMpegScan = this.calculateEofDuration && this.audioFrameHeader !== undefined;
       const id3v1Tail =
         this.syncPeek.len >= 3 &&
@@ -141,6 +142,7 @@ export class MpegParser extends AbstractID3Parser {
         this.syncPeek.buf[2] === 0x47;
       if (
         this.syncPeek.len < 2 ||
+        audioEndReached ||
         (this.syncPeek.len <= 163 && this.audioFrameHeader !== undefined && (!fullMpegScan || id3v1Tail))
       ) {
         throw new EndOfStreamError();

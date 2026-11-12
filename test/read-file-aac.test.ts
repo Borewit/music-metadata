@@ -149,6 +149,47 @@ describe('Parse ADTS/AAC', () => {
       });
     }
   });
+  describe('trailing ID3v1 tags', () => {
+    const id3v1File = path.join(aacSamplePath, 'id3v1.aac');
+    const id3v23File = path.join(aacSamplePath, 'id3v23-mpeg2.aac');
+
+    for (const parser of Parsers) {
+      it(`exposes an ID3v1-only tag after a duration scan (${parser.description})`, async context => {
+        const { format, common, native } = await parser.parse(() => context.skip(), id3v1File, 'audio/aac', {
+          duration: true
+        });
+        assert.deepEqual(format.tagTypes, ['ID3v1']);
+        assert.strictEqual(format.numberOfSamples, 14 * 1024);
+        assert.strictEqual(common.title, 'ADTS ID3v1 title');
+        assert.strictEqual(common.artist, 'ADTS ID3v1 artist');
+        assert.strictEqual(common.album, 'ADTS ID3v1 album');
+        assert.deepEqual(common.comment, [{ text: 'ID3v1 comment' }]);
+        assert.strictEqual(common.year, 2026);
+        assert.strictEqual(common.track.no, 5);
+        assert.isUndefined(common.genre, 'an unknown ID3v1 genre must stay undefined');
+        assert.isDefined(native.ID3v1);
+      });
+
+      it(`keeps the ID3v1 tag after a leading ID3v2.3 duration scan (${parser.description})`, async context => {
+        const { format, common, native } = await parser.parse(() => context.skip(), id3v23File, 'audio/aac', {
+          duration: true
+        });
+        assert.deepEqual(format.tagTypes, ['ID3v2.3', 'ID3v1']);
+        assert.strictEqual(common.title, 'Legacy AAC title');
+        assert.deepEqual(common.comment, [{ text: 'Legacy side tag' }]);
+        assert.deepEqual(common.track, { no: 3, of: 8 });
+        assert.deepEqual(native.ID3v1, [
+          { id: 'title', value: 'Legacy AAC title' },
+          { id: 'artist', value: 'AAC writer fixture' },
+          { id: 'album', value: 'Writer round-trip' },
+          { id: 'comment', value: 'Legacy side tag' },
+          { id: 'track', value: 3 },
+          { id: 'year', value: '2026' }
+        ]);
+      });
+    }
+  });
+
   it('should treat reserved sampling-frequency indices as unknown', () => {
     for (const thirdByte of [0x74, 0x78, 0x7c]) {
       const header = new AdtsFrameHeader(Uint8Array.of(0xff, 0xf1, thirdByte, 0x80));
