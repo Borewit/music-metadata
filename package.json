@@ -1,6 +1,6 @@
 {
   "name": "music-metadata",
-  "description": "Music metadata parser for Node.js, supporting virtual any audio and tag format.",
+  "description": "Read and write audio metadata in Node.js and browsers. Parse tags from a wide range of audio formats and edit tags and cover art without re-encoding audio.",
   "version": "12.4.0",
   "author": {
     "name": "Borewit",
@@ -60,6 +60,23 @@
   "keywords": [
     "music",
     "metadata",
+    "audio-metadata",
+    "music-metadata",
+    "metadata-reader",
+    "metadata-writer",
+    "metadata-editor",
+    "tag-reader",
+    "tag-writer",
+    "tag-editor",
+    "audio-tags",
+    "id3-parser",
+    "id3-writer",
+    "id3-editor",
+    "cover-art",
+    "album-art",
+    "artwork",
+    "nodejs",
+    "browser",
     "meta",
     "audio",
     "tag",
@@ -95,7 +112,6 @@
     "mpc",
     "dsd",
     "dsf",
-    "mpc",
     "dff",
     "dsdiff",
     "aac",
@@ -108,7 +124,6 @@
     "bwf",
     "slt",
     "lyrics",
-    "Chapters",
     "ID3v2 Chapters"
   ],
   "scripts": {
@@ -172,6 +187,7 @@
     "node": ">=22"
   },
   "repository": "github:Borewit/music-metadata",
+  "homepage": "https://github.com/Borewit/music-metadata#readme",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/Borewit/music-metadata/issues"
