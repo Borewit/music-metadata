@@ -1,7 +1,7 @@
 {
   "name": "music-metadata",
   "description": "Read and write audio metadata in Node.js and browsers. Parse tags from a wide range of audio formats and edit tags and cover art without re-encoding audio.",
-  "version": "12.4.0",
+  "version": "12.5.0",
   "author": {
     "name": "Borewit",
     "url": "https://github.com/Borewit"
