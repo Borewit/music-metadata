@@ -34,10 +34,10 @@ export function assertPatch(patch: TagPatch): void {
 
 export function assertSupported(
   format: ContainerFormat
-): asserts format is 'flac' | 'id3' | 'mp3' | 'wav' | 'mp4' | 'ogg' {
+): asserts format is 'flac' | 'id3' | 'mp3' | 'aac' | 'wav' | 'mp4' | 'ogg' {
   if (format === 'unknown') {
     throw new UnsupportedFormatError(
-      'Unsupported audio format; supported formats are FLAC, Ogg Vorbis/Opus, WAV, MP4 and MP3/ID3v2.4'
+      'Unsupported audio format; supported formats are FLAC, Ogg Vorbis/Opus, WAV, MP4, MP3 and ADTS AAC (ID3v2.4)'
     );
   }
 }

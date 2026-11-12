@@ -1,4 +1,4 @@
-import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdtemp, readdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
@@ -534,4 +534,283 @@ describe('APIC empty-description compatibility', () => {
       expect(after.common.picture).toEqual([picture]);
     }
   );
+});
+
+const aacDirectory = path.join(import.meta.dirname, 'samples/aac');
+const aacBare = await readFile(path.join(aacDirectory, 'adts-mpeg4-2.aac'));
+const aacLegacy = await readFile(path.join(aacDirectory, 'id3v23-mpeg2.aac'));
+const aacPicture = (await parseFile(sample)).common.picture!;
+
+describe('ADTS AAC ID3v2.4 writing', () => {
+  const directory = aacDirectory;
+  const bare = aacBare;
+  const legacy = aacLegacy;
+  const firstFrameLength = ((bare[3] & 3) << 11) | (bare[4] << 3) | (bare[5] >> 5);
+  const picture = aacPicture;
+  const patch: TagPatch = {
+    title: 'AAC title — 音楽',
+    artists: ['Artist A', 'Artist B'],
+    album: 'AAC album',
+    albumartists: ['Album artist A', 'Album artist B'],
+    genre: ['Jazz', 'Fusion'],
+    track: { no: 2, of: 9 },
+    disk: { no: 1, of: 2 },
+    comment: 'AAC comment',
+    lyrics: 'AAC lyrics',
+    rating: [{ rating: 0.8 }],
+    musicbrainz_recordingid: 'recording-id',
+    picture,
+    native: { 'TXXX:STYLE': 'Acoustic', 'TXXX:CUSTOM': ['One', 'Two'] }
+  };
+
+  it.each(['adts-mpeg4-2.aac', 'short-final-frame.aac'])(
+    'round-trips common/native tags and artwork without changing %s audio',
+    async filename => {
+      const source = await readFile(path.join(directory, filename));
+      const original = Buffer.from(source);
+      const before = await parseBuffer(source, undefined, { duration: true });
+      const output = await updateBuffer(source, patch);
+      expect(source).toEqual(original);
+      expect(Buffer.from(output.subarray(audioOffset(output)))).toEqual(source.subarray(audioOffset(source)));
+      const after = await parseBuffer(output, undefined, { duration: true });
+      // Overall bitrate includes metadata bytes; encoded-audio properties do not.
+      expect(after.format).toEqual({
+        ...before.format,
+        tagTypes: ['ID3v2.4'],
+        overallBitrate: (8 * output.length) / before.format.duration!
+      });
+      expect(after.common).toMatchObject({
+        title: patch.title,
+        artists: patch.artists,
+        album: patch.album,
+        albumartists: patch.albumartists,
+        // The existing ID3 mapper also contributes TXXX:STYLE to genre.
+        genre: ['Jazz', 'Fusion', 'Acoustic'],
+        track: patch.track,
+        disk: patch.disk,
+        musicbrainz_recordingid: patch.musicbrainz_recordingid
+      });
+      expect(after.common.comment?.[0]?.text).toBe(patch.comment);
+      expect(after.common.lyrics?.[0]?.text).toBe(patch.lyrics);
+      expect(after.common.rating?.[0]?.rating).toBeCloseTo(0.8, 2);
+      expect(after.common.picture).toEqual(picture);
+      expect(after.native['ID3v2.4']).toContainEqual({ id: 'TXXX:STYLE', value: 'Acoustic' });
+      expect(after.native['ID3v2.4']).toContainEqual({ id: 'TXXX:CUSTOM', value: 'One' });
+      expect(after.native['ID3v2.4']).toContainEqual({ id: 'TXXX:CUSTOM', value: 'Two' });
+      const repeated = await updateBuffer(output, patch);
+      // A repeated patch preserves tags and audio even if frame order changes.
+      expect((await parseBuffer(repeated)).common).toEqual(after.common);
+      expect(Buffer.from(repeated.subarray(audioOffset(repeated)))).toEqual(source.subarray(audioOffset(source)));
+      expect(await updateBuffer(output, { title: patch.title })).toEqual(output);
+
+      const changed = await updateBuffer(output, { track: { no: 4 }, title: null, picture: null, lyrics: null });
+      const tags = await parseBuffer(changed);
+      expect(tags.common.track).toEqual({ no: 4, of: 9 });
+      expect(tags.common.title).toBeUndefined();
+      expect(tags.common.picture).toBeUndefined();
+      expect(tags.common.lyrics).toBeUndefined();
+      expect(tags.common.album).toBe('AAC album');
+      expect(Buffer.from(changed.subarray(audioOffset(changed)))).toEqual(source.subarray(audioOffset(source)));
+    }
+  );
+
+  it.each([true, false])(
+    'supports atomic=%s, backup and dry run for an untagged AAC with no AAC extension',
+    async atomic => {
+      const temporary = await mkdtemp(path.join(tmpdir(), 'write-adts-'));
+      try {
+        const target = path.join(temporary, 'audio.bin');
+        await writeFile(target, bare);
+        const planned = await updateFile(
+          target,
+          { title: 'File title', artist: 'File artist' },
+          { atomic, dryRun: true }
+        );
+        expect(planned.format).toBe('aac');
+        expect(planned.atomic).toBe(atomic);
+        expect(await readFile(target)).toEqual(bare);
+        expect(await readdir(temporary)).toEqual(['audio.bin']);
+
+        const result = await updateFile(
+          target,
+          { title: 'File title', artist: 'File artist' },
+          { atomic, backup: true }
+        );
+        const output = await readFile(target);
+        expect(result).toEqual(planned);
+        expect(result.bytesWritten).toBe(output.length);
+        expect(await readFile(`${target}.bak`)).toEqual(bare);
+        expect(Buffer.from(output.subarray(audioOffset(output)))).toEqual(bare);
+        expect((await parseFile(target)).common.title).toBe('File title');
+        const again = await updateFile(target, { title: 'Second title' }, { atomic });
+        expect(again.format).toBe('aac');
+        expect((await parseFile(target)).common.artist).toBe('File artist');
+      } finally {
+        await rm(temporary, { recursive: true, force: true });
+      }
+    }
+  );
+
+  it.each([true, false])('explicitly replaces MPEG-2 AAC legacy tags with atomic=%s', async atomic => {
+    const temporary = await mkdtemp(path.join(tmpdir(), 'replace-adts-'));
+    try {
+      // Detection must follow the media, not this misleading extension.
+      const target = path.join(temporary, 'legacy.mp3');
+      await writeFile(target, legacy);
+      const before = await parseFile(target, { duration: true });
+      expect(before.format.container).toBe('ADTS/MPEG-2');
+      // The AAC reader does not expose the trailing ID3v1 tag.
+      expect(before.format.tagTypes).toEqual(['ID3v2.3']);
+      expect(legacy.subarray(-128, -125).toString('ascii')).toBe('TAG');
+      expect(before.common.title).toBe('Legacy AAC title');
+      await expect(updateFile(target, { title: 'New title' })).rejects.toThrow('Only ID3v2.4');
+      expect(await readFile(target)).toEqual(legacy);
+      const result = await updateFile(target, { ...before.common, title: 'New title' }, { atomic, replaceId3: true });
+      expect(result.format).toBe('aac');
+      expect(result.atomic).toBe(atomic);
+      const output = await readFile(target);
+      expect(output.subarray(audioOffset(output))).toEqual(legacy.subarray(audioOffset(legacy), -128));
+      const after = await parseFile(target, { duration: true });
+      // Overall bitrate includes metadata bytes; encoded-audio properties do not.
+      expect(after.format).toEqual({
+        ...before.format,
+        tagTypes: ['ID3v2.4'],
+        overallBitrate: (8 * output.length) / before.format.duration!
+      });
+      expect(after.common.title).toBe('New title');
+      expect(after.common.artist).toBe(before.common.artist);
+      expect(after.common.album).toBe(before.common.album);
+      expect(after.common.track).toEqual(before.common.track);
+    } finally {
+      await rm(temporary, { recursive: true, force: true });
+    }
+  });
+
+  it('preserves side tags by default and removes only ID3v1 on replacement', async () => {
+    const sideTags = Buffer.concat([Buffer.from('APETAGEX opaque side tag'), legacy.subarray(-128)]);
+    const source = Buffer.concat([bare, sideTags]);
+    const original = Buffer.from(source);
+    const output = await updateBuffer(source, { title: 'Primary title' }, { padding: 0 });
+    expect(Buffer.from(output.subarray(audioOffset(output)))).toEqual(source);
+    const replaced = await updateBuffer(output, { title: 'Replacement' }, { replaceId3: true, padding: 0 });
+    expect(Buffer.from(replaced.subarray(audioOffset(replaced)))).toEqual(source.subarray(0, -128));
+    expect(source).toEqual(original);
+  });
+
+  it('replaces valid ID3v2.2 tags and supports a one-frame AAC clip', async () => {
+    const text = Buffer.from([0, ...Buffer.from('Legacy title')]);
+    const frame = Buffer.concat([Buffer.from('TT2'), Buffer.from([0, 0, text.length]), text]);
+    const header = Buffer.from([73, 68, 51, 2, 0, 0, 0, 0, 0, 0]);
+    UINT32SYNCSAFE.put(header, 6, frame.length);
+    const source = Buffer.concat([header, frame, bare.subarray(0, firstFrameLength)]);
+    const before = await parseBuffer(source, undefined, { duration: true });
+    expect(before.common.title).toBe('Legacy title');
+    const output = await updateBuffer(source, { title: 'Replacement' }, { replaceId3: true, padding: 0 });
+    expect(Buffer.from(output.subarray(audioOffset(output)))).toEqual(bare.subarray(0, firstFrameLength));
+    const after = await parseBuffer(output, undefined, { duration: true });
+    expect(after.format.numberOfSamples).toBe(1024);
+    expect(after.format.duration).toBe(before.format.duration);
+    expect(after.common.title).toBe('Replacement');
+  });
+
+  it('reports AAC after replacing a leading ID3v2.4 tag with a footer', async () => {
+    const tagged = await updateBuffer(bare, { artist: 'Footer artist' }, { padding: 0 });
+    const header = Buffer.from(tagged.subarray(0, 10));
+    header[5] = 0x10;
+    const footer = Buffer.concat([Buffer.from('3DI'), header.subarray(3)]);
+    const source = Buffer.concat([header, tagged.subarray(10, audioOffset(tagged)), footer, bare]);
+    const temporary = await mkdtemp(path.join(tmpdir(), 'footer-adts-'));
+    try {
+      const target = path.join(temporary, 'footer.aac');
+      await writeFile(target, source);
+      const result = await updateFile(target, { title: 'Footer replaced' }, { replaceId3: true });
+      expect(result.format).toBe('aac');
+      const output = await readFile(target);
+      expect(output.subarray(audioOffset(output))).toEqual(bare);
+      expect((await parseFile(target)).common.title).toBe('Footer replaced');
+    } finally {
+      await rm(temporary, { recursive: true, force: true });
+    }
+  });
+
+  it('preserves opaque CRC bytes and protected ADTS frame boundaries', async () => {
+    // Structural CRC coverage: the metadata writer must not validate/recalculate
+    // audio checksums. Insert opaque CRC bytes into the existing first frame.
+    const protectedAudio = Buffer.concat([bare.subarray(0, 7), Buffer.from([0x12, 0x34]), bare.subarray(7)]);
+    protectedAudio[1] &= 0xfe;
+    const length = firstFrameLength + 2;
+    protectedAudio[3] = (protectedAudio[3] & 0xfc) | (length >> 11);
+    protectedAudio[4] = length >> 3;
+    protectedAudio[5] = (protectedAudio[5] & 31) | ((length & 7) << 5);
+    const output = await updateBuffer(protectedAudio, { title: 'Protected frame' });
+    expect(Buffer.from(output.subarray(audioOffset(output)))).toEqual(protectedAudio);
+    expect((await parseBuffer(output, undefined, { duration: true })).format.numberOfSamples).toBe(
+      (await parseBuffer(bare, undefined, { duration: true })).format.numberOfSamples
+    );
+  });
+
+  const malformed: [string, Buffer, string][] = [
+    ['empty payload', Buffer.alloc(0), 'not followed by MPEG audio'],
+    ['one-byte sync', bare.subarray(0, 1), 'not followed by MPEG audio']
+  ];
+  for (const length of [2, 6]) {
+    malformed.push([`${length}-byte header`, bare.subarray(0, length), 'Truncated ADTS header']);
+  }
+  for (const frequency of [13, 14, 15]) {
+    const data = Buffer.from(bare);
+    data[2] = (data[2] & 0xc3) | (frequency << 2);
+    malformed.push([`sampling-frequency index ${frequency}`, data, 'Invalid ADTS sampling-frequency index']);
+  }
+  for (const [length, crc] of [
+    [0, false],
+    [6, false],
+    [7, false],
+    [8, true],
+    [9, true]
+  ] as const) {
+    const data = Buffer.from(bare);
+    data[1] = crc ? 0xf0 : 0xf1;
+    data[3] &= 0xfc;
+    data[4] = length >> 3;
+    data[5] = (data[5] & 31) | ((length & 7) << 5);
+    malformed.push([`frame length ${length} (${crc ? 'CRC' : 'no CRC'})`, data, 'Invalid ADTS frame length']);
+  }
+  malformed.push(['truncated first frame', bare.subarray(0, firstFrameLength - 1), 'ADTS frame exceeds file size']);
+  malformed.push(['invalid sync', Buffer.from([0xff, 0xe1, ...bare.subarray(2)]), 'not followed by MPEG audio']);
+  malformed.push(['ADIF', Buffer.from('ADIF unsupported transport'), 'not followed by MPEG audio']);
+  malformed.push(['LOAS/LATM', Buffer.from([0x56, 0xe0, 0, 0, 0, 0, 0]), 'not followed by MPEG audio']);
+
+  it.each(['ADIF', 'LOAS/LATM'])('rejects bare %s without trusting the AAC extension', async name => {
+    const audio = malformed.find(([transport]) => transport === name)![1];
+    await expect(updateBuffer(audio, { title: 'Invalid' })).rejects.toThrow('Unsupported audio format');
+    const temporary = await mkdtemp(path.join(tmpdir(), 'unsupported-adts-'));
+    try {
+      const target = path.join(temporary, 'unsupported.aac');
+      await writeFile(target, audio);
+      await expect(updateFile(target, { title: 'Invalid' })).rejects.toThrow('Unsupported audio format');
+      expect(await readFile(target)).toEqual(audio);
+      expect(await readdir(temporary)).toEqual(['unsupported.aac']);
+    } finally {
+      await rm(temporary, { recursive: true, force: true });
+    }
+  });
+
+  it.each(malformed)('rejects %s before modifying a file or buffer', async (_name, audio, error) => {
+    // The valid leading ID3 tag ensures that even a short/unsupported transport
+    // reaches payload validation rather than only the format-detection fallback.
+    const source = Buffer.concat([Buffer.from([73, 68, 51, 4, 0, 0, 0, 0, 0, 0]), audio]);
+    const original = Buffer.from(source);
+    await expect(updateBuffer(source, { title: 'Invalid' })).rejects.toThrow(error);
+    expect(source).toEqual(original);
+    const temporary = await mkdtemp(path.join(tmpdir(), 'invalid-adts-'));
+    try {
+      const target = path.join(temporary, 'invalid.aac');
+      await writeFile(target, source);
+      await expect(updateFile(target, { title: 'Invalid' })).rejects.toThrow(error);
+      expect(await readFile(target)).toEqual(original);
+      expect(await readdir(temporary)).toEqual(['invalid.aac']);
+    } finally {
+      await rm(temporary, { recursive: true, force: true });
+    }
+  });
 });

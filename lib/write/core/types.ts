@@ -61,7 +61,7 @@ export type SynchronizedLyricsText = ILyricsText;
  *
  * Which properties survive depends on the container:
  *
- * - MP3/WAV preserve `language`, `descriptor`, `contentType`, `timeStampFormat`
+ * - MP3/ADTS AAC/WAV preserve `language`, `descriptor`, `contentType`, `timeStampFormat`
  *   and `syncText` by writing `USLT` and/or `SYLT` frames.
  * - FLAC stores `text` in `LYRICS`, or an LRC string when `syncText` is present.
  *   Language, descriptor, content type and timestamp format are not stored.
@@ -97,7 +97,7 @@ export interface LyricsEntry {
  * - An empty string, an empty array or `null` removes all lyrics.
  *
  * A lyrics patch replaces the complete lyrics value for the edited format.
- * On MP3/WAV, text-only input removes existing `SYLT` frames and synchronized
+ * On MP3/ADTS AAC/WAV, text-only input removes existing `SYLT` frames and synchronized
  * input removes existing `USLT` frames. Use an entry containing both `text` and
  * `syncText` to keep both representations.
  *
@@ -197,7 +197,7 @@ interface CustomTagPatch {
   /**
    * Format-native fields, applied after the common mapping.
    *
-   * For MP3 use frame IDs (TXXX:description for user text), structured native
+   * For MP3, ADTS AAC and WAV use frame IDs (TXXX:description for user text), structured native
    * objects for APIC/COMM/USLT/UFID/POPM/TIPL/TMCL, or raw Uint8Array bodies
    * for binary frames. For MP4 use four-character item names or ----:mean:name;
    * strings write UTF-8 data and Uint8Array supplies a complete raw item body
@@ -230,7 +230,7 @@ export interface WriteOptions {
    * Discard the existing leading ID3v2.2/2.3/2.4 tag and trailing ID3v1 tag
    * before writing the patch as ID3v2.4. In WAV, replaces the ID3 chunk contents.
    * Unspecified ID3 fields are lost.
-   * Other trailing metadata (such as APE) is preserved. MP3 and WAV ID3 chunks only.
+   * Other trailing metadata (such as APE) is preserved. MP3, ADTS AAC and WAV ID3 chunks only.
    */
   replaceId3?: boolean;
   /** Remove a nonstandard leading ID3 tag when rewriting FLAC metadata. */
@@ -260,11 +260,11 @@ export interface WriteOptions {
 }
 
 /**
- * Result of a FLAC, MP3, WAV, MP4 or Ogg Vorbis/Opus write operation.
+ * Result of a FLAC, MP3, ADTS AAC, WAV, MP4 or Ogg Vorbis/Opus write operation.
  */
 export interface WriteResult {
   /** Container format that was written. */
-  format: 'flac' | 'mp3' | 'wav' | 'mp4' | 'ogg';
+  format: 'flac' | 'mp3' | 'aac' | 'wav' | 'mp4' | 'ogg';
   /** Total number of bytes in the resulting file. */
   bytesWritten: number;
   /** Padding bytes in the resulting metadata section. */
