@@ -1,7 +1,7 @@
 import { fileTypeFromTokenizer } from 'file-type';
 import { EndOfStreamError, type ITokenizer } from 'strtok3';
 import { decodeAscii } from './bytes.js';
-import type { ByteSource } from './source.js';
+import type { ByteSource } from './source.shared.js';
 
 export type ContainerFormat = 'flac' | 'id3' | 'mp3' | 'aac' | 'wav' | 'mp4' | 'ogg' | 'unknown';
 

@@ -3,7 +3,7 @@ import { decodeBase64, encodeBase64 } from '../../common/Base64.js';
 import { BlockType as BLOCK_TYPE, BlockHeader, decodePicture } from '../../tokens/flac.js';
 import { InvalidFileError, InvalidPatchError, UnsupportedFormatError } from '../core/errors.js';
 import { validatePictures } from '../core/patch.js';
-import type { ByteSource } from '../core/source.js';
+import type { ByteSource } from '../core/source.shared.js';
 import type { Picture, TagPatch, WriteOptions } from '../core/types.js';
 import { applyVorbisPatch } from '../mapping/vorbis.js';
 import { parseVorbisComment, serializeVorbisComment } from '../vorbis/comment.js';

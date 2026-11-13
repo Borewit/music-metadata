@@ -1,10 +1,10 @@
 import { encodeBase64 } from '../../common/Base64.js';
 import { concatBytes, decodeAscii } from '../core/bytes.js';
+import type { WriteChunk } from '../core/chunks.js';
 import { InvalidFileError, UnsupportedFeatureError } from '../core/errors.js';
 import { validatePictures } from '../core/patch.js';
-import type { ByteSource } from '../core/source.js';
+import type { ByteSource } from '../core/source.shared.js';
 import type { TagPatch, WriteOptions } from '../core/types.js';
-import type { WriteChunk } from '../core/writer.js';
 import { serializePicture } from '../flac/picture.js';
 import { applyVorbisPatch } from '../mapping/vorbis.js';
 import { parseVorbisCommentWithSuffix, serializeVorbisComment } from '../vorbis/comment.js';

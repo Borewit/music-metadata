@@ -1,17 +1,11 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import type { WriteChunk } from './chunks.js';
 import { WriteError } from './errors.js';
-import type { ByteSource } from './source.js';
+
+export type { WriteChunk } from './chunks.js';
 
 const COPY_CHUNK_SIZE = 1024 * 1024;
-
-export type WriteChunk =
-  | Uint8Array
-  | {
-      source: ByteSource;
-      offset: number;
-      length: number;
-    };
 
 export interface AtomicWriteOptions {
   atomic: boolean;
@@ -40,7 +34,7 @@ export async function writeChunks(
   chunks: readonly WriteChunk[],
   options: AtomicWriteOptions
 ): Promise<AtomicWriteResult> {
-  const totalBytes = chunks.reduce((sum, chunk) => sum + chunkLength(chunk), 0);
+  const totalBytes = chunks.reduce((sum, chunk) => sum + chunk.length, 0);
 
   if (options.dryRun) {
     return { bytesWritten: totalBytes, atomic: options.atomic };
@@ -167,10 +161,6 @@ async function backupFile(filePath: string): Promise<void> {
     // Once a source exists, every copy failure must prevent replacement.
     await fs.copyFile(filePath, `${filePath}.bak`);
   }
-}
-
-function chunkLength(chunk: WriteChunk): number {
-  return chunk.length;
 }
 
 async function writeAll(handle: Awaited<ReturnType<typeof fs.open>>, data: Uint8Array): Promise<void> {

@@ -1,8 +1,8 @@
 import * as Token from 'token-types';
+import type { WriteChunk } from '../core/chunks.js';
 import { InvalidFileError, UnsupportedFeatureError } from '../core/errors.js';
-import type { ByteSource } from '../core/source.js';
+import type { ByteSource } from '../core/source.shared.js';
 import type { TagPatch, WriteOptions } from '../core/types.js';
-import type { WriteChunk } from '../core/writer.js';
 import { type AtomBudget, atom, type Box, boxes, copyBox, fourcc, header, limit, maxAtoms, zeros } from './atoms.js';
 import { chapterUpdate } from './chapters.js';
 import { editItems } from './tags.js';

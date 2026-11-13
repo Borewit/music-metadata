@@ -2,7 +2,13 @@ import { readFile } from 'node:fs/promises';
 import { describe, expect, it } from 'vitest';
 import * as browserRoot from '../lib/core.js';
 import { updateBuffer } from '../lib/core.js';
-import { type IAudioMetadata, type IPicture, parseBlob, parseBuffer } from '../lib/index.js';
+import {
+  type IAudioMetadata,
+  type IPicture,
+  parseBlob,
+  parseBuffer,
+  updateBuffer as updateNodeBuffer
+} from '../lib/index.js';
 import { syncSafe } from '../lib/write/id3v2/frames.js';
 import { makeFlac } from './helpers/flac.js';
 
@@ -132,5 +138,34 @@ describe('browser ADTS AAC writing', () => {
     expect(after.common.artist).toBe(before.common.artist);
     expect(updated.subarray(10 + syncSafe(updated, 6))).toEqual(original.subarray(10 + syncSafe(original, 6), -128));
     expect(new Uint8Array(await source.arrayBuffer())).toEqual(original);
+  });
+});
+
+// One chunk plan must produce identical bytes through each public buffer entry.
+describe('Node/browser writer parity', () => {
+  it.each([
+    mp3Fixture,
+    'test/samples/aac/adts-mpeg4-2.aac',
+    "test/samples/flac/MusicBrainz - Beth Hart - Sinner's Prayer.flac",
+    'test/samples/wav/pcm16-fact.wav',
+    'test/samples/mp4/aac-faststart.m4a',
+    'test/samples/ogg/generated-vorbis.ogg',
+    'test/samples/ogg/generated-opus.opus'
+  ])('shares patch and deletion behavior for %s', async fixture => {
+    const input = new Uint8Array(await readFile(fixture));
+    const snapshot = input.slice();
+    const patch = { title: 'Shared writer', artist: 'Parity artist', track: { no: 2, of: 7 } };
+    const options = {};
+    const expected = await updateNodeBuffer(input, patch, options);
+    expect(await updateBuffer(input, patch, options)).toEqual(expected);
+    expect(await updateBuffer(toBlob(input), patch, options)).toEqual(expected);
+    const tags = await parseBuffer(expected);
+    expect(tags.common.title).toBe(patch.title);
+    expect(tags.common.artist).toBe(patch.artist);
+    expect(tags.common.track).toEqual(patch.track);
+    const cleared = await updateNodeBuffer(expected, { title: null }, options);
+    expect(await updateBuffer(toBlob(expected), { title: null }, options)).toEqual(cleared);
+    expect((await parseBuffer(cleared)).common.title).toBeUndefined();
+    expect(input).toEqual(snapshot);
   });
 });
