@@ -3,7 +3,7 @@ import { EndOfStreamError, type ITokenizer } from 'strtok3';
 import { decodeAscii } from './bytes.js';
 import type { ByteSource } from './source.shared.js';
 
-export type ContainerFormat = 'flac' | 'id3' | 'mp3' | 'aac' | 'wav' | 'mp4' | 'ogg' | 'unknown';
+export type ContainerFormat = 'flac' | 'id3' | 'mp3' | 'aac' | 'wav' | 'mp4' | 'ogg' | 'ape' | 'wv' | 'mpc' | 'unknown';
 
 /** Detect audio containers using file-type without loading the entire file. */
 export async function detectFormat(source: ByteSource): Promise<ContainerFormat> {
@@ -49,7 +49,15 @@ export async function detectFormat(source: ByteSource): Promise<ContainerFormat>
   if (extension === 'm4a' || extension === 'mp4' || extension === 'm4b') {
     return 'mp4';
   }
-  if (extension === 'flac' || extension === 'mp3' || extension === 'aac' || extension === 'wav') {
+  if (
+    extension === 'flac' ||
+    extension === 'mp3' ||
+    extension === 'aac' ||
+    extension === 'wav' ||
+    extension === 'ape' ||
+    extension === 'wv' ||
+    extension === 'mpc'
+  ) {
     return extension;
   }
 

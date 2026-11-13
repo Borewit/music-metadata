@@ -65,6 +65,8 @@ export type SynchronizedLyricsText = ILyricsText;
  *   and `syncText` by writing `USLT` and/or `SYLT` frames.
  * - FLAC stores `text` in `LYRICS`, or an LRC string when `syncText` is present.
  *   Language, descriptor, content type and timestamp format are not stored.
+ * - APEv2 stores plain text in `Lyrics`; synchronized lines are joined with newlines.
+ *   Timing and ID3 attributes are not stored.
  * - MP4 stores `text` in `©lyr`; when only `syncText` is supplied, the line
  *   texts are joined with newlines. Timing and ID3 attributes are not stored.
  */
@@ -202,6 +204,10 @@ interface CustomTagPatch {
    * for binary frames. For MP4 use four-character item names or ----:mean:name;
    * strings write UTF-8 data and Uint8Array supplies a complete raw item body
    * (including matching mean/name children for freeform keys).
+   * For Monkey’s Audio, WavPack and Musepack use APEv2 item names. Strings
+   * (including arrays) write UTF-8 text; Uint8Array writes a complete binary
+   * value (cover values include a UTF-8 filename and NUL before the image).
+   * Unedited items retain their bytes and flags; read-only edits are rejected.
    * For FLAC use Vorbis Comment field names, e.g.
    * `{ "MY_FIELD": "value" }`. Use `null` to remove a field.
    */
@@ -237,7 +243,7 @@ export interface WriteOptions {
   stripFlacId3?: boolean;
   /**
    * Target amount of padding to keep or add, in bytes. Defaults to 8192.
-   * MP4 and Ogg Vorbis/Opus do not add padding and reject this option.
+   * MP4, Ogg Vorbis/Opus and APEv2 do not add padding and reject this option.
    */
   padding?: PaddingOption;
   /**
@@ -260,11 +266,11 @@ export interface WriteOptions {
 }
 
 /**
- * Result of a FLAC, MP3, ADTS AAC, WAV, MP4 or Ogg Vorbis/Opus write operation.
+ * Result of a supported audio metadata write operation.
  */
 export interface WriteResult {
   /** Container format that was written. */
-  format: 'flac' | 'mp3' | 'aac' | 'wav' | 'mp4' | 'ogg';
+  format: 'flac' | 'mp3' | 'aac' | 'wav' | 'mp4' | 'ogg' | 'ape' | 'wv' | 'mpc';
   /** Total number of bytes in the resulting file. */
   bytesWritten: number;
   /** Padding bytes in the resulting metadata section. */

@@ -19,7 +19,7 @@ common tag names.
 
 Key features:
 - **Read Many Audio Formats**: Read metadata from MP3, MP4, FLAC, Ogg, WAV, AIFF, and more.
-- **Write Tags and Cover Art**: Edit FLAC, Ogg Vorbis/Opus, MP3, ADTS AAC, WAV and MP4/M4A/M4B metadata while preserving encoded audio. Update files in Node.js or return new buffers in Node.js and browsers.
+- **Write Tags and Cover Art**: Edit FLAC, Ogg Vorbis/Opus, MP3, ADTS AAC, WAV, MP4/M4A/M4B, Monkey’s Audio, WavPack and Musepack metadata while preserving encoded audio. Update files in Node.js or return new buffers in Node.js and browsers.
 - **Extensive Metadata Extraction**: Extracts detailed metadata, including ID3v1, ID3v2, APE, Vorbis, and iTunes/MP4 tags.
 - **Streaming Support**: Efficiently handles large audio files by reading metadata from streams, making it suitable for server-side and browser-based applications.
 - **Promise-Based API**: Provides a modern, promise-based API for easy integration into asynchronous workflows.
@@ -30,7 +30,7 @@ The [`music-metadata`](https://github.com/Borewit/music-metadata) module is idea
 ## Writing metadata
 
 Import the write API from `music-metadata` to edit FLAC, Ogg Vorbis/Opus,
-MP3, ADTS AAC, WAV and MP4/M4A/M4B metadata without re-encoding audio.
+MP3, ADTS AAC, WAV, MP4/M4A/M4B, Monkey’s Audio, WavPack and Musepack metadata without re-encoding audio.
 
 ```js
 import { updateFile, updateBuffer } from 'music-metadata';
@@ -60,6 +60,11 @@ is `'aac'` for ADTS AAC, including files with a leading ID3 tag.
 `replaceId3: true` discards unspecified ID3v2 fields and, for MP3/ADTS AAC,
 removes a trailing ID3v1 tag; other trailing metadata is preserved unchanged.
 MP4 writing supports non-fragmented, self-contained files with iTunes metadata.
+Monkey’s Audio 3.98+ (`.ape`), WavPack (`.wv`) and Musepack SV7/SV8 (`.mpc`)
+write APEv2 tail tags, supporting common fields, native fields and front/back cover
+art. Existing trailing ID3v1 tags are preserved. APEv1 and files with leading ID3
+tags are not supported for writing.
+
 Consumers migrating from `music-metadata-editor` should import the write functions
 and types from `music-metadata`.
 
