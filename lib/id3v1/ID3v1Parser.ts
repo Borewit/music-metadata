@@ -297,7 +297,13 @@ export class ID3v1Parser extends BasicParser {
       return;
     }
 
-    if (this.apeHeader && isRandomAccessTokenizer(this.tokenizer)) {
+    // Format parsers (notably Musepack) can consume this tag in stream order.
+    // The seekable fallback must not traverse that same item range a second time.
+    if (
+      this.apeHeader &&
+      isRandomAccessTokenizer(this.tokenizer) &&
+      (this.tokenizer.position <= this.apeHeader.offset || !this.metadata.native.APEv2)
+    ) {
       this.tokenizer.setPosition(this.apeHeader.offset);
       const apeParser = new APEv2Parser(this.metadata, this.tokenizer, this.options);
       await apeParser.parseTags(this.apeHeader.footer);

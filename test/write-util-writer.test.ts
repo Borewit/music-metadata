@@ -379,7 +379,10 @@ describe('shared byte plumbing', () => {
     'wav/pcm16-fact.wav',
     'mp4/aac-faststart.m4a',
     'ogg/generated-vorbis.ogg',
-    'ogg/generated-opus.opus'
+    'ogg/generated-opus.opus',
+    'monkeysaudio-date.ape',
+    'wavpack/unknown-count-multichannel.wv',
+    'mpc/bach-goldberg-variatians-05.sv8.mpc'
   ]) {
     for (const atomic of [true, false]) {
       it(`writes ${sample} with fragmented filesystem reads, atomic=${atomic}`, async () => {
@@ -404,7 +407,7 @@ describe('shared byte plumbing', () => {
             position: number
           ) => {
             reads++;
-            return read(buffer, offset, Math.min(3, length), position);
+            return read(buffer, offset, Math.min(sample.endsWith('.ape') ? 127 : 3, length), position);
           }) as typeof handle.read);
           vi.spyOn(handle, 'close').mockImplementation(async () => {
             await close();
