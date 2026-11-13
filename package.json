@@ -167,7 +167,7 @@
     "win-guid": "^0.2.1"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.6.4",
+    "@biomejs/biome": "2.6.6",
     "@types/debug": "^4.1.13",
     "@types/media-typer": "^1.1.3",
     "@types/node": "^26.6.6",
