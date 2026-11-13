@@ -40,8 +40,7 @@ describe('Parse MP3 files', () => {
         index < 2 ? { dB: value, ratio: 10 ** (value / 10) } : { dB: 10 * Math.log10(value), ratio: value }
       );
     const id3Ratios = ratios([-6, -3, 0.75, 0.5]);
-    // APE album gain/peak remain native-only; ID3 supplies their common values.
-    const apeRatios = ratios([-3, -3, 0, 0.5]);
+    const apeRatios = ratios([-3, 0, 0, 1.25]);
 
     for (const kind of ['invalid', 'invalid-only', 'valid'] as const) {
       // Trailing APE tags remain unavailable to sequential streams, even with a known size.
@@ -98,9 +97,7 @@ describe('Parse MP3 files', () => {
           }
           assert.deepEqual(
             metadata.quality.warnings,
-            readsApe && kind !== 'valid'
-              ? [ids[0], ids[2]].map(id => ({ message: `Invalid ReplayGain value for APEv2.${id}` }))
-              : []
+            readsApe && kind !== 'valid' ? ids.map(id => ({ message: `Invalid ReplayGain value for APEv2.${id}` })) : []
           );
         });
       }

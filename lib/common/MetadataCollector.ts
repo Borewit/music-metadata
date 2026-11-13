@@ -284,6 +284,7 @@ export class MetadataCollector implements INativeMetadataCollector {
         break;
       }
 
+      case 'replaygain_album_minmax':
       case 'replaygain_track_minmax':
         tag.value = (tag.value as string).split(',', 2).map(v => Number.parseInt(v, 10));
         break;
