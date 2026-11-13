@@ -8,7 +8,7 @@ import {
   UnsupportedFeatureError,
   UnsupportedFormatError
 } from '../core/errors.js';
-import type { ByteSource } from '../core/source.js';
+import type { ByteSource } from '../core/source.shared.js';
 import type { TagPatch, WriteOptions } from '../core/types.js';
 import { applyId3Patch } from '../mapping/id3v2.js';
 import { decodeText, encodeFrame, type Frame, makeFrames, syncSafe } from './frames.js';

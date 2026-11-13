@@ -1,29 +1,49 @@
+import { buildFlacUpdate } from '../flac/flac.js';
+import { buildId3Update } from '../id3v2/id3v2.js';
 import { buildMp4Update } from '../mp4/mp4.js';
 import { buildOggUpdate } from '../ogg/ogg.js';
 import { buildWavUpdate } from '../wav/wav.js';
-import type { ContainerFormat } from './detect.js';
-import { InvalidPatchError, UnsupportedFormatError } from './errors.js';
-import type { ByteSource } from './source.js';
-import type { TagPatch, WriteOptions } from './types.js';
-import type { WriteChunk } from './writer.js';
+import type { WriteChunk } from './chunks.js';
+import { type ContainerFormat, detectFormat } from './detect.js';
+import { InvalidPatchError, UnsupportedFeatureError, UnsupportedFormatError } from './errors.js';
+import type { ByteSource } from './source.shared.js';
+import type { TagPatch, WriteOptions, WriteResult } from './types.js';
+
+export interface WriteUpdate {
+  format: WriteResult['format'];
+  chunks: WriteChunk[];
+  paddingBytes: number;
+  /** Stage on disk even for non-atomic file updates. */
+  stageToFile?: boolean;
+}
 
 /**
- * Rebuild a container whose metadata and audio are written as ordered chunks.
+ * Prepare one ordered chunk plan for file and buffer writers on both platforms.
+ * Container builders retain responsibility for layout, validation and metadata.
  */
-export function buildStreamedUpdate(
-  format: 'wav' | 'mp4' | 'ogg',
-  source: ByteSource,
-  patch: TagPatch,
-  options: WriteOptions
-): Promise<{ chunks: WriteChunk[]; paddingBytes: number }> {
+export async function buildUpdate(source: ByteSource, patch: TagPatch, options: WriteOptions): Promise<WriteUpdate> {
+  const format = await detectFormat(source);
+  assertSupported(format);
   switch (format) {
     case 'wav':
-      return buildWavUpdate(source, patch, options);
+      return { format, ...(await buildWavUpdate(source, patch, options)) };
     case 'mp4':
-      return buildMp4Update(source, patch, options);
+      return { format, ...(await buildMp4Update(source, patch, options)), stageToFile: true };
     case 'ogg':
-      return buildOggUpdate(source, patch, options);
+      return { format, ...(await buildOggUpdate(source, patch, options)), stageToFile: true };
   }
+  if (format === 'flac' && options.replaceId3) {
+    throw new UnsupportedFeatureError('replaceId3 is only supported for MP3, ADTS AAC and WAV');
+  }
+  const update =
+    format === 'flac'
+      ? { ...(await buildFlacUpdate(source, patch, options)), format: 'flac' as const }
+      : await buildId3Update(source, patch, options);
+  return {
+    format: update.format,
+    chunks: [update.metadata, { source, offset: update.audioOffset, length: update.audioLength }],
+    paddingBytes: update.paddingBytes
+  };
 }
 
 export function assertPatch(patch: TagPatch): void {
@@ -32,9 +52,7 @@ export function assertPatch(patch: TagPatch): void {
   }
 }
 
-export function assertSupported(
-  format: ContainerFormat
-): asserts format is 'flac' | 'id3' | 'mp3' | 'aac' | 'wav' | 'mp4' | 'ogg' {
+export function assertSupported(format: ContainerFormat): asserts format is Exclude<ContainerFormat, 'unknown'> {
   if (format === 'unknown') {
     throw new UnsupportedFormatError(
       'Unsupported audio format; supported formats are FLAC, Ogg Vorbis/Opus, WAV, MP4, MP3 and ADTS AAC (ID3v2.4)'
