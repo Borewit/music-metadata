@@ -169,3 +169,23 @@ describe('Node/browser writer parity', () => {
     expect(input).toEqual(snapshot);
   });
 });
+
+describe('browser APEv2 writing', () => {
+  for (const fixture of [
+    'monkeysaudio-date.ape',
+    'wavpack/unknown-count-multichannel.wv',
+    'mpc/apev2-no-header.sv7.mpc',
+    'mpc/bach-goldberg-variatians-05.sv8.mpc'
+  ]) {
+    it.each(['Uint8Array', 'Blob'])(`matches Node output for ${fixture} from %s`, async kind => {
+      const original = new Uint8Array(await readFile(`test/samples/${fixture}`));
+      const snapshot = original.slice();
+      const patch = { title: 'Browser APEv2', artists: ['One', 'Two'] };
+      const expected = await updateNodeBuffer(original, patch);
+      const updated = await updateBuffer(kind === 'Blob' ? toBlob(original) : original, patch);
+      expect(updated).toEqual(expected);
+      expect((await parseBuffer(updated)).common.title).toBe(patch.title);
+      expect(original).toEqual(snapshot);
+    });
+  }
+});

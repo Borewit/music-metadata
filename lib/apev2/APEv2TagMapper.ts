@@ -1,10 +1,11 @@
 import { CaseInsensitiveTagMap } from '../common/CaseInsensitiveTagMap.js';
 import type { INativeTagMap } from '../common/GenericTagTypes.js';
+import type { IPicture, ITag } from '../type.js';
 
 /**
- * ID3v2.2 tag mappings
+ * APEv2 tag mappings
  */
-const apev2TagMap: INativeTagMap = {
+export const apev2TagMap: INativeTagMap = {
   Title: 'title',
   Artist: 'artist',
   Artists: 'artists',
@@ -76,6 +77,9 @@ const apev2TagMap: INativeTagMap = {
   Weblink: 'website',
   REPLAYGAIN_TRACK_GAIN: 'replaygain_track_gain',
   REPLAYGAIN_TRACK_PEAK: 'replaygain_track_peak',
+  REPLAYGAIN_ALBUM_GAIN: 'replaygain_album_gain',
+  REPLAYGAIN_ALBUM_PEAK: 'replaygain_album_peak',
+  MP3GAIN_ALBUM_MINMAX: 'replaygain_album_minmax',
   MP3GAIN_MINMAX: 'replaygain_track_minmax',
   MP3GAIN_UNDO: 'replaygain_undo'
 };
@@ -83,5 +87,16 @@ const apev2TagMap: INativeTagMap = {
 export class APEv2TagMapper extends CaseInsensitiveTagMap {
   public constructor() {
     super(['APEv2'], apev2TagMap);
+  }
+
+  protected override postMap(tag: ITag): void {
+    const key = tag.id.toUpperCase();
+    if (
+      (key === 'COVER ART (FRONT)' || key === 'COVER ART (BACK)') &&
+      typeof tag.value === 'object' &&
+      tag.value !== null
+    ) {
+      (tag.value as IPicture).type = key === 'COVER ART (FRONT)' ? 'Cover (front)' : 'Cover (back)';
+    }
   }
 }
