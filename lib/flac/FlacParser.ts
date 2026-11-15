@@ -1,6 +1,7 @@
 import initDebug from 'debug';
+import { isRandomAccessTokenizer } from 'strtok3';
 import { Uint8ArrayType } from 'token-types';
-import { getMaxMetadataEntries } from '../common/Allocation.js';
+import { getMaxMemoryAllocation, getMaxMetadataEntries } from '../common/Allocation.js';
 import { FourCcToken } from '../common/FourCC.js';
 import { AbstractID3Parser } from '../id3v2/AbstractID3Parser.js';
 import { type IVorbisPicture, VorbisPictureToken } from '../ogg/vorbis/Vorbis.js';
@@ -17,6 +18,8 @@ class FlacContentError extends makeUnexpectedFileContentError('FLAC') {}
 export class FlacParser extends AbstractID3Parser {
   private vorbisParser = new VorbisStream(this.metadata, this.options);
 
+  private streamInfo: IBlockStreamInfo | undefined;
+
   public async postId3v2Parse(): Promise<void> {
     const fourCC = await this.readToken<string>(FourCcToken);
     if (fourCC.toString() !== 'fLaC') {
@@ -31,9 +34,128 @@ export class FlacParser extends AbstractID3Parser {
       await this.parseDataBlock(blockHeader);
     } while (!blockHeader.lastBlock);
 
+    const audioOffset = this.tokenizer.position;
+    // Duration scan: recover sample extent from FLAC frame headers when STREAMINFO
+    // totalSamples is unknown (0) and duration was explicitly requested.
+    if (this.options.duration && !this.metadata.format.duration && this.streamInfo) {
+      try {
+        await this.scanFramesForDuration();
+      } finally {
+        // Leave trailing tags available to the post-header parser on seekable inputs.
+        if (isRandomAccessTokenizer(this.tokenizer)) {
+          this.tokenizer.setPosition(audioOffset);
+        }
+      }
+    }
     if (this.tokenizer.fileInfo.size && this.metadata.format.duration) {
-      const dataSize = this.tokenizer.fileInfo.size - this.tokenizer.position;
+      const dataSize = this.tokenizer.fileInfo.size - audioOffset;
       this.metadata.setFormat('bitrate', (8 * dataSize) / this.metadata.format.duration);
+    }
+  }
+
+  /**
+   * Scan FLAC audio frames to recover the total sample count when STREAMINFO
+   * totalSamples is zero. Walks frame headers looking for valid sync codes and
+   * CRC-8, tracking the last frame number / coded sample number. Gated behind
+   * `duration: true`; traverses the remaining input, including streams of unknown size.
+   */
+  private async scanFramesForDuration(): Promise<void> {
+    const sampleRate = this.metadata.format.sampleRate;
+    const streamInfo = this.streamInfo;
+    if (!sampleRate || !streamInfo) {
+      return;
+    }
+
+    const fixedBlockSize =
+      streamInfo.minimumBlockSize > 0 && streamInfo.minimumBlockSize === streamInfo.maximumBlockSize
+        ? streamInfo.minimumBlockSize
+        : undefined;
+
+    let lastFrameNumber = -1;
+    let lastCodedSampleNumber = -1;
+    let frameBlockSize: number | undefined;
+    let nominalBlockSize = fixedBlockSize;
+    let blockingStrategy = false;
+    let frameCount = 0;
+
+    // A header is at most 16 bytes: 4 fixed, 7 coded-number, 2 block-size,
+    // 2 sample-rate and 1 CRC. Retain 15 bytes to cover every chunk boundary.
+    const overlap = 15;
+    const data = new Uint8Array(Math.min(64 * 1024, getMaxMemoryAllocation(this.options)));
+    let retained = 0;
+    while (true) {
+      const remaining =
+        this.tokenizer.fileInfo.size === undefined
+          ? data.length - retained
+          : Math.max(0, this.tokenizer.fileInfo.size - this.tokenizer.position);
+      const read = await this.tokenizer.readBuffer(data.subarray(retained), {
+        length: Math.min(data.length - retained, remaining),
+        mayBeLess: true
+      });
+      const atEnd = read === 0 || this.tokenizer.position === this.tokenizer.fileInfo.size;
+      const scanData = data.subarray(0, retained + read);
+      const scanEnd = atEnd ? scanData.length : Math.max(0, scanData.length - overlap);
+
+      // Scan byte-by-byte for FLAC frame sync codes (0xFF) and validate candidates.
+      for (let i = 0; i < scanEnd; ++i) {
+        if (scanData[i] !== 0xff) {
+          continue;
+        }
+        try {
+          const header = Flac.parseFlacFrameHeader(scanData, i);
+          if (
+            !Flac.validateFlacFrameCrc8(
+              scanData.subarray(i, i + header.headerBytes),
+              header.crc8Position - i,
+              header.storedCrc8
+            )
+          ) {
+            continue;
+          }
+          // The blocking strategy cannot change within a FLAC stream, and
+          // coded numbers must increase. Ignore out-of-order sync candidates.
+          if (
+            frameCount > 0 &&
+            (header.blockingStrategy !== blockingStrategy ||
+              header.number <= (blockingStrategy ? lastCodedSampleNumber : lastFrameNumber))
+          ) {
+            continue;
+          }
+          // Valid frame header
+          ++frameCount;
+          blockingStrategy = header.blockingStrategy;
+          if (header.blockingStrategy) {
+            lastCodedSampleNumber = header.number;
+          } else {
+            lastFrameNumber = header.number;
+            nominalBlockSize ??= header.blockSize;
+          }
+          frameBlockSize = header.blockSize;
+        } catch {
+          // Not a valid frame header at this position; keep scanning.
+        }
+      }
+      if (atEnd) {
+        break;
+      }
+      retained = scanData.length - scanEnd;
+      data.copyWithin(0, scanEnd, scanData.length);
+    }
+
+    let totalSamples: number | undefined;
+    if (!blockingStrategy && lastFrameNumber >= 0 && nominalBlockSize && frameBlockSize) {
+      // Fixed-blocksize: all preceding frames use the nominal size, but the
+      // final frame can be short and carries its actual sample count.
+      totalSamples = lastFrameNumber * nominalBlockSize + frameBlockSize;
+    } else if (blockingStrategy && lastCodedSampleNumber >= 0 && frameBlockSize) {
+      // Variable-blocksize: coded number is the first sample of the last frame.
+      totalSamples = lastCodedSampleNumber + frameBlockSize;
+    }
+
+    if (totalSamples && totalSamples > 0) {
+      debug(`FLAC frame scan: ${frameCount} frames, ${totalSamples} samples`);
+      this.metadata.setFormat('numberOfSamples', totalSamples);
+      this.metadata.setFormat('duration', totalSamples / sampleRate);
     }
   }
 
@@ -71,6 +193,7 @@ export class FlacParser extends AbstractID3Parser {
     }
 
     const streamInfo = await this.readToken(Flac.BlockStreamInfo);
+    this.streamInfo = streamInfo;
     this.metadata.setFormat('container', 'FLAC');
     this.processsStreamInfo(streamInfo);
   }
