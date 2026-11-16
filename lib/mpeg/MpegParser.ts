@@ -445,13 +445,17 @@ export class MpegParser extends AbstractID3Parser {
       const duration = (infoTag.numFrames * this.audioFrameHeader.samplesPerFrame) / this.audioFrameHeader.samplingRate;
       this.metadata.setFormat('duration', duration);
       debug('Get duration from Xing header: %s', this.metadata.format.duration);
-      return infoTag;
     }
 
-    // frames field is not present
+    // Always finish the Info/Xing frame, even when its duration is known.
+    // Unrecognized encoder tags (e.g. Lavc) and padding can contain false sync words.
     const frameDataLeft = this.frameSize - this.offset;
 
-    await this.skipFrameData(frameDataLeft);
+    if (frameDataLeft < 0) {
+      this.metadata.addWarning(`Frame ${this.frameCount} corrupt: negative frameDataLeft`);
+    } else {
+      await this.skipFrameData(frameDataLeft);
+    }
     return infoTag;
   }
 

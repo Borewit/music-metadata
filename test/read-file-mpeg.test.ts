@@ -514,6 +514,73 @@ describe('Parse MPEG', () => {
       });
     });
 
+    describe('FFmpeg Info/Xing encoder-tag false sync #2924', () => {
+      // Generated with FFmpeg from a one-second 440 Hz tone, libmp3lame at 128 kbps,
+      // with -map_metadata -1 -id3v2_version 0. The Lavc tag CRC (bytes 34–35)
+      // is patched to FF F1 to reproduce a false ADTS sync inside the Info frame.
+      const filename = path.join(issueDir, 'mp3', 'ffmpeg-info-false-sync.mp3');
+
+      function checkMetadata({ format, quality }: mm.IAudioMetadata) {
+        assert.strictEqual(format.container, 'MPEG');
+        assert.strictEqual(format.codec, 'MPEG 1 Layer 3');
+        assert.strictEqual(format.codecProfile, 'CBR');
+        assert.strictEqual(format.sampleRate, 44100);
+        assert.strictEqual(format.numberOfChannels, 1);
+        assert.strictEqual(format.bitrate, 128000);
+        assert.strictEqual(format.duration, (40 * 1152) / 44100);
+        assert.deepEqual(quality.warnings, [], 'encoder-tag bytes must not be parsed as audio headers');
+      }
+
+      for (const duration of [false, true]) {
+        for (const parser of Parsers) {
+          it(`skips the remaining Info frame (${parser.description}, duration=${duration})`, async context => {
+            checkMetadata(await parser.parse(() => context.skip(), filename, 'audio/mpeg', { duration }));
+          });
+        }
+      }
+
+      for (const tag of ['Info', 'Xing']) {
+        for (const source of ['buffer', 'stream']) {
+          it(`warns and resyncs when the ${tag} header exceeds its frame (${source})`, async () => {
+            const data = fs.readFileSync(filename);
+            data.write(tag, data.indexOf('Info'));
+            // Advertise a 104-byte first frame instead of 417 bytes: the parsed
+            // Info/Xing fields occupy 141 bytes, leaving a negative remainder.
+            data[2] = (data[2] & 0x0f) | 0x10;
+            const encoder = data.indexOf('Lavc');
+            data.fill(0, encoder + 34, encoder + 36);
+            const { format, quality } =
+              source === 'buffer'
+                ? await mm.parseBuffer(data, 'audio/mpeg', { duration: true })
+                : await mm.parseStream(Readable.from([data], { objectMode: false }), 'audio/mpeg', { duration: true });
+            assert.strictEqual(format.codec, 'MPEG 1 Layer 3');
+            assert.strictEqual(format.sampleRate, 44100);
+            assert.strictEqual(format.duration, (40 * 1152) / 44100);
+            assert.deepEqual(quality.warnings, [{ message: 'Frame 1 corrupt: negative frameDataLeft' }]);
+          });
+        }
+        for (const sync of [0xf0, 0xf1, 0xf8, 0xf9]) {
+          it(`ignores FF ${sync.toString(16)} in the ${tag} encoder tag and padding`, async () => {
+            const data = fs.readFileSync(filename);
+            data.write(tag, data.indexOf('Info'));
+            const encoder = data.indexOf('Lavc');
+            // Establish a clean baseline for both CBR Info and VBR Xing metadata.
+            data.fill(0, encoder + 34, encoder + 36);
+            const expected = await mm.parseBuffer(data, 'audio/mpeg', { duration: true });
+            data[encoder + 34] = 0xff;
+            data[encoder + 35] = sync;
+            // Also cover an apparent MPEG header in the unused frame padding.
+            // Info/Xing has no formal specification; the frame layout reference
+            // is http://gabriel.mp3-tech.org/mp3infotag.html (LAME tag CRC field).
+            data.set([0xff, 0xfb, 0x90, 0xc0], encoder + 36);
+            const actual = await mm.parseBuffer(data, 'audio/mpeg', { duration: true });
+            assert.deepEqual(actual.format, expected.format);
+            assert.deepEqual(actual.quality.warnings, []);
+          });
+        }
+      }
+    });
+
     it('VBR: based on frame count if duration flag is set', async () => {
       const filePath = path.join(issueDir, 'Dethklok-mergeTagHeaders.mp3');
       // Wrap stream around buffer, to prevent the `stream.path` is provided
