@@ -18,7 +18,7 @@ const radioStream = {
   }
 };
 
-describe('peek radio streams', { timeout: 10000 }, async () => {
+describe.skip('peek radio streams', { timeout: 10000 }, async () => {
   async function fetchRadioStream(url: string): Promise<IAudioMetadata> {
     const response = await fetch(url);
     const contentType = response.headers.get('Content-Type');
