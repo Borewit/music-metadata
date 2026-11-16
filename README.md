@@ -115,6 +115,20 @@ If you find this project useful and would like to support its development, consi
 
   <a href="https://www.buymeacoffee.com/borewit" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/default-orange.png" alt="Buy me A coffee" height="41" width="174"></a>
 
+<div align="center">
+  <h2>Sponsors</h2>
+  <br />
+  <a href="https://coderabbit.link/borewit">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="image/coderabbit-dark.svg" />
+      <source media="(prefers-color-scheme: light)" srcset="image/coderabbit-light.svg" />
+      <img src="image/coderabbit-light.svg" alt="CodeRabbit" width="360" />
+    </picture>
+  </a>
+  <br />
+  <p>Code reviews powered by CodeRabbit</p>
+</div>
+
 ## Features
 
 ### Support for audio file types
