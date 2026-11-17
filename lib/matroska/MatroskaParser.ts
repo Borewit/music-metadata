@@ -1,7 +1,8 @@
 import initDebug from 'debug';
 
+import { getMaxMetadataEntries } from '../common/Allocation.js';
 import { BasicParser } from '../common/BasicParser.js';
-import { EbmlIterator, ParseAction } from '../ebml/EbmlIterator.js';
+import { EbmlContentError, EbmlIterator, ParseAction } from '../ebml/EbmlIterator.js';
 import type { IElementContext } from '../ebml/types.js';
 import type { AnyTagValue, ITrackInfo, IVideoTrack } from '../type.js';
 import { matroskaDtd } from './MatroskaDtd.js';
@@ -23,6 +24,38 @@ interface IAlbumCandidate {
   value: AnyTagValue;
   targetUIDs: string[];
   untargeted: boolean;
+}
+
+interface IClusterTrack {
+  stream: ITrackInfo;
+  defaultDurationNs?: number;
+  timestampScale: number;
+  codecDelayNs: number;
+  lastTimestamp?: number;
+  minDelta?: number;
+  // Segment-tick endpoints keyed by their nanosecond adjustment. Keeping both
+  // units separate allows Info/TimestampScale to arrive after the Clusters.
+  maxEnds: Map<number, number>;
+  maxEstimatedEnds: Map<number, number>;
+}
+
+interface IBlockTiming {
+  trackNumber: number;
+  timestamp: number;
+  frameCount: number;
+  duration?: number;
+  padding: number;
+}
+
+function statisticsDuration(value: string | undefined): number | undefined {
+  const match = value?.match(/^(\d+):([0-5]\d):([0-5]\d(?:\.\d+)?)$/);
+  if (match) {
+    const seconds = Number(match[1]) * 3600 + Number(match[2]) * 60 + Number(match[3]);
+    if (Number.isFinite(seconds) && seconds > 0) {
+      return seconds;
+    }
+  }
+  return undefined;
 }
 
 function isCompleteTrack(entry: IDecodedTrackEntry): entry is ITrackEntry {
@@ -74,6 +107,19 @@ export class MatroskaParser extends BasicParser {
    * Significant performance impact
    */
   private flagUseIndexToSkipClusters = this.options.mkvUseIndex ?? false;
+  /**
+   * When `duration: true` and no duration from Segment Info / track statistics,
+   * scan Cluster block timing to recover presentation duration.
+   */
+  private flagScanClusterTiming = false;
+  private skippedClusterTiming = false;
+  private timecodeScaleNs = 1000000;
+  private clusterTimecode?: number;
+  private clusterTracks = new Map<number, IClusterTrack>();
+  private selectedAudioTrackNumber?: number;
+  private tracksRead = false;
+  private pendingClusterBlocks: IBlockTiming[] = [];
+  private pendingTrackBlocks: { block: IBlockTiming; clusterTimestamp: number }[] = [];
 
   public async parse(): Promise<void> {
     const containerSize = this.tokenizer.fileInfo.size ?? Number.MAX_SAFE_INTEGER;
@@ -83,7 +129,12 @@ export class MatroskaParser extends BasicParser {
     debug('Initializing DTD end MatroskaIterator');
     await matroskaIterator.iterate(matroskaDtd, containerSize, {
       // Process tags and attachments one at a time. Never assemble a Segment/root tree.
-      collect: element => [0x114d9b74, 0x1549a966, 0x1654ae6b, 0x7373, 0x61a7].includes(element.id),
+      collect: element =>
+        [0x114d9b74, 0x1549a966, 0x1654ae6b, 0x7373, 0x61a7].includes(element.id) ||
+        (this.flagScanClusterTiming && element.id === 0xa0),
+      // Track VINT (up to 8 bytes), signed timestamp, flags and optional lace count.
+      // Never allocate encoded frames or accumulate whole Clusters to recover timing.
+      binaryPrefixLength: element => (element.id === 0xa1 || element.id === 0xa3 ? 12 : undefined),
       startNext: async element => {
         switch (element.id) {
           case 0x18538067: // SeekPosition is relative to the Segment payload, not the SeekHead.
@@ -109,6 +160,20 @@ export class MatroskaParser extends BasicParser {
             debug(`Skip element: name=${element.name}, id=0x${element.id.toString(16)}`);
             return ParseAction.IgnoreElement;
           case 0x1f43b675: // cluster
+            this.clusterTimecode = undefined;
+            this.pendingClusterBlocks = [];
+            this.flagScanClusterTiming =
+              !!this.options.duration &&
+              this.metadata.format.duration === undefined &&
+              statisticsDuration(
+                this.selectedAudioTrackUid
+                  ? this.trackStatistics.get(this.selectedAudioTrackUid)?.get('DURATION')
+                  : undefined
+              ) === undefined;
+            this.skippedClusterTiming ||= !this.flagScanClusterTiming;
+            if (this.flagScanClusterTiming || element.length === -1) {
+              return ParseAction.ReadNext;
+            }
             if (this.flagUseIndexToSkipClusters && this.seekHead) {
               const index = (this.seekHead.seek ?? []).find(
                 index => index.position !== undefined && index.position + this.seekHeadOffset > this.tokenizer.position
@@ -121,6 +186,19 @@ export class MatroskaParser extends BasicParser {
                 return ParseAction.SkipElement;
               }
             }
+            return ParseAction.IgnoreElement;
+          case 0xa0: // BlockGroup
+            return this.flagScanClusterTiming ? ParseAction.ReadNext : ParseAction.IgnoreElement;
+          case 0xa1: // Block
+          case 0xa3: // SimpleBlock
+            if (
+              element.length !== undefined &&
+              element.length > (this.tokenizer.fileInfo.size ?? Number.POSITIVE_INFINITY) - this.tokenizer.position
+            ) {
+              return ParseAction.IgnoreElement;
+            }
+            return this.flagScanClusterTiming ? ParseAction.ReadNext : ParseAction.IgnoreElement;
+          case 0xa2: // Deprecated BlockVirtual has no presentation data.
             return ParseAction.IgnoreElement;
           default:
             return ParseAction.ReadNext;
@@ -148,6 +226,7 @@ export class MatroskaParser extends BasicParser {
                 await this.addTag('segment:title', info.title);
               }
               const timecodeScale = info.timecodeScale ? info.timecodeScale : 1000000;
+              this.timecodeScaleNs = timecodeScale;
               if (typeof info.duration === 'number') {
                 const duration = (info.duration * timecodeScale) / 1000000000;
                 if (Number.isFinite(duration) && duration > 0) {
@@ -198,11 +277,27 @@ export class MatroskaParser extends BasicParser {
                   if (stream.video && entry.defaultDuration && entry.defaultDuration > 0) {
                     stream.video = { ...stream.video, frameRate: 1e9 / entry.defaultDuration };
                   }
+                  this.clusterTracks.set(entry.trackNumber, {
+                    stream,
+                    defaultDurationNs:
+                      entry.defaultDuration && entry.defaultDuration > 0 ? entry.defaultDuration : undefined,
+                    timestampScale:
+                      entry.trackTimecodeScale && entry.trackTimecodeScale > 0 ? entry.trackTimecodeScale : 1,
+                    codecDelayNs: entry.codecDelay ?? 0,
+                    maxEnds: new Map(),
+                    maxEstimatedEnds: new Map()
+                  });
                   if (entry.uid) {
-                    this.tracksByUid.set(this.uidKey(entry.uid), stream);
+                    const key = this.uidKey(entry.uid);
+                    this.tracksByUid.set(key, stream);
                   }
                   this.metadata.addStreamInfo(stream);
                 });
+                this.tracksRead = true;
+                for (const { block, clusterTimestamp } of this.pendingTrackBlocks) {
+                  this.processBlockTiming(block, clusterTimestamp);
+                }
+                this.pendingTrackBlocks = [];
 
                 const audioTrack = entries
                   .filter(entry => entry.trackType === TrackType.audio && entry.flagEnabled !== false)
@@ -222,6 +317,7 @@ export class MatroskaParser extends BasicParser {
                   }, null);
 
                 if (audioTrack) {
+                  this.selectedAudioTrackNumber = audioTrack.trackNumber;
                   if (audioTrack.uid) {
                     this.selectedAudioTrackUid = this.uidKey(audioTrack.uid);
                   }
@@ -321,11 +417,189 @@ export class MatroskaParser extends BasicParser {
             }
             break;
           }
+
+          // Cluster block-timing duration scan (only when flagScanClusterTiming)
+          case 0xe7: // ClusterTimecode
+            if (this.flagScanClusterTiming) {
+              this.clusterTimecode = event.value;
+              for (const block of this.pendingClusterBlocks) {
+                this.processBlockTiming(block, event.value);
+              }
+              this.pendingClusterBlocks = [];
+            }
+            break;
+
+          case 0x1f43b675: // Cluster end
+            // A missing Timestamp makes the scan incomplete; do not publish
+            // durations from just the remaining, well-formed Clusters.
+            this.skippedClusterTiming ||= this.pendingClusterBlocks.length > 0;
+            this.pendingClusterBlocks = [];
+            break;
+
+          case 0xa3: // SimpleBlock
+            if (this.flagScanClusterTiming) {
+              this.processBlockPayload(event.value);
+            }
+            break;
+
+          case 0xa0: // BlockGroup
+            if (this.flagScanClusterTiming && event.value.block) {
+              this.processBlockPayload(event.value.block, event.value.blockDuration, event.value.discardPadding);
+            }
+            break;
         }
       }
     });
+    this.skippedClusterTiming ||= matroskaIterator.hasTruncatedPayload;
     this.applyTrackStatistics();
+    this.applyClusterTiming();
     await this.resolveTrackAlbum();
+  }
+
+  /**
+   * Parse a SimpleBlock / Block binary payload and update the max presentation
+   * end time for the referenced track. Block payload layout:
+   *   TrackNumber (vint), Timestamp (int16 BE), Flags (1 byte), [lace data], Frame data
+   */
+  private processBlockPayload(data: Uint8Array, blockDuration?: number, discardPadding = 0): void {
+    if (data.length < 4) {
+      return;
+    }
+    // Read VINT track number: count leading zero bits to determine length
+    const first = data[0];
+    let trackNumberLength = 1;
+    let mask = 0x80;
+    while ((first & mask) === 0) {
+      ++trackNumberLength;
+      mask >>= 1;
+      if (trackNumberLength > 8) {
+        return;
+      }
+    }
+    if (trackNumberLength + 3 > data.length) {
+      return;
+    }
+    let trackNumber = first & (0x7f >> (trackNumberLength - 1));
+    for (let i = 1; i < trackNumberLength; ++i) {
+      trackNumber = trackNumber * 256 + data[i];
+    }
+    if (!Number.isSafeInteger(trackNumber) || trackNumber <= 0) {
+      return;
+    }
+    const pos = trackNumberLength;
+    // Read int16 timestamp (relative to cluster timecode)
+    const timestamp = (data[pos] << 8) | data[pos + 1];
+    const signedTimestamp = timestamp & 0x8000 ? timestamp - 0x10000 : timestamp;
+    // Flags byte
+    const lacing = (data[pos + 2] >> 1) & 0x03;
+    if (lacing && data.length < pos + 4) {
+      return;
+    }
+    const frameCount = lacing ? data[pos + 3] + 1 : 1;
+    const block: IBlockTiming = {
+      trackNumber,
+      timestamp: signedTimestamp,
+      frameCount,
+      duration: blockDuration,
+      padding: Math.max(0, discardPadding)
+    };
+    if (this.clusterTimecode === undefined) {
+      this.checkTimingEntryLimit(this.pendingClusterBlocks.length);
+      this.pendingClusterBlocks.push(block);
+    } else {
+      this.processBlockTiming(block, this.clusterTimecode);
+    }
+  }
+
+  private processBlockTiming(block: IBlockTiming, clusterTimestamp: number): void {
+    const track = this.clusterTracks.get(block.trackNumber);
+    if (!track) {
+      if (!this.tracksRead) {
+        // Only compact numeric observations are deferred, never frame payloads.
+        this.checkTimingEntryLimit(this.pendingTrackBlocks.length);
+        this.pendingTrackBlocks.push({ block, clusterTimestamp });
+      }
+      return;
+    }
+
+    // Cluster Timestamp is in Segment ticks; only the relative timestamp uses
+    // TrackTimestampScale. Convert to nanoseconds after the final Info arrives.
+    const presentation = clusterTimestamp + block.timestamp * track.timestampScale;
+    if (!Number.isFinite(presentation)) {
+      return;
+    }
+
+    // Track timestamp deltas to estimate block duration when BlockDuration is absent
+    const lastTs = track.lastTimestamp;
+    if (lastTs !== undefined) {
+      const delta = presentation - lastTs;
+      if (delta > 0) {
+        const curMin = track.minDelta;
+        if (curMin === undefined || delta < curMin) {
+          track.minDelta = delta;
+        }
+      }
+    }
+    track.lastTimestamp = presentation;
+
+    // BlockDuration covers the entire lace in timestamp units; DefaultDuration is ns per frame.
+    if (block.duration !== undefined) {
+      this.recordTimingEnd(track.maxEnds, presentation + block.duration * track.timestampScale, -block.padding);
+    } else if (track.defaultDurationNs !== undefined) {
+      this.recordTimingEnd(track.maxEnds, presentation, track.defaultDurationNs * block.frameCount - block.padding);
+    } else {
+      // Apply the final minimum delta only after every block has been visited, so
+      // an early gap cannot inflate an endpoint after a smaller delta is found.
+      this.recordTimingEnd(track.maxEstimatedEnds, presentation, -block.padding);
+    }
+  }
+
+  private checkTimingEntryLimit(count: number): void {
+    if (count >= getMaxMetadataEntries(this.options)) {
+      throw new EbmlContentError('Matroska timing entry count exceeds entry limit');
+    }
+  }
+
+  private recordTimingEnd(ends: Map<number, number>, timestamp: number, adjustmentNs: number): void {
+    if (!Number.isFinite(timestamp) || !Number.isFinite(adjustmentNs)) {
+      return;
+    }
+    const previous = ends.get(adjustmentNs);
+    if (previous === undefined) {
+      this.checkTimingEntryLimit(ends.size);
+    }
+    ends.set(adjustmentNs, Math.max(previous ?? Number.NEGATIVE_INFINITY, timestamp));
+  }
+
+  private applyClusterTiming(): void {
+    for (const track of this.clusterTracks.values()) {
+      if (this.skippedClusterTiming) {
+        break; // Partial scans must not be reported as complete per-track timing.
+      }
+      let endNs = 0;
+      for (const [adjustmentNs, timestamp] of track.maxEnds) {
+        endNs = Math.max(endNs, timestamp * this.timecodeScaleNs + adjustmentNs - track.codecDelayNs);
+      }
+      if (track.minDelta !== undefined) {
+        for (const [adjustmentNs, timestamp] of track.maxEstimatedEnds) {
+          endNs = Math.max(
+            endNs,
+            (timestamp + track.minDelta) * this.timecodeScaleNs + adjustmentNs - track.codecDelayNs
+          );
+        }
+      }
+      const duration = endNs / 1e9;
+      if (Number.isFinite(duration) && duration > 0) {
+        track.stream.duration ??= duration;
+      }
+    }
+    const duration =
+      this.selectedAudioTrackNumber === undefined
+        ? undefined
+        : this.clusterTracks.get(this.selectedAudioTrackNumber)?.stream.duration;
+    if (duration !== undefined && this.metadata.format.duration === undefined) {
+      this.metadata.setFormat('duration', duration);
+    }
   }
 
   private addNativeTag(tagId: string, value: AnyTagValue): void {
@@ -370,12 +644,9 @@ export class MatroskaParser extends BasicParser {
       if (!track) {
         continue;
       }
-      const duration = tags.get('DURATION')?.match(/^(\d+):([0-5]\d):([0-5]\d(?:\.\d+)?)$/);
-      if (duration) {
-        const seconds = Number(duration[1]) * 3600 + Number(duration[2]) * 60 + Number(duration[3]);
-        if (Number.isFinite(seconds) && seconds > 0) {
-          track.duration = seconds;
-        }
+      const duration = statisticsDuration(tags.get('DURATION'));
+      if (duration !== undefined) {
+        track.duration = duration;
       }
       const number = (name: string): number | undefined => {
         const value = tags.get(name);

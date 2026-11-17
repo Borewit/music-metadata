@@ -66,6 +66,8 @@ export type DecodedElement<S extends IElementType> = S extends {
 export interface IElementContext extends IElementType {
   readonly id: number;
   readonly parent: IElementContext | undefined;
+  /** Declared payload length; -1 denotes an unknown-size container. */
+  readonly length?: number;
 }
 
 /** Discriminating by ID narrows the decoded value along with the element. */

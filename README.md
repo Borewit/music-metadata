@@ -714,6 +714,10 @@ Returns a list of supported MIME-types. This may include some MIME-types which a
   Note that enabling this option **does not guarantee** that duration will be available,
   only that the parser will attempt to calculate it when possible, even if it requires reading the full file.
 
+  For Matroska/WebM files, including `MediaRecorder` recordings, this recovers missing duration from block timestamps while skipping encoded frame data.
+  Existing duration metadata is preserved, and recovered track durations appear in `format.trackInfo`.
+  Estimates may be approximate; a single block without duration information remains unknown.
+
 - `includeChapters`: `boolean` (default: `false`)
   When `true`, the MP4 parser reads QuickTime chapter tracks and Nero `chpl` chapter lists.
   A usable QuickTime chapter track takes precedence over a Nero list.
