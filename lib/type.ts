@@ -450,6 +450,14 @@ export interface IVideoTrack {
 }
 
 export interface ITrackInfo {
+  /**
+   * Seconds per tick of the track's media timestamps, expressed as numerator / denominator.
+   * Both values are positive integers. Currently populated for MP4 media timescales;
+   * omitted when unknown or unsupported. This is not the sample rate or frame rate,
+   * and does not change duration fields, which remain in seconds.
+   */
+  timeBase?: { numerator: number; denominator: number };
+
   /** Container track ID/number, or Ogg logical stream serial number. */
   id?: number;
   type?: TrackType;

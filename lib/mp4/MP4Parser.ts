@@ -850,6 +850,9 @@ export class MP4Parser extends BasicParser {
 
     const mediaHeader = track.media.header;
     if (mediaHeader) {
+      if (mediaHeader.timeScale > 0) {
+        info.timeBase = { numerator: 1, denominator: mediaHeader.timeScale };
+      }
       // ISO BMFF stores three lowercase letters in three 5-bit fields.
       const letters = [10, 5, 0].map(shift => (mediaHeader.language >> shift) & 0x1f);
       if (letters.every(letter => letter >= 1 && letter <= 26)) {

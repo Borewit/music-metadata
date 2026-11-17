@@ -2043,6 +2043,36 @@ describe('Parse MPEG-4', () => {
         });
       });
 
+      for (const stream of [false, true]) {
+        it(`preserves independent media time bases (stream=${stream})`, async () => {
+          const buffer = mp4(
+            { ...videoTrack, timeScale: 90000, duration: 180000, movieDuration: 3000 },
+            {
+              handler: 'soun',
+              dataFormat: 'mp4a',
+              entrySize: 36,
+              audioLike: true,
+              timeScale: 48000,
+              duration: 48000,
+              audioSampleRate: 44100
+            }
+          );
+          const { format } = stream
+            ? await mm.parseStream(Readable.from([buffer], { objectMode: false }), 'video/mp4')
+            : await mm.parseBuffer(buffer, 'video/mp4');
+          assert.deepEqual(format.trackInfo[0].timeBase, { numerator: 1, denominator: 90000 });
+          assert.deepEqual(format.trackInfo[1].timeBase, { numerator: 1, denominator: 48000 });
+          assert.equal(format.trackInfo[1].audio?.samplingFrequency, 44100);
+          assert.equal(format.trackInfo[0].duration, 2);
+          assert.equal(format.trackInfo[1].duration, 1);
+        });
+      }
+
+      it('omits an invalid media time base without substituting the movie clock', async () => {
+        const { format } = await mm.parseBuffer(mp4({ ...videoTrack, timeScale: 0, movieDuration: 3000 }), 'video/mp4');
+        assert.isUndefined(format.trackInfo[0].timeBase);
+      });
+
       it('uses the movie duration for overall bitrate while retaining the audio summary', async () => {
         const buffer = mp4(
           { ...videoTrack, duration: timeScale * 2, movieDuration: 3000 },
