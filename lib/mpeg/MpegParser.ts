@@ -266,6 +266,7 @@ export class MpegParser extends AbstractID3Parser {
     // Ref: https://github.com/rbrito/lame/blob/master/libmp3lame/VbrTag.c#L866-L874
     if (this.frameCount === 1) {
       this.offset = MpegFrameHeader.len;
+      await this.readVbriHeader(header);
       await this.skipSideInformation();
       this.applyMpegFormat(header);
       return false;
@@ -308,6 +309,31 @@ export class MpegParser extends AbstractID3Parser {
       this.metadata.setFormat('codecProfile', 'VBR');
     }
     return false;
+  }
+
+  private async readVbriHeader(header: MpegFrameHeader): Promise<void> {
+    // VBRI is fixed at frame offset 36, independent of side information and CRC.
+    // Peek only the fixed header, never allocate or traverse its seek table.
+    if (header.layer !== 3 || header.frameSize < 62) {
+      return;
+    }
+    const buffer = new Uint8Array(58);
+    if ((await this.tokenizer.peekBuffer(buffer, { mayBeLess: true })) < buffer.length) {
+      return;
+    }
+    const view = new DataView(buffer.buffer);
+    if (view.getUint32(32) !== 0x56425249 || view.getUint16(36) !== 1) {
+      return;
+    }
+    const bytes = view.getUint32(42);
+    const frames = view.getUint32(46);
+    if (bytes < header.frameSize || frames === 0) {
+      return;
+    }
+    const samples = frames * header.samplesPerFrame;
+    this.metadata.setFormat('numberOfSamples', samples);
+    this.metadata.setFormat('duration', samples / header.samplingRate);
+    this.metadata.setFormat('codecProfile', 'VBR');
   }
 
   private applyMpegFormat(header: MpegFrameHeader): void {

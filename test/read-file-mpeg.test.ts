@@ -13,6 +13,73 @@ import { SourceStream, samplePath } from './helpers/util.js';
 const t = assert;
 
 describe('Parse MPEG', () => {
+  for (const mode of [0, 0xc0]) {
+    for (const crc of [0xfa, 0xfb]) {
+      it(`recovers VBRI duration with channel mode ${mode} and protection ${crc}`, async () => {
+        const frame = Buffer.alloc(417);
+        frame.set([0xff, crc, 0x90, mode]);
+        frame.write('VBRI', 36);
+        frame.writeUInt16BE(1, 40);
+        frame.writeUInt32BE(41700, 46);
+        frame.writeUInt32BE(100, 50);
+        const data = Buffer.concat([frame, frame, frame, frame]);
+        for (const duration of [false, true]) {
+          const metadata = await mm.parseBuffer(data, 'audio/mpeg', { duration });
+          assert.equal(metadata.format.duration, (100 * 1152) / 44100);
+          assert.equal(metadata.format.numberOfSamples, 100 * 1152);
+          assert.equal(metadata.format.codecProfile, 'VBR');
+        }
+      });
+    }
+  }
+
+  describe('invalid VBRI recovery headers', () => {
+    const source = fs.readFileSync(path.join(samplePath, 'silence-2s-16000 [no-tags].CBR-128.mp3'));
+    // Corrupt only a copy of a real MPEG audio fixture; leave its frame boundaries intact.
+    const header = new MpegFrameHeader(source.subarray(0, 4));
+    const declaredFrames = 10000;
+    const makeCandidate = () => {
+      const data = Buffer.from(source);
+      data.write('VBRI', 36);
+      data.writeUInt16BE(1, 40);
+      data.writeUInt32BE(source.length, 46);
+      data.writeUInt32BE(declaredFrames, 50);
+      return data;
+    };
+
+    for (const invalid of ['version', 'frames', 'bytes', 'truncated']) {
+      for (const duration of [false, true]) {
+        it(`uses the non-VBRI fallback for ${invalid} (duration=${duration})`, async () => {
+          let candidate = makeCandidate();
+          if (invalid === 'version') {
+            candidate.writeUInt16BE(2, 40);
+          } else if (invalid === 'frames') {
+            candidate.writeUInt32BE(0, 50);
+          } else if (invalid === 'bytes') {
+            candidate.writeUInt32BE(header.frameSize - 1, 46);
+          } else {
+            // Leading junk ensures synchronization reaches the partial first frame.
+            candidate = Buffer.concat([Buffer.alloc(200), candidate.subarray(0, 61)]);
+          }
+          const control = Buffer.from(candidate);
+          control.fill(0, invalid === 'truncated' ? 236 : 36, invalid === 'truncated' ? 240 : 40);
+          // Unknown-size streams exercise the bounded peek even for a truncated frame.
+          const parse = (data: Buffer) =>
+            mm.parseStream(Readable.from([data], { objectMode: false }), 'audio/mpeg', {
+              duration,
+              skipPostHeaders: true
+            });
+          const actual = await parse(candidate);
+          const fallback = await parse(control);
+          assert.deepEqual(actual.format, fallback.format);
+          assert.notEqual(actual.format.numberOfSamples, declaredFrames * header.samplesPerFrame);
+          assert.notEqual(actual.format.duration, (declaredFrames * header.samplesPerFrame) / header.samplingRate);
+          assert.notEqual(actual.format.codecProfile, 'VBR');
+        });
+      }
+    }
+  });
+
   it('should reject a reserved MPEG version with a content error', () => {
     assert.throws(
       () => new MpegFrameHeader(Uint8Array.of(0xff, 0xeb, 0x90, 0x00)),
