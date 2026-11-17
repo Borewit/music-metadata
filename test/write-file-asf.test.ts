@@ -15,7 +15,10 @@ import {
   updateBuffer,
   updateFile
 } from '../lib/index.js';
+import { buildAsfUpdate } from '../lib/write/asf/asf.js';
+import { MAX_HEADER_BYTES, textLength } from '../lib/write/asf/objects.js';
 import { updateBuffer as updateBrowserBuffer } from '../lib/write/browser.js';
+import type { ByteSource } from '../lib/write/core/source.shared.js';
 
 const fileId = new AsfGuid('10203040-5060-7080-90A0-B0C0D0E0F000').toBin();
 const reserved = new AsfGuid('ABD3D211-A9BA-11CF-8EE6-00C00C205365').toBin();
@@ -99,15 +102,17 @@ function simpleIndex(): Buffer {
   body.writeUInt16LE(1, 36);
   return object(AsfGuid.SimpleIndexObject, body);
 }
-function synthetic(extra: Uint8Array[] = [], tail: Uint8Array[] = []): Buffer {
-  const props = Buffer.alloc(80);
-  props.set(fileId);
-  props.writeBigUInt64LE(2n, 32);
-  props.writeBigUInt64LE(10_000_000n, 40);
-  props.writeUInt32LE(2, 64);
-  props.writeUInt32LE(128, 68);
-  props.writeUInt32LE(128, 72);
-  props.writeUInt32LE(16_000, 76);
+function synthetic(extra: Uint8Array[] = [], tail: Uint8Array[] = [], propsBody?: Buffer): Buffer {
+  const props = propsBody ?? Buffer.alloc(80);
+  if (!propsBody) {
+    props.set(fileId);
+    props.writeBigUInt64LE(2n, 32);
+    props.writeBigUInt64LE(10_000_000n, 40);
+    props.writeUInt32LE(2, 64);
+    props.writeUInt32LE(128, 68);
+    props.writeUInt32LE(128, 72);
+    props.writeUInt32LE(16_000, 76);
+  }
   const stream = Buffer.alloc(70);
   stream.set(AsfGuid.AudioMedia.toBin());
   stream.writeUInt32LE(16, 40);
@@ -396,6 +401,8 @@ describe('WMA / ASF metadata writing', () => {
     expect(native.Qword).toEqual([0xffffffffffffffffn]);
     expect(native.Guid).toEqual([opaqueGuid.toBin()]);
     expect(Buffer.from(output).includes(record('Text', 0, utf16('世界'), false, 1, 1))).toBe(true);
+    const sourceOnly = await updateBuffer(output, { rating: [{ source: 'test@example.com' }] });
+    expect((await tags(sourceOnly)).rating).toBeUndefined();
     const removed = await updateBuffer(output, { native: { Text: null }, rating: [] });
     expect(orderTags((await parseBuffer(removed)).native.asf!).Text).toBeUndefined();
     expect((await tags(removed)).rating).toBeUndefined();
@@ -412,6 +419,23 @@ describe('WMA / ASF metadata writing', () => {
     expect(native['WM/TrackNumber']).toBeUndefined();
     expect(native.TotalTracks).toBeUndefined();
     expect(dataAndIndexes(output)).toEqual(dataAndIndexes(input));
+  });
+
+  it.each([
+    { type: 4, value: Buffer.from('0500000000000000', 'hex') },
+    { type: 5, value: Buffer.from('0500', 'hex') }
+  ])('merges existing type $type track numbers', async ({ type, value }) => {
+    const input = synthetic([
+      metadata(AsfGuid.ExtendedContentDescriptionObject, [record('WM/TrackNumber', type, value, true)])
+    ]);
+    expect((await tags(await updateBuffer(input, { track: { of: 12 } }))).track).toEqual({ no: 5, of: 12 });
+  });
+
+  it('rejects merging track numbers with unsupported native types', async () => {
+    const input = synthetic([
+      metadata(AsfGuid.ExtendedContentDescriptionObject, [record('WM/TrackNumber', 2, Buffer.from([1, 0]), true)])
+    ]);
+    await expect(updateBuffer(input, { track: { of: 12 } })).rejects.toBeInstanceOf(UnsupportedFeatureError);
   });
 
   it.each([0.001, 0.005])('retains a specified rating when %s rounds to a zero shared rating', async rating => {
@@ -595,7 +619,13 @@ describe('WMA / ASF metadata writing', () => {
     { native: { Text: { type: 'unicode', value: 'x', stream: 2 } } },
     { native: { Text: { type: 'unicode', value: 'x', extra: true } } },
     { native: { Unsupported: { value: 1 } } },
+    { native: { Invalid: [null] } },
+    { native: { Text: { type: 'unicode', value: 'x', language: -1 } } },
+    { native: { Text: { type: 'unicode', value: 'x', stream: 128 } } },
+    { native: [] },
     { compilation: 'yes' },
+    { rating: 1 },
+    { rating: [null] },
     { rating: [{ rating: 2 }] },
     { rating: [{ source: 'a|b', rating: 0.5 }] },
     { picture: [{ format: 'image/png', data: png, type: 'Unknown role' }] }
@@ -646,6 +676,10 @@ describe('WMA / ASF metadata writing', () => {
     mutate(buffer => buffer.writeUInt16LE(0, headerSize(buffer) + 48));
     mutate(buffer => buffer.writeUInt32LE(0, 30 + 92));
     mutate(buffer => buffer.writeUInt32LE(1, 30 + 96));
+    mutate(buffer => {
+      buffer.writeUInt32LE(200, 30 + 92);
+      buffer.writeUInt32LE(300, 30 + 96);
+    });
     mutate(buffer => buffer.writeUInt32LE(17, 30 + 104 + 64));
     for (const buffer of cases) {
       await expect(updateBuffer(buffer, {})).rejects.toBeInstanceOf(InvalidFileError);
@@ -669,6 +703,97 @@ describe('WMA / ASF metadata writing', () => {
     const missingStream = Buffer.from(input);
     missingStream.set(opaqueGuid.toBin(), 134);
     await expect(updateBuffer(missingStream, {})).rejects.toBeInstanceOf(InvalidFileError);
+    const badIndexSize = simpleIndex();
+    badIndexSize.writeBigUInt64LE(10n, 16);
+    await expect(updateBuffer(synthetic([], [badIndexSize]), {})).rejects.toBeInstanceOf(InvalidFileError);
+    const shortIndex = simpleIndex();
+    shortIndex.writeBigUInt64LE(48n, 16);
+    await expect(updateBuffer(synthetic([], [shortIndex]), {})).rejects.toBeInstanceOf(InvalidFileError);
+    const badIndexEntries = simpleIndex();
+    badIndexEntries.writeUInt32LE(2, 24 + 28);
+    await expect(updateBuffer(synthetic([], [badIndexEntries]), {})).rejects.toBeInstanceOf(InvalidFileError);
+  });
+
+  it('rejects malformed ASF language lists', async () => {
+    const oddStringLength = object(AsfGuid.LanguageListObject, Buffer.from([1, 0, 1, 0x41]));
+    const trailingBytes = object(AsfGuid.LanguageListObject, Buffer.from([0, 0, 0]));
+    for (const languageList of [oddStringLength, trailingBytes]) {
+      await expect(updateBuffer(synthetic([extension([languageList])]), {})).rejects.toBeInstanceOf(InvalidFileError);
+    }
+  });
+
+  it('rejects oversized ASF object, record and index counts', async () => {
+    const tooManyObjects = synthetic();
+    tooManyObjects.writeUInt32LE(10_001, 24);
+    await expect(updateBuffer(tooManyObjects, {})).rejects.toBeInstanceOf(UnsupportedFeatureError);
+    const nested = extension(Array.from({ length: 10_001 }, () => object(opaqueGuid, new Uint8Array(0))));
+    await expect(updateBuffer(synthetic([nested]), {})).rejects.toBeInstanceOf(UnsupportedFeatureError);
+    const records = Array.from({ length: 0xffff }, () => record('A', 0, new Uint8Array(0), true));
+    const manyRecords = metadata(AsfGuid.ExtendedContentDescriptionObject, records);
+    await expect(updateBuffer(synthetic([manyRecords, manyRecords]), {})).rejects.toBeInstanceOf(
+      UnsupportedFeatureError
+    );
+    const indexes = Array.from({ length: 10_001 }, () => simpleIndex());
+    await expect(updateBuffer(synthetic([], indexes), {})).rejects.toBeInstanceOf(UnsupportedFeatureError);
+  });
+
+  it('rejects malformed ASF object layouts', async () => {
+    await expect(updateBuffer(synthetic([], [], Buffer.alloc(79)), {})).rejects.toBeInstanceOf(InvalidFileError);
+    const badContentLength = description(['A']);
+    badContentLength.writeUInt16LE(0, 24);
+    await expect(updateBuffer(synthetic([badContentLength]), {})).rejects.toBeInstanceOf(InvalidFileError);
+    await expect(updateBuffer(synthetic([extension([description(['A'])])]), {})).rejects.toBeInstanceOf(
+      InvalidFileError
+    );
+    await expect(
+      updateBuffer(synthetic([extension([metadata(AsfGuid.ExtendedContentDescriptionObject, [])])]), {})
+    ).rejects.toBeInstanceOf(InvalidFileError);
+    const nestedProperties = rawObject(synthetic(), AsfGuid.FilePropertiesObject);
+    await expect(updateBuffer(synthetic([extension([nestedProperties])]), {})).rejects.toBeInstanceOf(
+      UnsupportedFeatureError
+    );
+    const extraAttributeByte = object(AsfGuid.ExtendedContentDescriptionObject, Buffer.from([0, 0, 1]));
+    await expect(updateBuffer(synthetic([extraAttributeByte]), {})).rejects.toBeInstanceOf(InvalidFileError);
+    const oddName = object(
+      AsfGuid.ExtendedContentDescriptionObject,
+      Buffer.concat([Buffer.from([1, 0]), Buffer.from([1, 0, 0x41, 0, 0, 0, 0])])
+    );
+    await expect(updateBuffer(synthetic([oddName]), {})).rejects.toBeInstanceOf(InvalidFileError);
+  });
+
+  it('rejects ASF cover art and native values larger than the header budget', async () => {
+    const huge = new Uint8Array(MAX_HEADER_BYTES);
+    await expect(updateBuffer(synthetic(), { picture: [{ format: 'image/png', data: huge }] })).rejects.toBeInstanceOf(
+      UnsupportedFeatureError
+    );
+    await expect(updateBuffer(synthetic(), { native: { Huge: huge } })).rejects.toBeInstanceOf(UnsupportedFeatureError);
+  });
+
+  it('rejects non-string ASF text and unsafe output sizes', async () => {
+    expect(() => textLength(123 as unknown as string)).toThrow(InvalidPatchError);
+    const base = synthetic();
+    const oldSize = headerSize(base);
+    const header = Buffer.from(base.subarray(0, oldSize));
+    const dataHeader = Buffer.from(base.subarray(oldSize, oldSize + 50));
+    const packetCount = BigInt(Math.floor((Number.MAX_SAFE_INTEGER - oldSize - 50) / 128));
+    const dataSize = 50 + Number(packetCount * 128n);
+    const sourceSize = oldSize + dataSize;
+    header.writeBigUInt64LE(packetCount, 30 + 24 + 32);
+    dataHeader.writeBigUInt64LE(BigInt(dataSize), 16);
+    dataHeader.writeBigUInt64LE(packetCount, 40);
+    const source = {
+      size: sourceSize,
+      tokenizer: {} as never,
+      read: async (offset: number, length: number) => {
+        const bytes = offset === 0 ? header : offset === oldSize ? dataHeader : undefined;
+        if (!bytes) {
+          throw new Error(`Unexpected ASF read at ${offset}`);
+        }
+        return bytes.subarray(0, length);
+      },
+      close: async () => undefined
+    } as ByteSource;
+    await expect(buildAsfUpdate(source, { title: 'New' }, {})).rejects.toBeInstanceOf(UnsupportedFeatureError);
   });
 
   it('rejects DRM/signatures, broadcast/video, complex indexes and populated placeholders', async () => {
