@@ -80,7 +80,16 @@ export const matroskaDtd = {
             },
             0xa7: { name: 'position', value: DataType.uint },
             0xab: { name: 'prevSize', value: DataType.uint },
-            0xa0: { name: 'blockGroup', multiple: true },
+            0xa0: {
+              name: 'blockGroup',
+              multiple: true,
+              container: {
+                0xa1: { name: 'block', value: DataType.binary },
+                0xa2: { name: 'blockVirtual', value: DataType.binary },
+                0x9b: { name: 'blockDuration', value: DataType.uint },
+                0x75a2: { name: 'discardPadding', value: DataType.int }
+              }
+            },
             0xa3: { name: 'simpleBlock', value: DataType.binary, multiple: true }
           }
         },
@@ -104,6 +113,7 @@ export const matroskaDtd = {
                 0x6df8: { name: 'maxCache', value: DataType.uint },
                 0x23e383: { name: 'defaultDuration', value: DataType.uint },
                 0x23314f: { name: 'trackTimecodeScale', value: DataType.float },
+                0x56aa: { name: 'codecDelay', value: DataType.uint },
                 0x536e: { name: 'name', value: DataType.string },
                 0x22b59c: { name: 'language', value: DataType.string },
                 0x22b59d: { name: 'languageIETF', value: DataType.string },

@@ -408,7 +408,7 @@ describe('Matroska formats', () => {
     const filePath = path.join(matroskaSamplePath, 'no-duration.webm');
     for (const mkvUseIndex of [false, true]) {
       for (const parser of Parsers) {
-        it(`preserves metadata without inventing a duration (${parser.description}, index=${mkvUseIndex})`, async context => {
+        it(`recovers duration consistently across inputs (${parser.description}, index=${mkvUseIndex})`, async context => {
           const expected = await mm.parseFile(filePath, { mkvUseIndex, duration: true });
           const actual = await parser.parse(() => context.skip(), filePath, 'audio/webm', {
             mkvUseIndex,
@@ -417,7 +417,8 @@ describe('Matroska formats', () => {
           assert.strictEqual(actual.format.container, expected.format.container);
           assert.deepEqual(actual.format.trackInfo, expected.format.trackInfo);
           assert.deepEqual(actual.common, expected.common);
-          assert.isUndefined(actual.format.duration);
+          assert.isNumber(actual.format.duration);
+          assert.approximately(actual.format.duration, 25.5, 0.1);
         });
       }
     }
@@ -978,5 +979,570 @@ describe('Matroska formats', () => {
     assert.strictEqual(common.date, '2021-03-04', 'common.date');
     assert.deepEqual(common.composer, ['Writer'], 'common.composer');
     assert.strictEqual(common.disk.no, 2, 'common.disk.no');
+  });
+
+  describe('Cluster timing duration recovery', () => {
+    function vint(value: number, width = 1): Buffer {
+      while (value >= 2 ** (7 * width) - 1) {
+        ++width;
+      }
+      const data = Buffer.alloc(width);
+      let rest = value;
+      for (let i = width - 1; i >= 0; --i) {
+        data[i] = rest % 256;
+        rest = Math.floor(rest / 256);
+      }
+      data[0] |= 0x80 >> (width - 1);
+      return data;
+    }
+
+    function element(id: string, ...parts: Uint8Array[]): Buffer {
+      const payload = Buffer.concat(parts);
+      return Buffer.concat([Buffer.from(id, 'hex'), vint(payload.length), payload]);
+    }
+
+    function uint(id: string, value: number): Buffer {
+      const payload = Buffer.alloc(8);
+      payload.writeBigUInt64BE(BigInt(value));
+      const first = payload.findIndex(byte => byte !== 0);
+      return element(id, payload.subarray(first < 0 ? 7 : first));
+    }
+
+    function float(id: string, value: number): Buffer {
+      const payload = Buffer.alloc(8);
+      payload.writeDoubleBE(value);
+      return element(id, payload);
+    }
+
+    function text(id: string, value: string): Buffer {
+      return element(id, Buffer.from(value));
+    }
+
+    function track(id = 1, ...properties: Uint8Array[]): Buffer {
+      return element('ae', uint('d7', id), uint('83', 2), text('86', 'A_OPUS'), ...properties);
+    }
+
+    function block(id: number, timestamp: number, flags = 0x80, data = Buffer.from([0])): Buffer {
+      const time = Buffer.alloc(2);
+      time.writeInt16BE(timestamp);
+      return Buffer.concat([vint(id), time, Buffer.from([flags]), data]);
+    }
+
+    function simple(timestamp: number, id = 1): Buffer {
+      return element('a3', block(id, timestamp));
+    }
+
+    function group(timestamp: number, duration?: number, ...properties: Uint8Array[]): Buffer {
+      return element(
+        'a0',
+        element('a1', block(1, timestamp)),
+        ...(duration === undefined ? [] : [uint('9b', duration)]),
+        ...properties
+      );
+    }
+
+    function cluster(timestamp: number, ...blocks: Uint8Array[]): Buffer {
+      return element('1f43b675', uint('e7', timestamp), ...blocks);
+    }
+
+    function unknownCluster(timestamp: number, ...blocks: Uint8Array[]): Buffer {
+      return Buffer.concat([Buffer.from('1f43b675ff', 'hex'), uint('e7', timestamp), ...blocks]);
+    }
+
+    function document(...parts: Uint8Array[]): Buffer {
+      return Buffer.concat([element('1a45dfa3', text('4282', 'webm')), element('18538067', ...parts)]);
+    }
+
+    function sample(...blocks: Uint8Array[]): Buffer {
+      return document(element('1654ae6b', track()), cluster(0, ...blocks));
+    }
+
+    function statistics(duration: string): Buffer {
+      return element(
+        '1254c367',
+        element(
+          '7373',
+          element('63c0', uint('63c5', 1)),
+          element('67c8', text('45a3', 'DURATION'), text('4487', duration))
+        )
+      );
+    }
+
+    async function parse(data: Buffer, options: mm.IOptions = { duration: true }): Promise<mm.IFormat> {
+      return (await mm.parseBuffer(data, { mimeType: 'audio/webm' }, options)).format;
+    }
+
+    it('uses the real BlockDuration ID and handles its position before or after Block', async () => {
+      for (const durationFirst of [true, false]) {
+        const children = [element('a1', block(1, 0)), uint('9b', 20000)];
+        const format = await parse(sample(element('a0', ...(durationFirst ? children.reverse() : children))));
+        assert.strictEqual(format.duration, 20);
+        assert.strictEqual(format.trackInfo[0].duration, 20);
+      }
+    });
+
+    it('does not scan by default or when duration is explicitly disabled', async () => {
+      for (const options of [{}, { duration: false }]) {
+        const format = await parse(sample(group(0, 20000)), options);
+        assert.isUndefined(format.duration);
+        assert.isUndefined(format.trackInfo[0].duration);
+      }
+    });
+
+    it('leaves duration unknown without blocks or without a final-frame estimate', async () => {
+      for (const data of [sample(), sample(simple(0)), sample(simple(1000))]) {
+        assert.isUndefined((await parse(data)).duration);
+      }
+    });
+
+    it('estimates the final block duration from timestamp deltas, including BlockGroups', async () => {
+      const format = await parse(sample(simple(0), group(20), simple(40)));
+      assert.strictEqual(format.duration, 0.06);
+    });
+
+    it('applies the final minimum delta rather than retaining an early overestimate', async () => {
+      const format = await parse(sample(simple(0), simple(1000), simple(1020)));
+      assert.strictEqual(format.duration, 1.04);
+    });
+
+    it('handles signed relative timestamps and resets timing for each Cluster', async () => {
+      const format = await parse(
+        document(element('1654ae6b', track()), cluster(1000, group(-20, 20)), cluster(2000, group(-20, 20)))
+      );
+      assert.strictEqual(format.duration, 2);
+      assert.isUndefined(
+        (await parse(document(element('1654ae6b', track()), cluster(1000), element('1f43b675', group(0, 20))))).duration
+      );
+    });
+
+    it('keeps DefaultDuration in nanoseconds with a non-default TimestampScale', async () => {
+      const format = await parse(
+        document(
+          element('1549a966', uint('2ad7b1', 2000000)),
+          element('1654ae6b', track(1, uint('23e383', 20000000))),
+          cluster(0, simple(10))
+        )
+      );
+      assert.strictEqual(format.duration, 0.04);
+    });
+
+    it('prefers explicit whole-block duration to the track frame duration', async () => {
+      const format = await parse(
+        document(element('1654ae6b', track(1, uint('23e383', 20000000))), cluster(0, group(10, 100)))
+      );
+      assert.strictEqual(format.duration, 0.11);
+    });
+
+    for (const [name, flags, laceData] of [
+      ['Xiph', 0x82, Buffer.from([2, 1, 1, 0, 0, 0])],
+      ['fixed', 0x84, Buffer.from([2, 0, 0, 0])],
+      ['EBML', 0x86, Buffer.from([2, 0x81, 0xbf, 0, 0, 0])]
+    ] as const) {
+      it(`counts frames for ${name} lacing without multiplying BlockDuration`, async () => {
+        const header = element('1654ae6b', track(1, uint('23e383', 20000000)));
+        const payload = element('a1', block(1, 0, flags, laceData));
+        const estimated = await parse(document(header, cluster(0, element('a3', block(1, 0, flags, laceData)))));
+        assert.strictEqual(estimated.duration, 0.06);
+        const explicit = await parse(document(header, cluster(0, element('a0', payload, uint('9b', 50)))));
+        assert.strictEqual(explicit.duration, 0.05);
+      });
+    }
+
+    it('supports multibyte and wide TrackNumber VINTs without 32-bit truncation', async () => {
+      for (const id of [128, 0x100000001, Number.MAX_SAFE_INTEGER]) {
+        const format = await parse(
+          document(element('1654ae6b', track(id, uint('23e383', 20000000))), cluster(0, simple(0, id), simple(20, id)))
+        );
+        assert.strictEqual(format.duration, 0.04);
+      }
+    });
+
+    it('recovers timing without TrackUID and selects the enabled default audio track', async () => {
+      const format = await parse(
+        document(
+          element('1654ae6b', track(1, uint('88', 0)), track(2), track(3, uint('b9', 0))),
+          cluster(0, simple(0, 1), simple(1000, 1), simple(0, 2), simple(20, 2), simple(0, 3), simple(2000, 3))
+        )
+      );
+      assert.strictEqual(format.duration, 0.04);
+      assert.strictEqual(format.trackInfo[0].duration, 2);
+      assert.strictEqual(format.containerDuration, 4);
+    });
+
+    it('does not replace Segment Info or selected-track statistics duration', async () => {
+      const tracks = element('1654ae6b', track(1, uint('73c5', 1)));
+      const blocks = cluster(0, group(0, 20));
+      const known = await parse(document(element('1549a966', float('4489', 5000)), tracks, blocks));
+      assert.strictEqual(known.duration, 5);
+      assert.isUndefined(known.trackInfo[0].duration);
+      for (const tagsFirst of [true, false]) {
+        const tags = statistics('00:00:03.000');
+        const format = await parse(document(tracks, ...(tagsFirst ? [tags, blocks] : [blocks, tags])));
+        assert.strictEqual(format.duration, 3);
+        assert.strictEqual(format.trackInfo[0].duration, 3);
+      }
+    });
+
+    it('uses the default TimestampScale for Info Duration and skips invalid Cluster payloads', async () => {
+      // The TagLib reference parser requires an explicit scale here, although
+      // Matroska defaults TimestampScale to 1,000,000 ns.
+      const format = await parse(
+        document(
+          element('1549a966', float('4489', 1120)),
+          element('1654ae6b', track()),
+          element('1f43b675', Buffer.from([0]))
+        )
+      );
+      assert.strictEqual(format.duration, 1.12);
+      assert.isUndefined(format.trackInfo[0].duration);
+    });
+
+    it('bounds deferred timing and distinct nanosecond endpoint adjustments', async () => {
+      const blocks = Array.from({ length: 5 }, (_, i) => group(i * 20, 20));
+      const variedPadding = blocks.map((_, i) => {
+        const padding = Buffer.alloc(4);
+        padding.writeInt32BE(i);
+        return group(i * 20, 20, element('75a2', padding));
+      });
+      for (const data of [
+        document(cluster(0, ...blocks), element('1654ae6b', track())),
+        document(element('1654ae6b', track()), element('1f43b675', ...blocks, uint('e7', 0))),
+        sample(...variedPadding)
+      ]) {
+        await expect(parse(data, { duration: true, maxMetadataEntries: 4 })).rejects.toThrow(
+          'Matroska timing entry count exceeds entry limit'
+        );
+      }
+    });
+
+    it('does not reuse a missing Cluster timestamp or publish a partial duration', async () => {
+      const format = await parse(
+        document(element('1654ae6b', track()), cluster(1000, group(0, 20)), element('1f43b675', group(0, 20)))
+      );
+      assert.isUndefined(format.duration);
+      assert.isUndefined(format.trackInfo[0].duration);
+    });
+
+    for (const input of ['buffer', 'known-size stream', 'unknown-size stream']) {
+      it(`does not publish a partial scan when a known-size Cluster ends before its declared boundary (${input})`, async () => {
+        const lastBlock = simple(1000);
+        const data = sample(group(0, 20), lastBlock);
+        const truncated = data.subarray(0, data.length - lastBlock.length);
+        const tokenizer =
+          input === 'buffer'
+            ? fromBuffer(truncated)
+            : await fromStream(Readable.from([truncated], { objectMode: false }), {
+                fileInfo: { size: input === 'known-size stream' ? truncated.length : undefined }
+              });
+        tokenizer.fileInfo.mimeType = 'audio/webm';
+        try {
+          const { format } = await mm.parseFromTokenizer(tokenizer, { duration: true });
+          assert.isUndefined(format.duration);
+          assert.isUndefined(format.trackInfo[0].duration);
+        } finally {
+          await tokenizer.close();
+        }
+      });
+    }
+
+    for (const stream of [false, true]) {
+      for (const trailing of ['', 'a3', 'a340', '40']) {
+        it(`recovers duration only at clean EOF in unknown-size containers (stream=${stream}, trailing=${trailing})`, async () => {
+          const data = Buffer.concat([
+            element('1a45dfa3', text('4282', 'webm')),
+            Buffer.from('18538067ff', 'hex'),
+            element('1654ae6b', track()),
+            unknownCluster(0, group(0, 20), Buffer.from(trailing, 'hex'))
+          ]);
+          const tokenizer = stream ? await fromStream(Readable.from([data], { objectMode: false })) : fromBuffer(data);
+          tokenizer.fileInfo.mimeType = 'audio/webm';
+          try {
+            const { format } = await mm.parseFromTokenizer(tokenizer, { duration: true });
+            assert.strictEqual(format.duration, trailing === '' ? 0.02 : undefined);
+            assert.strictEqual(format.trackInfo[0].duration, trailing === '' ? 0.02 : undefined);
+          } finally {
+            await tokenizer.close();
+          }
+        });
+      }
+    }
+
+    for (const id of ['a1', 'a3']) {
+      for (const stream of [false, true]) {
+        it(`skips a block extending beyond the known file size without publishing partial timing (id=${id}, stream=${stream})`, async () => {
+          const lastBlock = element(id, block(1, 1000, 0x80, Buffer.alloc(64)));
+          const data = sample(group(0, 20), id === 'a1' ? element('a0', lastBlock) : lastBlock);
+          const truncated = data.subarray(0, data.length - 56);
+          const tokenizer = stream
+            ? await fromStream(Readable.from([truncated], { objectMode: false }), {
+                fileInfo: { size: truncated.length }
+              })
+            : fromBuffer(truncated);
+          tokenizer.fileInfo.mimeType = 'audio/webm';
+          try {
+            const { format } = await mm.parseFromTokenizer(tokenizer, { duration: true });
+            assert.isUndefined(format.duration);
+            assert.isUndefined(format.trackInfo[0].duration);
+          } finally {
+            await tokenizer.close();
+          }
+        });
+      }
+    }
+
+    for (const id of ['a1', 'a3']) {
+      for (const available of [0, 4, 11]) {
+        for (const advertisedSize of [false, true]) {
+          it(`returns available metadata when a block prefix is incomplete (id=${id}, available=${available}, advertised size=${advertisedSize})`, async () => {
+            const payload = block(1, 1000, 0x80, Buffer.alloc(64));
+            const lastBlock = element(id, payload);
+            const data = document(
+              element('1549a966', text('7ba9', 'Before truncated block')),
+              element('1654ae6b', track()),
+              cluster(0, group(0, 20), id === 'a1' ? element('a0', lastBlock) : lastBlock)
+            );
+            const truncated = data.subarray(0, data.length - payload.length + available);
+            const tokenizer = await fromStream(Readable.from([truncated], { objectMode: false }), {
+              fileInfo: { mimeType: 'audio/webm', size: advertisedSize ? data.length : undefined }
+            });
+            try {
+              const { format, common } = await mm.parseFromTokenizer(tokenizer, { duration: true });
+              assert.strictEqual(common.title, 'Before truncated block');
+              assert.strictEqual(format.codec, 'OPUS');
+              assert.lengthOf(format.trackInfo, 1);
+              assert.isUndefined(format.duration);
+              assert.isUndefined(format.trackInfo[0].duration);
+            } finally {
+              await tokenizer.close();
+            }
+          });
+        }
+      }
+    }
+
+    it('does not publish a partial scan when a stream ends after a block prefix', async () => {
+      const data = sample(group(0, 20), element('a3', block(1, 1000, 0x80, Buffer.alloc(64))));
+      // Leave all 12 prefix bytes intact but truncate the skipped frame data.
+      for (const size of [undefined, data.length]) {
+        const tokenizer = await fromStream(Readable.from([data.subarray(0, data.length - 56)], { objectMode: false }), {
+          fileInfo: { mimeType: 'audio/webm', size }
+        });
+        try {
+          const { format } = await mm.parseFromTokenizer(tokenizer, { duration: true });
+          assert.isUndefined(format.duration);
+          assert.isUndefined(format.trackInfo[0].duration);
+        } finally {
+          await tokenizer.close();
+        }
+      }
+    });
+
+    it('ignores invalid duration statistics instead of suppressing the fallback', async () => {
+      const format = await parse(
+        document(element('1654ae6b', track(1, uint('73c5', 1))), statistics('00:99:01'), cluster(0, group(0, 20)))
+      );
+      assert.strictEqual(format.duration, 0.02);
+    });
+
+    it('applies TrackTimestampScale, CodecDelay and positive DiscardPadding', async () => {
+      const padding = Buffer.alloc(4);
+      padding.writeInt32BE(5000000);
+      const format = await parse(
+        document(
+          element('1654ae6b', track(1, float('23314f', 2), uint('56aa', 10000000))),
+          cluster(100, group(0, 20, element('75a2', padding)))
+        )
+      );
+      assert.strictEqual(format.duration, 0.125);
+    });
+
+    it('ignores negative DiscardPadding at the start instead of extending the end', async () => {
+      const padding = Buffer.alloc(4);
+      padding.writeInt32BE(-5000000);
+      assert.strictEqual((await parse(sample(group(0, 20, element('75a2', padding))))).duration, 0.02);
+    });
+
+    it('ignores malformed, truncated and unknown-track block headers', async () => {
+      const invalid = [
+        Buffer.alloc(0),
+        Buffer.from([0, 0, 0, 0]),
+        Buffer.from([0x80, 0, 0, 0]),
+        Buffer.from([0x40, 1, 0, 0]),
+        Buffer.from([0x81, 0, 0, 4]),
+        block(2, 1000),
+        Buffer.from([1, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0, 0, 0])
+      ];
+      const format = await parse(sample(...invalid.map(payload => element('a3', payload)), group(0, 20)));
+      assert.strictEqual(format.duration, 0.02);
+    });
+
+    for (const stream of [false, true]) {
+      async function parseInput(data: Buffer, options: mm.IOptions = { duration: true }) {
+        const tokenizer = stream ? await fromStream(Readable.from([data], { objectMode: false })) : fromBuffer(data);
+        tokenizer.fileInfo.mimeType = 'audio/webm';
+        try {
+          return await mm.parseFromTokenizer(tokenizer, options);
+        } finally {
+          await tokenizer.close();
+        }
+      }
+
+      it(`uses final track and Segment timing metadata regardless of element order (stream=${stream})`, async () => {
+        const info = element('1549a966', uint('2ad7b1', 2000000));
+        const tracks = element('1654ae6b', track(1, float('23314f', 2), uint('56aa', 5000000)));
+        for (const tracksFirst of [false, true]) {
+          for (const infoFirst of [false, true]) {
+            for (const timestampFirst of [false, true]) {
+              const blocks = element(
+                '1f43b675',
+                ...(timestampFirst ? [uint('e7', 100), group(10, 20)] : [group(10, 20), uint('e7', 100)])
+              );
+              const { format } = await parseInput(
+                document(
+                  ...(tracksFirst ? [tracks] : []),
+                  ...(infoFirst ? [info] : []),
+                  blocks,
+                  ...(tracksFirst ? [] : [tracks]),
+                  ...(infoFirst ? [] : [info])
+                )
+              );
+              assert.strictEqual(format.duration, 0.315);
+              assert.strictEqual(format.trackInfo[0].duration, 0.315);
+            }
+          }
+        }
+      });
+
+      it(`uses late DefaultDuration for laced blocks and the final TimestampScale for estimates (stream=${stream})`, async () => {
+        const laced = element('a3', block(1, 10, 0x84, Buffer.from([2, 0, 0, 0])));
+        const { format } = await parseInput(
+          document(
+            cluster(100, laced),
+            element('1654ae6b', track(1, uint('23e383', 20000000))),
+            element('1549a966', uint('2ad7b1', 2000000))
+          )
+        );
+        assert.strictEqual(format.duration, 0.28);
+        const estimated = await parseInput(
+          document(
+            element('1654ae6b', track()),
+            cluster(100, simple(-10), simple(0), simple(10)),
+            element('1549a966', uint('2ad7b1', 2000000))
+          )
+        );
+        assert.strictEqual(estimated.format.duration, 0.24);
+      });
+
+      it(`re-evaluates endpoints with nanosecond padding when TimestampScale arrives late (stream=${stream})`, async () => {
+        const padding = Buffer.alloc(4);
+        padding.writeInt32BE(15000000);
+        const { format } = await parseInput(
+          document(
+            element('1654ae6b', track()),
+            cluster(0, group(0, 20), group(0, 30, element('75a2', padding))),
+            element('1549a966', uint('2ad7b1', 2000000))
+          )
+        );
+        assert.strictEqual(format.duration, 0.045);
+      });
+
+      it(`does not publish partial scans after late authoritative duration metadata (stream=${stream})`, async () => {
+        const tracks = element('1654ae6b', track(1, uint('73c5', 1)), track(2));
+        for (const metadata of [element('1549a966', float('4489', 5000)), statistics('00:00:05.000')]) {
+          const { format } = await parseInput(
+            document(
+              tracks,
+              cluster(0, group(0, 20), simple(0, 2), simple(20, 2)),
+              metadata,
+              cluster(1000, group(0, 20))
+            )
+          );
+          assert.strictEqual(format.duration, 5);
+          assert.isUndefined(format.trackInfo[1].duration);
+        }
+      });
+
+      it(`handles eight-byte unknown Segment and Cluster sizes and trailing metadata (stream=${stream})`, async () => {
+        const unknownSize = Buffer.from('01ffffffffffffff', 'hex');
+        const data = Buffer.concat([
+          element('1a45dfa3', text('4282', 'webm')),
+          Buffer.from('18538067', 'hex'),
+          unknownSize,
+          element('1654ae6b', track()),
+          Buffer.from('1f43b675', 'hex'),
+          unknownSize,
+          uint('e7', 0),
+          simple(0),
+          simple(20),
+          unknownCluster(40, simple(0)),
+          element('1254c367', element('7373', element('67c8', text('45a3', 'TITLE'), text('4487', 'After clusters'))))
+        ]);
+        for (const duration of [false, true]) {
+          const result = await parseInput(data, { duration });
+          assert.strictEqual(result.format.duration, duration ? 0.06 : undefined);
+          assert.strictEqual(result.common.title, 'After clusters');
+        }
+      });
+
+      it(`handles successive unknown-size Clusters and trailing tags (stream=${stream})`, async () => {
+        const data = document(
+          element('1654ae6b', track()),
+          unknownCluster(0, simple(0), simple(20)),
+          unknownCluster(40, simple(0)),
+          element('1254c367', element('7373', element('67c8', text('45a3', 'TITLE'), text('4487', 'After clusters'))))
+        );
+        const tokenizer = stream ? await fromStream(Readable.from([data], { objectMode: false })) : fromBuffer(data);
+        tokenizer.fileInfo.mimeType = 'audio/webm';
+        try {
+          const result = await mm.parseFromTokenizer(tokenizer, { duration: true, mkvUseIndex: true });
+          assert.strictEqual(result.format.duration, 0.06);
+          assert.strictEqual(result.common.title, 'After clusters');
+        } finally {
+          await tokenizer.close();
+        }
+      });
+
+      it(`skips encoded payloads and does not retain a whole Cluster (stream=${stream})`, async () => {
+        const data = sample(
+          ...Array.from({ length: 20 }, (_, i) => element('a3', block(1, i * 20, 0x80, Buffer.alloc(4096, 0xee))))
+        );
+        const tokenizer = stream
+          ? await fromStream(Readable.from([data], { objectMode: false }), { maxBufferSize: 64 })
+          : fromBuffer(data);
+        tokenizer.fileInfo.mimeType = 'audio/webm';
+        const read = tokenizer.readBuffer.bind(tokenizer);
+        const ignore = tokenizer.ignore.bind(tokenizer);
+        let draining = false;
+        let skipped = 0;
+        tokenizer.readBuffer = (buffer, options) => {
+          if (!draining) {
+            assert.isAtMost(options?.length ?? buffer.length, 64, 'no encoded block allocation');
+          }
+          return read(buffer, options);
+        };
+        tokenizer.ignore = async length => {
+          if (length > 4000) {
+            ++skipped;
+          }
+          draining = true;
+          try {
+            return await ignore(length);
+          } finally {
+            draining = false;
+          }
+        };
+        try {
+          const result = await mm.parseFromTokenizer(tokenizer, {
+            duration: true,
+            maxMemoryAllocation: 64,
+            maxMetadataEntries: 4
+          });
+          assert.strictEqual(result.format.duration, 0.4);
+          assert.strictEqual(skipped, 20);
+        } finally {
+          await tokenizer.close();
+        }
+      });
+    }
   });
 });

@@ -46,6 +46,8 @@ export type IElementListener<S extends IElementType = IElementType> = {
    * Leaf events are delivered even when their values are not retained.
    */
   collect?: (element: IElementContext) => boolean;
+  /** Read a binary leaf's prefix and skip its remaining payload before emitting the event. */
+  binaryPrefixLength?: (element: IElementContext) => number | undefined;
 };
 
 /**
@@ -63,6 +65,14 @@ export class EbmlIterator {
 
   private tokenizer: ITokenizer;
   private readonly elementHeader: Uint8Array;
+  private pendingElement?: { header: IHeader; position: number };
+  private truncatedPayload = false;
+  private stopTraversal = false;
+
+  /** Whether a payload or known-size container ended before its boundary. */
+  public get hasTruncatedPayload(): boolean {
+    return this.truncatedPayload;
+  }
 
   /**
    * @param {ITokenizer} tokenizer Input
@@ -96,6 +106,7 @@ export class EbmlIterator {
       {
         startNext: listener.startNext,
         collect: listener.collect ?? (() => true),
+        binaryPrefixLength: listener.binaryPrefixLength,
         elementValue: async (element, value, offset) => {
           await listener.elementValue?.(element, value, offset);
           // The schema selects both the decoder and the event ID. Keep this bridge here,
@@ -103,7 +114,9 @@ export class EbmlIterator {
           await listener.onElement?.({ id: element.id, element, value, offset } as ElementEvent<S>);
         }
       },
-      listener.collect?.(root) ?? true
+      listener.collect?.(root) ?? true,
+      // An unbounded synthetic root must not turn normal stream EOF into truncation.
+      posDone === Number.MAX_SAFE_INTEGER || posDone === Number.POSITIVE_INFINITY
     );
     return tree as DecodedElement<S>;
   }
@@ -111,24 +124,48 @@ export class EbmlIterator {
   private async parseContainer(
     dtdElement: ILinkedElementType,
     posDone: number,
-    listener: Required<Pick<IElementListener, 'startNext' | 'elementValue' | 'collect'>>,
-    collect: boolean
+    listener: Required<Pick<IElementListener, 'startNext' | 'elementValue' | 'collect'>> &
+      Pick<IElementListener, 'binaryPrefixLength'>,
+    collect: boolean,
+    unknownSize = false
   ): Promise<ITree> {
     const tree: ITree = {};
-    while (this.tokenizer.position < posDone) {
+    while (this.pendingElement || this.tokenizer.position < posDone) {
       let element: IHeader;
-      const elementPosition = this.tokenizer.position;
+      const elementPosition = this.pendingElement?.position ?? this.tokenizer.position;
       try {
-        element = await this.readElement();
+        if (this.pendingElement) {
+          element = this.pendingElement.header;
+          this.pendingElement = undefined;
+        } else {
+          element = await this.readElement();
+        }
       } catch (error) {
         if (error instanceof EndOfStreamError) {
+          // Unknown-size masters may end at EOF, but not midway through a header.
+          this.truncatedPayload ||=
+            (!unknownSize && elementPosition < posDone) ||
+            this.tokenizer.position > elementPosition ||
+            (await this.tokenizer.peekBuffer(this.elementHeader, { mayBeLess: true })) > 0;
           break;
         }
         throw error;
       }
       const definition = dtdElement.container?.[element.id];
+      // An unknown-size master ends at the next element belonging to an ancestor.
+      // Keep the already-read header so forward-only streams need not rewind.
+      if (!definition && unknownSize) {
+        let ancestor = dtdElement.parent;
+        while (ancestor) {
+          if (ancestor.container?.[element.id]) {
+            this.pendingElement = { header: element, position: elementPosition };
+            return tree;
+          }
+          ancestor = ancestor.parent;
+        }
+      }
       if (definition) {
-        const child: IElementContext = { ...definition, id: element.id, parent: dtdElement };
+        const child: IElementContext = { ...definition, id: element.id, parent: dtdElement, length: element.len };
         const action = await listener.startNext(child);
         switch (action) {
           case ParseAction.ReadNext:
@@ -137,14 +174,25 @@ export class EbmlIterator {
                 `Read element: name=${getElementPath(child)}{id=0x${element.id.toString(16)}, container=${!!child.container}} at position=${elementPosition}`
               );
               if (child.container) {
+                const declaredEnd = element.len >= 0 ? this.tokenizer.position + element.len : posDone;
                 const childEnd = Math.min(
                   posDone,
                   this.tokenizer.fileInfo.size ?? Number.POSITIVE_INFINITY,
-                  element.len >= 0 ? this.tokenizer.position + element.len : posDone
+                  declaredEnd
                 );
-                const res = await this.parseContainer(child, childEnd, listener, collect || listener.collect(child));
+                this.truncatedPayload ||= element.len >= 0 && declaredEnd > childEnd;
+                const res = await this.parseContainer(
+                  child,
+                  childEnd,
+                  listener,
+                  collect || listener.collect(child),
+                  element.len < 0
+                );
                 if (collect) {
                   this.collect(tree, child, res);
+                }
+                if (this.stopTraversal) {
+                  return tree;
                 }
                 await listener.elementValue(child, res, elementPosition);
               } else {
@@ -159,7 +207,25 @@ export class EbmlIterator {
                   ) {
                     throw new EbmlContentError(`Invalid element length: ${element.len}`);
                   }
-                  const value = await parser(element);
+                  const prefix = child.value === DataType.binary ? listener.binaryPrefixLength?.(child) : undefined;
+                  if (prefix !== undefined && (!Number.isSafeInteger(prefix) || prefix < 0)) {
+                    throw new EbmlContentError(`Invalid binary prefix length: ${prefix}`);
+                  }
+                  const length = prefix === undefined ? element.len : Math.min(element.len, prefix);
+                  let value: ValueType;
+                  try {
+                    value = await parser({ ...element, len: length });
+                  } catch (error) {
+                    if (prefix === undefined || !(error instanceof EndOfStreamError)) {
+                      throw error;
+                    }
+                    this.truncatedPayload = true;
+                    this.stopTraversal = true;
+                    return tree;
+                  }
+                  if (length < element.len && !(await this.ignore(element.len - length, posDone))) {
+                    return tree;
+                  }
                   if (collect) {
                     this.collect(tree, child, value);
                   }
@@ -241,14 +307,18 @@ export class EbmlIterator {
     // Unknown-size EBML containers may advertise lengths above the safe integer range.
     // Bound skips by the enclosing container and known input before passing them to the tokenizer.
     const end = Math.min(posDone, this.tokenizer.fileInfo.size ?? Number.POSITIVE_INFINITY);
-    const boundedLength = Math.min(length, end - this.tokenizer.position);
+    const boundedLength = length < 0 ? end - this.tokenizer.position : Math.min(length, end - this.tokenizer.position);
     if (!Number.isSafeInteger(boundedLength) || boundedLength < 0) {
       throw new EbmlContentError(`Invalid element length: ${length}`);
     }
+    this.truncatedPayload ||= length >= 0 && boundedLength < length;
     try {
-      return (await this.tokenizer.ignore(boundedLength)) === boundedLength;
+      const complete = (await this.tokenizer.ignore(boundedLength)) === boundedLength;
+      this.truncatedPayload ||= !complete;
+      return complete;
     } catch (error) {
       if (error instanceof EndOfStreamError) {
+        this.truncatedPayload = true;
         return false;
       }
       throw error;
@@ -299,14 +369,14 @@ export class EbmlIterator {
       const lenField = this.elementHeader.subarray(idLength, idLength + sizeLength);
       lenField[0] ^= 0x80 >> (sizeLength - 1);
       this.tokenizer.setPosition(this.tokenizer.position + idLength + sizeLength);
-      return { id, len: readUIntBE(lenField, sizeLength) };
+      return { id, len: readSize(lenField) };
     }
     const id = await this.readVintData(this.ebmlMaxIDLength);
     const lenField = await this.readVintData(this.ebmlMaxSizeLength);
     lenField[0] ^= 0x80 >> (lenField.length - 1);
     return {
       id: readUIntBE(id, id.length),
-      len: readUIntBE(lenField, lenField.length)
+      len: readSize(lenField)
     };
   }
 
@@ -349,6 +419,11 @@ export class EbmlIterator {
   private async readBuffer(e: IHeader): Promise<Uint8Array> {
     return readBuffer(this.tokenizer, e.len, this.options, undefined, message => new EbmlContentError(message));
   }
+}
+
+function readSize(data: Uint8Array): number {
+  const unknown = data[0] === 0xff >> data.length && data.subarray(1).every(byte => byte === 0xff);
+  return unknown ? -1 : readUIntBE(data, data.length);
 }
 
 function readUIntBE(buf: Uint8Array, len: number): number {

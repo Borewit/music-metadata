@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { Readable } from 'node:stream';
 import { ReadableStream } from 'node:stream/web';
-import { fromBuffer, fromStream, type ITokenizer } from 'strtok3';
+import { EndOfStreamError, fromBuffer, fromStream, type ITokenizer } from 'strtok3';
 import { assert, expect } from 'vitest';
 
 import { EbmlContentError, EbmlIterator, ParseAction } from '../lib/ebml/EbmlIterator.js';
@@ -161,6 +161,192 @@ describe('EBML physical EOF while skipping', () => {
       await tokenizer.close();
     }
   });
+});
+
+describe('EBML binary prefix reads and unknown-size masters', () => {
+  for (const [size, trailing] of [
+    [0x88, []],
+    [0x88, [0x81]],
+    [0x84, [0x81]]
+  ] as const) {
+    it(`marks early EOF inside a known-size master as truncated (size=${size}, trailing bytes=${trailing.length})`, async () => {
+      const data = Uint8Array.from([0x82, size, 0x81, 0x81, 42, ...trailing]);
+      const tokenizer = await fromStream(Readable.from([data], { objectMode: false }));
+      const dtd: IElementType = {
+        name: 'root',
+        container: { 0x82: { name: 'master', container: leafDtd(DataType.uint).container } }
+      };
+      try {
+        const iterator = new EbmlIterator(tokenizer);
+        const tree = await iterator.iterate(dtd, Number.MAX_SAFE_INTEGER, listener);
+        assert.deepEqual(tree, { master: { leaf: 42 } });
+        assert.isTrue(iterator.hasTruncatedPayload);
+      } finally {
+        await tokenizer.close();
+      }
+    });
+  }
+
+  for (const size of [0x83, 0xff]) {
+    it(`does not mark normal stream EOF as truncated (master size=${size})`, async () => {
+      const data = Uint8Array.from([0x82, size, 0x81, 0x81, 42]);
+      const tokenizer = await fromStream(Readable.from([data], { objectMode: false }));
+      const dtd: IElementType = {
+        name: 'root',
+        container: { 0x82: { name: 'master', container: leafDtd(DataType.uint).container } }
+      };
+      try {
+        const iterator = new EbmlIterator(tokenizer);
+        const tree = await iterator.iterate(dtd, Number.MAX_SAFE_INTEGER, listener);
+        assert.deepEqual(tree, { master: { leaf: 42 } });
+        assert.isFalse(iterator.hasTruncatedPayload);
+      } finally {
+        await tokenizer.close();
+      }
+    });
+  }
+
+  it('marks a known-size master extending beyond its enclosing container as truncated', async () => {
+    const data = Uint8Array.from([0x82, 0x85, 0x83, 0x85, 0x81, 0x81, 42, 0x81, 0x81, 43]);
+    const dtd: IElementType = {
+      name: 'root',
+      container: {
+        ...leafDtd(DataType.uint).container,
+        0x82: {
+          name: 'outer',
+          container: { 0x83: { name: 'inner', container: leafDtd(DataType.uint).container } }
+        }
+      }
+    };
+    const iterator = new EbmlIterator(fromBuffer(data));
+    const tree = await iterator.iterate(dtd, data.length, listener);
+    assert.deepEqual(tree, { outer: { inner: { leaf: 42 } }, leaf: 43 });
+    assert.isTrue(iterator.hasTruncatedPayload);
+  });
+
+  it('preserves full binary decoding without a prefix callback', async () => {
+    const data = Uint8Array.from([0x81, 0x84, 1, 2, 3, 4]);
+    const tree = await new EbmlIterator(fromBuffer(data)).iterate(leafDtd(DataType.binary), data.length, listener);
+    assert.deepEqual(tree.leaf, Uint8Array.from([1, 2, 3, 4]));
+  });
+
+  for (const prefix of [0, 2, 10]) {
+    it(`emits only the requested prefix after skipping the remainder (prefix=${prefix})`, async () => {
+      const data = Uint8Array.from([0x81, 0x84, 1, 2, 3, 4]);
+      const tokenizer = fromBuffer(data);
+      const values: unknown[] = [];
+      const tree = await new EbmlIterator(tokenizer).iterate(leafDtd(DataType.binary), data.length, {
+        ...listener,
+        binaryPrefixLength: () => prefix,
+        elementValue: async (_, value) => {
+          assert.strictEqual(tokenizer.position, data.length);
+          values.push(value);
+        }
+      });
+      const expected = data.subarray(2, 2 + Math.min(prefix, 4));
+      assert.deepEqual(tree.leaf, expected);
+      assert.deepEqual(values, [expected]);
+    });
+  }
+
+  for (const prefix of [-1, 1.5, Number.NaN, Number.POSITIVE_INFINITY, Number.MAX_SAFE_INTEGER + 1]) {
+    it(`rejects an invalid prefix before reading the payload (prefix=${prefix})`, async () => {
+      const tokenizer = fromBuffer(Uint8Array.from([0x81, 0x81, 42]));
+      await expect(
+        new EbmlIterator(tokenizer).iterate(leafDtd(DataType.binary), 3, {
+          ...listener,
+          binaryPrefixLength: () => prefix
+        })
+      ).rejects.toThrow('Invalid binary prefix length');
+      assert.strictEqual(tokenizer.position, 2);
+    });
+  }
+
+  for (const leafInside of [false, true]) {
+    it(`stops all traversal when a nested prefix read fails without advancing the tokenizer (leaf inside=${leafInside})`, async () => {
+      const leaf = [0x81, 0x81, 42];
+      const data = Uint8Array.from([
+        ...(leafInside ? [] : leaf),
+        0x82,
+        leafInside ? 0x8b : 0x88,
+        ...(leafInside ? leaf : []),
+        0x83,
+        0x86,
+        0x81,
+        0x84
+      ]);
+      const tokenizer = await fromStream(Readable.from([data], { objectMode: false }));
+      const read = tokenizer.readBuffer.bind(tokenizer);
+      tokenizer.readBuffer = (buffer, options) => {
+        if (buffer.length === 4) {
+          throw new EndOfStreamError();
+        }
+        return read(buffer, options);
+      };
+      const dtd: IElementType = {
+        name: 'root',
+        container: {
+          ...leafDtd(DataType.uint).container,
+          0x82: {
+            name: 'master',
+            container: {
+              ...leafDtd(DataType.uint).container,
+              0x83: { name: 'prefix', value: DataType.binary }
+            }
+          }
+        }
+      };
+      try {
+        const iterator = new EbmlIterator(tokenizer);
+        const tree = await iterator.iterate(dtd, Number.MAX_SAFE_INTEGER, {
+          ...listener,
+          binaryPrefixLength: () => 4,
+          elementValue: async element => assert.strictEqual(element.id, 0x81, 'only complete leaves must be emitted')
+        });
+        assert.deepEqual(tree, leafInside ? { master: { leaf: 42 } } : { leaf: 42, master: {} });
+        assert.isTrue(iterator.hasTruncatedPayload);
+        assert.strictEqual(tokenizer.position, 7, 'must not interpret the incomplete prefix as sibling headers');
+      } finally {
+        await tokenizer.close();
+      }
+    });
+  }
+
+  it('does not emit a prefix when the skipped stream payload is truncated', async () => {
+    const tokenizer = await fromStream(Readable.from([Uint8Array.from([0x81, 0x85, 42])], { objectMode: false }));
+    try {
+      const iterator = new EbmlIterator(tokenizer);
+      const tree = await iterator.iterate(leafDtd(DataType.binary), Number.MAX_SAFE_INTEGER, {
+        ...listener,
+        binaryPrefixLength: () => 1,
+        elementValue: async () => assert.fail('truncated payload must not emit a value')
+      });
+      assert.deepEqual(tree, {});
+      assert.isTrue(iterator.hasTruncatedPayload);
+    } finally {
+      await tokenizer.close();
+    }
+  });
+
+  for (const stream of [false, true]) {
+    it(`processes an ancestor's empty final sibling after an unknown-size master (stream=${stream})`, async () => {
+      const data = Uint8Array.from([0x82, 0xff, 0x81, 0x81, 42, 0x83, 0x80]);
+      const tokenizer = stream ? await fromStream(Readable.from([data], { objectMode: false })) : fromBuffer(data);
+      const dtd: IElementType = {
+        name: 'root',
+        container: {
+          0x82: { name: 'master', container: leafDtd(DataType.uint).container },
+          0x83: { name: 'final', value: DataType.string }
+        }
+      };
+      try {
+        const tree = await new EbmlIterator(tokenizer).iterate(dtd, data.length, listener);
+        assert.deepEqual(tree, { master: { leaf: 42 }, final: '' });
+      } finally {
+        await tokenizer.close();
+      }
+    });
+  }
 });
 
 describe('EBML leaf lengths (GHSA-5gfj-9q3v-qfp3)', () => {
