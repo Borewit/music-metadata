@@ -65,6 +65,8 @@ export type SynchronizedLyricsText = ILyricsText;
  *   and `syncText` by writing `USLT` and/or `SYLT` frames.
  * - FLAC stores `text` in `LYRICS`, or an LRC string when `syncText` is present.
  *   Language, descriptor, content type and timestamp format are not stored.
+ * - WMA/ASF stores plain text in `WM/Lyrics`; synchronized lines are joined with newlines.
+ *   Timing, language, descriptor and other ID3 attributes are not stored.
  * - APEv2 stores plain text in `Lyrics`; synchronized lines are joined with newlines.
  *   Timing and ID3 attributes are not stored.
  * - MP4 stores `text` in `©lyr`; when only `syncText` is supplied, the line
@@ -208,6 +210,12 @@ interface CustomTagPatch {
    * (including arrays) write UTF-8 text; Uint8Array writes a complete binary
    * value (cover values include a UTF-8 filename and NUL before the image).
    * Unedited items retain their bytes and flags; read-only edits are rejected.
+   * For WMA/ASF use attribute names. Strings write UTF-16LE text; Uint8Array writes
+   * binary data. Typed objects use `{ type, value, language?, stream? }`, with
+   * type unicode/binary/bool/word/dword/qword/guid. QWORD accepts bigint or a safe
+   * integer; GUID accepts a dashed GUID string. Arrays store multiple values.
+   * language/stream select existing language indexes/audio stream numbers.
+   * Replacements/removals cover all language/stream variants of the edited name.
    * For FLAC use Vorbis Comment field names, e.g.
    * `{ "MY_FIELD": "value" }`. Use `null` to remove a field.
    */
@@ -243,13 +251,14 @@ export interface WriteOptions {
   stripFlacId3?: boolean;
   /**
    * Target amount of padding to keep or add, in bytes. Defaults to 8192.
+   * ASF adds a Padding Object; an omitted option retains at least 8192 bytes on an edit.
    * MP4, Ogg Vorbis/Opus and APEv2 do not add padding and reject this option.
    */
   padding?: PaddingOption;
   /**
    * Write through a temporary file and rename it into place. Defaults to
    * `true`. Only applies to `updateFile`. When false, stage output in memory
-   * and overwrite the existing file in place; MP4 and Ogg Vorbis/Opus instead
+   * and overwrite the existing file in place; MP4, WMA/ASF and Ogg Vorbis/Opus instead
    * stage on disk, requiring directory write access and space for a second
    * copy. Neither overwrite is crash-atomic.
    */
@@ -270,7 +279,7 @@ export interface WriteOptions {
  */
 export interface WriteResult {
   /** Container format that was written. */
-  format: 'flac' | 'mp3' | 'aac' | 'wav' | 'mp4' | 'ogg' | 'ape' | 'wv' | 'mpc';
+  format: 'flac' | 'mp3' | 'aac' | 'wav' | 'mp4' | 'ogg' | 'ape' | 'wv' | 'mpc' | 'asf';
   /** Total number of bytes in the resulting file. */
   bytesWritten: number;
   /** Padding bytes in the resulting metadata section. */

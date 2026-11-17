@@ -8,7 +8,7 @@ import type { IRating, ITag } from '../type.js';
  * ASF Metadata tag mappings.
  * See http://msdn.microsoft.com/en-us/library/ms867702.aspx
  */
-const asfTagMap: INativeTagMap = {
+export const asfTagMap: INativeTagMap = {
   Title: 'title',
   Author: 'artist',
   'WM/AlbumArtist': 'albumartist',
