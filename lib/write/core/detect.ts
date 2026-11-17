@@ -1,9 +1,22 @@
 import { fileTypeFromTokenizer } from 'file-type';
 import { EndOfStreamError, type ITokenizer } from 'strtok3';
+import AsfGuid from '../../asf/AsfGuid.js';
 import { decodeAscii } from './bytes.js';
 import type { ByteSource } from './source.shared.js';
 
-export type ContainerFormat = 'flac' | 'id3' | 'mp3' | 'aac' | 'wav' | 'mp4' | 'ogg' | 'ape' | 'wv' | 'mpc' | 'unknown';
+export type ContainerFormat =
+  | 'flac'
+  | 'id3'
+  | 'mp3'
+  | 'aac'
+  | 'wav'
+  | 'mp4'
+  | 'ogg'
+  | 'ape'
+  | 'wv'
+  | 'mpc'
+  | 'asf'
+  | 'unknown';
 
 /** Detect audio containers using file-type without loading the entire file. */
 export async function detectFormat(source: ByteSource): Promise<ContainerFormat> {
@@ -15,6 +28,9 @@ export async function detectFormat(source: ByteSource): Promise<ContainerFormat>
     if (decodeAscii(header.subarray(0, 4)) === 'RIFF' && decodeAscii(header.subarray(8, 12)) === 'WAVE') {
       return 'wav';
     }
+  }
+  if (source.size >= 16 && AsfGuid.decode(await source.read(0, 16)) === AsfGuid.HeaderObject.str) {
+    return 'asf';
   }
   let extension: string | undefined;
   try {

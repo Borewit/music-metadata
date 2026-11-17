@@ -19,7 +19,7 @@ common tag names.
 
 Key features:
 - **Read Many Audio Formats**: Read metadata from MP3, MP4, FLAC, Ogg, WAV, AIFF, and more.
-- **Write Tags and Cover Art**: Edit FLAC, Ogg Vorbis/Opus, MP3, ADTS AAC, WAV, MP4/M4A/M4B, Monkey’s Audio, WavPack and Musepack metadata while preserving encoded audio. Update files in Node.js or return new buffers in Node.js and browsers.
+- **Write Tags and Cover Art**: Edit FLAC, Ogg Vorbis/Opus, MP3, ADTS AAC, WAV, WMA/ASF, MP4/M4A/M4B, Monkey’s Audio, WavPack and Musepack metadata while preserving encoded audio. Update files in Node.js or return new buffers in Node.js and browsers.
 - **Extensive Metadata Extraction**: Extracts detailed metadata, including ID3v1, ID3v2, APE, Vorbis, and iTunes/MP4 tags.
 - **Streaming Support**: Efficiently handles large audio files by reading metadata from streams, making it suitable for server-side and browser-based applications.
 - **Promise-Based API**: Provides a modern, promise-based API for easy integration into asynchronous workflows.
@@ -30,7 +30,7 @@ The [`music-metadata`](https://github.com/Borewit/music-metadata) module is idea
 ## Writing metadata
 
 Import the write API from `music-metadata` to edit FLAC, Ogg Vorbis/Opus,
-MP3, ADTS AAC, WAV, MP4/M4A/M4B, Monkey’s Audio, WavPack and Musepack metadata without re-encoding audio.
+MP3, ADTS AAC, WAV, WMA/ASF, MP4/M4A/M4B, Monkey’s Audio, WavPack and Musepack metadata without re-encoding audio.
 
 ```js
 import { updateFile, updateBuffer } from 'music-metadata';
@@ -67,6 +67,29 @@ tags are not supported for writing.
 
 Consumers migrating from `music-metadata-editor` should import the write functions
 and types from `music-metadata`.
+
+### WMA / ASF
+
+WMA writing supports complete, unencrypted, audio-only ASF files and returns
+`WriteResult.format: 'asf'`. Common fields use the same ASF names as the reader;
+unsupported fields are rejected.
+
+```js
+await updateFile('track.wma', {
+  title: '作品 🎵',
+  native: {
+    'Custom/Text': 'Unicode text',
+    'Custom/Flag': { type: 'bool', value: true },
+    'Custom/Counter': { type: 'qword', value: 123n }
+  }
+});
+```
+
+Native values can be strings, `Uint8Array` for binary data, or typed
+`{ type, value }` objects (`unicode`, `binary`, `bool`, `word`, `dword`,
+`qword`, `guid`). Optional `language` and `stream` select the ASF language
+index and audio stream. Use `{ padding: n }` to set header padding; an empty
+patch leaves the file byte-identical unless padding is specified.
 
 ### MP4 chapters
 

@@ -1,4 +1,5 @@
 import { buildApeUpdate } from '../apev2/apev2.js';
+import { buildAsfUpdate } from '../asf/asf.js';
 import { buildFlacUpdate } from '../flac/flac.js';
 import { buildId3Update } from '../id3v2/id3v2.js';
 import { buildMp4Update } from '../mp4/mp4.js';
@@ -30,6 +31,8 @@ export async function buildUpdate(source: ByteSource, patch: TagPatch, options: 
     case 'wv':
     case 'mpc':
       return { format, ...(await buildApeUpdate(source, patch, options, format)) };
+    case 'asf':
+      return { format, ...(await buildAsfUpdate(source, patch, options)), stageToFile: true };
     case 'wav':
       return { format, ...(await buildWavUpdate(source, patch, options)) };
     case 'mp4':
@@ -60,7 +63,7 @@ export function assertPatch(patch: TagPatch): void {
 export function assertSupported(format: ContainerFormat): asserts format is Exclude<ContainerFormat, 'unknown'> {
   if (format === 'unknown') {
     throw new UnsupportedFormatError(
-      'Unsupported audio format; supported formats are FLAC, Ogg Vorbis/Opus, WAV, MP4, MP3, ADTS AAC (ID3v2.4), Monkey’s Audio, WavPack and Musepack (APEv2)'
+      'Unsupported audio format; supported formats are FLAC, Ogg Vorbis/Opus, WAV, WMA/ASF, MP4, MP3, ADTS AAC (ID3v2.4), Monkey’s Audio, WavPack and Musepack (APEv2)'
     );
   }
 }
