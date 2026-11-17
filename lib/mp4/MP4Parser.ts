@@ -34,6 +34,7 @@ interface IEncoder {
 
 interface ISoundSampleDescription {
   encoder?: IEncoder;
+  codecProfile?: string;
   dataFormat: string;
   dataReferenceIndex: number;
   description?: {
@@ -389,6 +390,12 @@ export class MP4Parser extends BasicParser {
 
     for (const audioTrack of audioTracks) {
       const ssd = audioTrack.soundSampleDescription[0];
+      this.metadata.setFormat('codecProfile', ssd.codecProfile);
+      if (audioTracks.length > 1 && !(ssd.description && audioTrack.media.header)) {
+        this.metadata.setFormat('sampleRate', undefined);
+        this.metadata.setFormat('bitsPerSample', undefined);
+        this.metadata.setFormat('numberOfChannels', undefined);
+      }
       if (ssd.description && audioTrack.media.header) {
         this.metadata.setFormat('sampleRate', ssd.description.sampleRate);
         this.metadata.setFormat('bitsPerSample', ssd.description.sampleSize);
@@ -408,6 +415,8 @@ export class MP4Parser extends BasicParser {
       const encoderInfo = ssd.encoder ?? encoderDict[ssd.dataFormat];
       if (encoderInfo) {
         this.metadata.setFormat('lossless', !encoderInfo.lossy);
+      } else if (audioTracks.length > 1) {
+        this.metadata.setFormat('lossless', undefined);
       }
     }
 
@@ -1206,6 +1215,10 @@ export class MP4Parser extends BasicParser {
             const audioConfig = this.readAudioConfig(description, childOffset);
             if (audioConfig?.objectType === 36) {
               ssd.encoder = { format: 'MPEG-4/ALS', lossy: false };
+            }
+            // Escaped Audio Object Type 42 identifies USAC (xHE-AAC).
+            if (audioConfig?.objectType === 42) {
+              ssd.codecProfile = 'xHE-AAC';
             }
             if (audioConfig?.channels) {
               ssd.description.numAudioChannels = audioConfig.channels;

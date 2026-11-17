@@ -1193,6 +1193,7 @@ describe('Parse MPEG-4', () => {
 
     assert.strictEqual(format.container, 'isom/iso2/mp41', 'format.container');
     assert.strictEqual(format.codec, 'MPEG-4/AAC', 'format.codec');
+    assert.strictEqual(format.codecProfile, 'xHE-AAC');
     assert.strictEqual(format.numberOfChannels, 1, 'format.numberOfChannels');
     assert.strictEqual(format.sampleRate, 44100, 'format.sampleRate');
     assert.approximately(format.duration!, 4, 1 / 1000, 'format.duration');
@@ -2702,10 +2703,41 @@ describe('Parse MPEG-4', () => {
               type < 32 ? Uint8Array.of(type << 3) : Uint8Array.of(0xf8 | ((type - 32) >> 3), (type - 32) << 5);
             const { format } = await parse(box('esds', config(specific)));
             assert.equal(format.codec, 'MPEG-4/AAC');
+            assert.isUndefined(format.codecProfile);
             assert.isFalse(format.lossless);
             assert.include(format.trackInfo[0], { codecName: 'MPEG-4/AAC', lossless: false });
           });
         }
+
+        it('identifies USAC from escaped Audio Object Type 42', async () => {
+          const { format } = await parse(box('esds', config(Uint8Array.of(0xf9, 0x48, 0x24, 0x21))));
+          assert.equal(format.codec, 'MPEG-4/AAC');
+          assert.equal(format.codecProfile, 'xHE-AAC');
+          assert.isFalse(format.lossless);
+        });
+
+        for (const reverse of [false, true]) {
+          it(`keeps audio summary fields on the same track (reverse=${reverse})`, async () => {
+            const { format } = await mm.parseFile(path.join(mp4Samples, reverse ? 'alac-usac.m4a' : 'usac-alac.m4a'));
+            assert.equal(format.codecProfile, reverse ? 'xHE-AAC' : undefined);
+            assert.equal(format.sampleRate, reverse ? 44100 : 48000);
+            assert.equal(format.lossless, !reverse);
+            assert.equal(format.numberOfChannels, 1);
+            assert.equal(format.bitsPerSample, 16);
+          });
+        }
+
+        it('clears summary values when a later audio track has no sound description or known codec', async () => {
+          const { format } = await mm.parseFile(path.join(mp4Samples, 'usac-pcm-v2.mov'));
+          assert.lengthOf(format.trackInfo, 2);
+          assert.isUndefined(format.codecProfile);
+          assert.isUndefined(format.sampleRate);
+          assert.isUndefined(format.bitsPerSample);
+          assert.isUndefined(format.numberOfChannels);
+          assert.isUndefined(format.lossless);
+          assert.equal(format.trackInfo[0].audio?.samplingFrequency, 44100);
+          assert.isFalse(format.trackInfo[0].lossless);
+        });
 
         it('preserves ALAC identification', async () => {
           const { format } = await mm.parseBuffer(
