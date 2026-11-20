@@ -182,7 +182,13 @@ function hasNativePicture(native: TagPatch['native']): boolean {
 function decodeNativePicture(value: string): Picture {
   const errorMessage = 'native.METADATA_BLOCK_PICTURE must contain valid base64 FLAC PICTURE data';
   const normalized = value.replace(/\s/g, '');
-  const data = decodeBase64(normalized);
+  let data: Uint8Array;
+  try {
+    data = decodeBase64(normalized);
+  } catch {
+    // The browser decoder throws on malformed base64; the patch path reports a patch error.
+    throw new InvalidPatchError(errorMessage);
+  }
   if (encodeBase64(data) !== normalized) {
     throw new InvalidPatchError(errorMessage);
   }

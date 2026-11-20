@@ -100,7 +100,15 @@ export class VorbisStream implements IPageConsumer {
         debug('Ignore picture');
         return;
       }
-      value = VorbisPictureToken.fromBase64(value);
+      try {
+        value = VorbisPictureToken.fromBase64(value);
+      } catch (error) {
+        if (typeof error === 'object' && error !== null && 'name' in error && error.name === 'InvalidCharacterError') {
+          this.metadata.addWarning('Invalid base64 in METADATA_BLOCK_PICTURE; picture skipped');
+          return;
+        }
+        throw error;
+      }
       debug(`Push picture: id=${id}, format=${value.format}`);
     } else {
       debug(`Push tag: id=${id}, value=${value}`);
