@@ -1,4 +1,5 @@
 import { encodeBase64 } from '../../common/Base64.js';
+import { crc } from '../../ogg/OggCrc.js';
 import { concatBytes, decodeAscii } from '../core/bytes.js';
 import type { WriteChunk } from '../core/chunks.js';
 import { InvalidFileError, UnsupportedFeatureError } from '../core/errors.js';
@@ -9,32 +10,12 @@ import { serializePicture } from '../flac/picture.js';
 import { applyVorbisPatch } from '../mapping/vorbis.js';
 import { parseVorbisCommentWithSuffix, serializeVorbisComment } from '../vorbis/comment.js';
 
+export { crc } from '../../ogg/OggCrc.js';
+
 // Match the MP4 parser's 100,000-entry budget. This caps retained page
 // headers and source-range descriptors for buffer, file, and dry-run updates.
 const MAX_PAGES = 100_000;
 const MAX_HEADER_PACKET = 64 * 1024 * 1024;
-const CRC_POLYNOMIAL = 0x04c11db7;
-
-const CRC_TABLE = (() => {
-  const table = new Uint32Array(256);
-  for (let index = 0; index < 256; index++) {
-    let value = index << 24;
-    for (let bit = 0; bit < 8; bit++) {
-      value = (value << 1) ^ (value & 0x80000000 ? CRC_POLYNOMIAL : 0);
-    }
-    table[index] = value >>> 0;
-  }
-  return table;
-})();
-
-/** Compute the Ogg CRC-32 over a complete page. */
-export function crc(data: Uint8Array): number {
-  let value = 0;
-  for (const byte of data) {
-    value = ((value << 8) ^ CRC_TABLE[((value >>> 24) ^ byte) & 0xff]) >>> 0;
-  }
-  return value;
-}
 
 function checkPageCount(count: number): void {
   if (count >= MAX_PAGES) {

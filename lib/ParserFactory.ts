@@ -102,15 +102,7 @@ export class ParserFactory {
     const maxBufferSize = getMaxMemoryAllocation(opts);
     getMaxMetadataEntries(opts);
     getMaxChapterCount(opts);
-    if (isRandomAccessTokenizer(tokenizer)) {
-      debug('tokenizer supports random-access, scanning for appending headers');
-      await scanAppendingHeaders(tokenizer, opts);
-    } else {
-      debug('tokenizer does not support random-access, cannot scan for appending headers');
-    }
-
     if (!parserLoader) {
-      const buf = new Uint8Array(4100);
       if (tokenizer.fileInfo.mimeType) {
         parserLoader = this.findLoaderForContentType(tokenizer.fileInfo.mimeType);
       }
@@ -120,6 +112,7 @@ export class ParserFactory {
       if (!parserLoader) {
         // Parser could not be determined on MIME-type or extension
         debug('Guess parser on content...');
+        const buf = new Uint8Array(4100);
         await tokenizer.peekBuffer(buf, { mayBeLess: true });
 
         const guessedType = await fileTypeFromBuffer(buf, { mpegOffsetTolerance: 10, maxBufferSize });
@@ -132,6 +125,13 @@ export class ParserFactory {
           throw new UnsupportedFileTypeError(`Guessed MIME-type not supported: ${guessedType.mime}`);
         }
       }
+    }
+    // Ogg reads its own packet metadata and never consumes appended ID3/APEv2
+    // tags. Select the parser first, including when the format is sniffed, to
+    // avoid two unrelated tail reads for Ogg files.
+    if (parserLoader.parserType !== 'ogg' && isRandomAccessTokenizer(tokenizer)) {
+      debug('tokenizer supports random-access, scanning for appending headers');
+      await scanAppendingHeaders(tokenizer, opts);
     }
     // Parser found, execute parser
     debug(`Loading ${parserLoader.parserType} parser...`);

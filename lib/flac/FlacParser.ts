@@ -1,7 +1,8 @@
+import type { IGetToken } from '@tokenizer/token';
 import initDebug from 'debug';
-import { isRandomAccessTokenizer } from 'strtok3';
+import { EndOfStreamError, type IRandomAccessTokenizer, isRandomAccessTokenizer } from 'strtok3';
 import { Uint8ArrayType } from 'token-types';
-import { getMaxMemoryAllocation, getMaxMetadataEntries } from '../common/Allocation.js';
+import { getMaxMemoryAllocation, getMaxMetadataEntries, validateAllocation } from '../common/Allocation.js';
 import { FourCcToken } from '../common/FourCC.js';
 import { AbstractID3Parser } from '../id3v2/AbstractID3Parser.js';
 import { type IVorbisPicture, VorbisPictureToken } from '../ogg/vorbis/Vorbis.js';
@@ -20,7 +21,24 @@ export class FlacParser extends AbstractID3Parser {
 
   private streamInfo: IBlockStreamInfo | undefined;
 
+  private metadataBuffer?: {
+    tokenizer: IRandomAccessTokenizer;
+    data: Uint8Array;
+    position: number;
+    length: number;
+  };
+
   public async postId3v2Parse(): Promise<void> {
+    // Coalesce small metadata reads without making streams wait for bytes past
+    // the metadata. A modest window avoids rereading much of a large picture.
+    if (isRandomAccessTokenizer(this.tokenizer)) {
+      this.metadataBuffer = {
+        tokenizer: this.tokenizer,
+        data: new Uint8Array(Math.min(4096, getMaxMemoryAllocation(this.options))),
+        position: this.tokenizer.position,
+        length: 0
+      };
+    }
     const fourCC = await this.readToken<string>(FourCcToken);
     if (fourCC.toString() !== 'fLaC') {
       throw new FlacContentError('Invalid FLAC preamble');
@@ -34,6 +52,7 @@ export class FlacParser extends AbstractID3Parser {
       await this.parseDataBlock(blockHeader);
     } while (!blockHeader.lastBlock);
 
+    this.metadataBuffer = undefined;
     const audioOffset = this.tokenizer.position;
     // Duration scan: recover sample extent from FLAC frame headers when STREAMINFO
     // totalSamples is unknown (0) and duration was explicitly requested.
@@ -51,6 +70,34 @@ export class FlacParser extends AbstractID3Parser {
       const dataSize = this.tokenizer.fileInfo.size - audioOffset;
       this.metadata.setFormat('bitrate', (8 * dataSize) / this.metadata.format.duration);
     }
+  }
+
+  protected override async readToken<T>(token: IGetToken<T>, position?: number): Promise<T> {
+    const cache = this.metadataBuffer;
+    if (!cache || position !== undefined || token.len > cache.data.length) {
+      return super.readToken(token, position);
+    }
+    validateAllocation(token.len, this.options);
+    const fileSize = this.tokenizer.fileInfo.size;
+    if (fileSize !== undefined && token.len > fileSize - this.tokenizer.position) {
+      throw new EndOfStreamError();
+    }
+    let offset = this.tokenizer.position - cache.position;
+    if (offset < 0 || offset + token.len > cache.length) {
+      cache.position = this.tokenizer.position;
+      cache.length = await this.tokenizer.peekBuffer(cache.data, {
+        length: Math.min(cache.data.length, fileSize === undefined ? cache.data.length : fileSize - cache.position),
+        mayBeLess: true
+      });
+      if (cache.length < token.len) {
+        // Preserve ordinary token-read EOF handling on truncated input.
+        return super.readToken(token, position);
+      }
+      offset = 0;
+    }
+    // Only advance over bytes whose presence the peek has already established.
+    cache.tokenizer.setPosition(this.tokenizer.position + token.len);
+    return token.get(cache.data, offset);
   }
 
   /**
@@ -96,11 +143,8 @@ export class FlacParser extends AbstractID3Parser {
       const scanData = data.subarray(0, retained + read);
       const scanEnd = atEnd ? scanData.length : Math.max(0, scanData.length - overlap);
 
-      // Scan byte-by-byte for FLAC frame sync codes (0xFF) and validate candidates.
-      for (let i = 0; i < scanEnd; ++i) {
-        if (scanData[i] !== 0xff) {
-          continue;
-        }
+      // Use the native byte search, then validate each sync candidate as before.
+      for (let i = scanData.indexOf(0xff); i >= 0 && i < scanEnd; i = scanData.indexOf(0xff, i + 1)) {
         try {
           const header = Flac.parseFlacFrameHeader(scanData, i);
           if (
@@ -193,6 +237,10 @@ export class FlacParser extends AbstractID3Parser {
     }
 
     const streamInfo = await this.readToken(Flac.BlockStreamInfo);
+    if (this.metadataBuffer) {
+      // STREAMINFO survives subsequent refills of the shared metadata buffer.
+      streamInfo.fileMD5 = new Uint8Array(streamInfo.fileMD5);
+    }
     this.streamInfo = streamInfo;
     this.metadata.setFormat('container', 'FLAC');
     this.processsStreamInfo(streamInfo);
