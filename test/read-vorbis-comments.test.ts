@@ -1,4 +1,5 @@
 import { rejects } from 'node:assert/strict';
+import { runInNewContext } from 'node:vm';
 import {
   DEFAULT_MAX_COMMENT_COUNT,
   parseVorbisComment,
@@ -6,13 +7,15 @@ import {
   VorbisCommentError
 } from 'music-metadata/tokens/vorbis';
 import { fromBuffer } from 'strtok3';
-import { assert } from 'vitest';
+import { assert, vi } from 'vitest';
+import { decodeBase64 } from '../lib/common/Base64.js';
 import { MetadataCollector } from '../lib/common/MetadataCollector.js';
 import { FlacParser } from '../lib/flac/FlacParser.js';
 import { UnexpectedFileContentError } from '../lib/index.js';
 import { PageHeader } from '../lib/ogg/OggToken.js';
 import { OpusStream } from '../lib/ogg/opus/OpusStream.js';
 import { SpeexStream } from '../lib/ogg/speex/SpeexStream.js';
+import { VorbisPictureToken } from '../lib/ogg/vorbis/Vorbis.js';
 import { VorbisDecoder } from '../lib/ogg/vorbis/VorbisDecoder.js';
 import { VorbisStream } from '../lib/ogg/vorbis/VorbisStream.js';
 import type { IOptions } from '../lib/type.js';
@@ -74,6 +77,67 @@ function pictureComment(): string {
 }
 
 describe('Shared Vorbis comment decoding', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
+  });
+
+  function useBrowserDecoder() {
+    return vi.spyOn(VorbisPictureToken, 'fromBase64').mockImplementation(value => {
+      let decoded: Uint8Array;
+      try {
+        vi.stubGlobal('Buffer', undefined);
+        decoded = decodeBase64(value);
+      } finally {
+        vi.unstubAllGlobals();
+      }
+      return VorbisPictureToken.fromBuffer(decoded);
+    });
+  }
+
+  it('recognizes InvalidCharacterError without requiring a particular error prototype', async () => {
+    const metadata = new MetadataCollector({});
+    const parser = new VorbisStream(metadata, {});
+    const error = runInNewContext("Object.assign(new Error('Invalid base64'), { name: 'InvalidCharacterError' })");
+    assert.notInstanceOf(error, Error);
+    vi.spyOn(VorbisPictureToken, 'fromBase64').mockImplementation(() => {
+      throw error;
+    });
+
+    await parser.addTag('METADATA_BLOCK_PICTURE', '!');
+
+    assert.deepEqual(metadata.quality.warnings, [
+      { message: 'Invalid base64 in METADATA_BLOCK_PICTURE; picture skipped' }
+    ]);
+    assert.isUndefined(metadata.native.vorbis);
+  });
+
+  for (const error of [null, 'decoder failed', { name: 'TypeError' }]) {
+    it(`preserves unexpected thrown values: ${JSON.stringify(error)}`, async () => {
+      const metadata = new MetadataCollector({});
+      const parser = new VorbisStream(metadata, {});
+      vi.spyOn(VorbisPictureToken, 'fromBase64').mockImplementation(() => {
+        throw error;
+      });
+
+      await rejects(parser.addTag('METADATA_BLOCK_PICTURE', '!'), caught => caught === error);
+      assert.isEmpty(metadata.quality.warnings);
+    });
+  }
+
+  it('does not suppress InvalidCharacterError from metadata collection', async () => {
+    const metadata = new MetadataCollector({});
+    const parser = new VorbisStream(metadata, {});
+    const error = new DOMException('metadata collection failed', 'InvalidCharacterError');
+    vi.spyOn(metadata, 'addTag').mockRejectedValueOnce(error);
+
+    await rejects(
+      parser.addTag('METADATA_BLOCK_PICTURE', pictureComment().slice('METADATA_BLOCK_PICTURE='.length)),
+      caught => caught === error
+    );
+    assert.isEmpty(metadata.quality.warnings);
+  });
+
   it('yields comments without consuming format-specific trailing bytes', () => {
     const packet = commentList('Vendor', ['title=Héllo=world', 'ARTIST=Artist']);
     const decoder = new VorbisDecoder(Buffer.concat([Buffer.from([0xaa]), packet, Buffer.from([1, 0xff])]), 1);
@@ -149,13 +213,69 @@ describe('Shared Vorbis comment decoding', () => {
 
       it('skips covers before decoding Base64', async () => {
         const { metadata, parse } = setup({ skipCovers: true });
+        const decoder = useBrowserDecoder();
         await parse(commentList('Vendor', ['METADATA_BLOCK_PICTURE=!invalid Base64', 'TITLE=Kept']));
+        assert.lengthOf(decoder.mock.calls, 0);
         assert.isUndefined(metadata.common.picture);
         assert.deepEqual(
           metadata.native.vorbis.map(tag => tag.id),
           ['TITLE']
         );
         assert.strictEqual(metadata.common.title, 'Kept');
+        assert.isEmpty(metadata.quality.warnings);
+      });
+
+      for (const invalid of ['SGVs!bG8=', 'AA=']) {
+        it(`warns and continues after browser base64 rejection of ${JSON.stringify(invalid)}`, async () => {
+          const { metadata, parser, parse } = setup();
+          const data = commentList('Vendor', [
+            'TITLE=Before',
+            `METADATA_BLOCK_PICTURE=${invalid}`,
+            'ARTIST=After',
+            pictureComment(),
+            'ALBUM=Last'
+          ]);
+          useBrowserDecoder();
+
+          await parse(data);
+
+          assert.strictEqual(metadata.common.title, 'Before');
+          assert.strictEqual(metadata.common.artist, 'After');
+          assert.strictEqual(metadata.common.album, 'Last');
+          assert.lengthOf(metadata.common.picture, 1);
+          assert.deepEqual(metadata.common.picture[0].data, new Uint8Array([0xff, 0xd8, 0xff, 0xd9]));
+          assert.deepEqual(
+            metadata.native.vorbis.map(tag => tag.id),
+            ['TITLE', 'ARTIST', 'METADATA_BLOCK_PICTURE', 'ALBUM']
+          );
+          assert.deepEqual(metadata.quality.warnings, [
+            { message: 'Invalid base64 in METADATA_BLOCK_PICTURE; picture skipped' }
+          ]);
+          if (parser instanceof VorbisStream) {
+            assert.isTrue(parser.isMetadataComplete);
+          }
+        });
+      }
+
+      it('does not suppress other browser decoder errors', async () => {
+        const { metadata, parse } = setup();
+        const data = commentList('Vendor', [pictureComment()]);
+        const error = new Error('decoder failed');
+        useBrowserDecoder();
+        vi.spyOn(globalThis, 'atob').mockImplementation(() => {
+          throw error;
+        });
+
+        await rejects(parse(data), caught => caught === error);
+        assert.isEmpty(metadata.quality.warnings);
+      });
+
+      it('does not suppress malformed decoded picture data', async () => {
+        const { metadata, parse } = setup();
+        useBrowserDecoder();
+
+        await rejects(parse(commentList('Vendor', ['METADATA_BLOCK_PICTURE=AQID'])), RangeError);
+        assert.isEmpty(metadata.quality.warnings);
       });
 
       for (const [name, payload, message, countError] of [

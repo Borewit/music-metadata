@@ -97,6 +97,24 @@ describe('browser root entry', () => {
     const after = await readTags(updated);
     expect(after.common.title).toBe('Browser Test');
   });
+
+  it('reports malformed native FLAC artwork as InvalidPatchError in the browser decoder path', async () => {
+    const flac = makeFlac();
+    const globalWithBuffer = globalThis as typeof globalThis & { Buffer: typeof Buffer | undefined };
+    const savedBuffer = globalWithBuffer.Buffer;
+    let error: unknown;
+    try {
+      globalWithBuffer.Buffer = undefined;
+      error = await updateBuffer(flac, { native: { METADATA_BLOCK_PICTURE: '!' } }).then(
+        () => undefined,
+        reason => reason
+      );
+    } finally {
+      globalWithBuffer.Buffer = savedBuffer;
+    }
+    expect(error).toBeInstanceOf(browserRoot.InvalidPatchError);
+    expect((error as Error).message).toBe('native.METADATA_BLOCK_PICTURE must contain valid base64 FLAC PICTURE data');
+  });
 });
 
 describe('browser ADTS AAC writing', () => {
