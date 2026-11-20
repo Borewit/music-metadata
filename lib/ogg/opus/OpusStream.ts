@@ -15,13 +15,14 @@ import { OpusContentError } from './Opus.js';
  */
 export class OpusStream extends VorbisStream {
   private idHeader: Opus.IIdHeader = null as unknown as Opus.IIdHeader;
-  private lastPos = -1;
+  private audioOffset = -1;
   private tokenizer: ITokenizer;
 
   constructor(metadata: INativeMetadataCollector, options: IOptions, tokenizer: ITokenizer) {
     super(metadata, options);
     this.tokenizer = tokenizer;
     this.durationOnLastPage = true;
+    this.parsePacketsOnPageEnd = true;
   }
 
   /**
@@ -47,7 +48,9 @@ export class OpusStream extends VorbisStream {
     switch (magicSignature) {
       case 'OpusTags':
         await this.parseUserCommentList(pageData, 8);
-        this.lastPos = this.tokenizer.position - pageData.length;
+        // OpusTags now finishes before reading audio. Keep the summary estimate
+        // independent of artwork size and the size of the first audio page.
+        this.audioOffset = this.tokenizer.position;
         break;
 
       default:
@@ -55,20 +58,20 @@ export class OpusStream extends VorbisStream {
     }
   }
 
-  public calculateDuration(enfOfStream: boolean) {
+  public calculateDuration(endOfStream: boolean, lastPageHeader = this.lastPageHeader) {
     if (
-      this.lastPageHeader &&
-      (enfOfStream || this.lastPageHeader.headerType.lastPage) &&
+      lastPageHeader &&
+      (endOfStream || lastPageHeader.headerType.lastPage) &&
       this.metadata.format.sampleRate &&
-      this.lastPageHeader.absoluteGranulePosition >= 0
+      lastPageHeader.absoluteGranulePosition >= 0
     ) {
-      // Calculate duration
-      const pos_48bit = this.lastPageHeader.absoluteGranulePosition - this.idHeader.preSkip;
+      // Calculate duration from last page we already read
+      const pos_48bit = lastPageHeader.absoluteGranulePosition - this.idHeader.preSkip;
       this.metadata.setFormat('numberOfSamples', pos_48bit);
       this.metadata.setFormat('duration', pos_48bit / 48000);
 
-      if (this.lastPos !== -1 && this.tokenizer.fileInfo.size && this.metadata.format.duration) {
-        const dataSize = this.tokenizer.fileInfo.size - this.lastPos;
+      if (this.audioOffset !== -1 && this.tokenizer.fileInfo.size && this.metadata.format.duration) {
+        const dataSize = this.tokenizer.fileInfo.size - this.audioOffset;
         this.metadata.setFormat('bitrate', (8 * dataSize) / this.metadata.format.duration);
       }
     }

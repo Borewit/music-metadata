@@ -21,6 +21,7 @@ export class VorbisStream implements IPageConsumer {
   protected metadata: INativeMetadataCollector;
   protected options: IOptions;
   protected lastPageHeader?: IPageHeader;
+  protected parsePacketsOnPageEnd = false;
   private readonly maxBufferedSegments: number;
   public durationOnLastPage = true;
   public isMetadataComplete = false;
@@ -36,37 +37,43 @@ export class VorbisStream implements IPageConsumer {
    * @param header Ogg Page Header
    * @param pageData Page data
    */
-  public async parsePage(header: IPageHeader, pageData: Uint8Array): Promise<void> {
+  public async parsePage(header: IPageHeader, pageData: Uint8Array, lacingValues?: Uint8Array): Promise<void> {
     this.lastPageHeader = header;
     if (header.headerType.firstPage) {
       this.parseFirstPage(header, pageData);
     } else {
-      if (header.headerType.continued) {
-        if (this.pageSegments.length === 0) {
-          throw new VorbisContentError('Cannot continue on previous page');
-        }
+      // OpusTags is a complete packet when its final lace is below 255. Do
+      // not read the following audio page merely to discover that boundary.
+      const eager = this.parsePacketsOnPageEnd && lacingValues !== undefined;
+      if (header.headerType.continued && this.pageSegments.length === 0) {
+        throw new VorbisContentError('Cannot continue on previous page');
+      }
+      if (!header.headerType.continued) {
+        await this.flush();
+      }
+      // Preserve the existing handling of non-Opus EOS pages. Opus must also
+      // process an OpusTags packet that starts and finishes on the EOS page.
+      if (!header.headerType.lastPage || header.headerType.continued || eager) {
         validateAllocation(this.bufferedPageLength + pageData.length, this.options);
-        if (this.pageSegments.length >= this.maxBufferedSegments) {
+        if (header.headerType.continued && this.pageSegments.length >= this.maxBufferedSegments) {
           throw new VorbisContentError('Buffered Ogg page count exceeds entry limit');
         }
         this.pageSegments.push(pageData);
         this.bufferedPageLength += pageData.length;
       }
-      if (header.headerType.lastPage || !header.headerType.continued) {
-        // Flush page segments
-        if (this.pageSegments.length > 0) {
-          const fullPage = this.mergeUint8Arrays(this.pageSegments);
-          await this.parseFullPage(fullPage);
-        }
-        // Reset page segments
-        this.bufferedPageLength = header.headerType.lastPage ? 0 : pageData.length;
-        validateAllocation(this.bufferedPageLength, this.options);
-        this.pageSegments = header.headerType.lastPage ? [] : [pageData];
+      if (
+        header.headerType.lastPage ||
+        (eager && lacingValues.length > 0 && lacingValues[lacingValues.length - 1] < 255)
+      ) {
+        await this.flush();
       }
     }
   }
 
   private mergeUint8Arrays(arrays: Uint8Array[]): Uint8Array {
+    if (arrays.length === 1) {
+      return arrays[0];
+    }
     const totalSize = arrays.reduce((acc, e) => acc + e.length, 0);
     validateAllocation(totalSize, this.options);
     const merged = new Uint8Array(totalSize);
@@ -83,6 +90,8 @@ export class VorbisStream implements IPageConsumer {
       return;
     }
     await this.parseFullPage(this.mergeUint8Arrays(this.pageSegments));
+    this.pageSegments = [];
+    this.bufferedPageLength = 0;
   }
 
   public async parseUserComment(pageData: Uint8Array, offset: number): Promise<number> {
