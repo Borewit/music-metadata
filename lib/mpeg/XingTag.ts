@@ -68,7 +68,9 @@ export const XingHeaderFlags: IGetToken<IXingHeaderFlags> = {
 //  * XING Header Tag
 //  * Ref: http://gabriel.mp3-tech.org/mp3infotag.html
 //  */
-export async function readXingHeader(tokenizer: ITokenizer): Promise<IXingInfoTag> {
+export async function readXingHeader(
+  tokenizer: Pick<ITokenizer, 'readToken' | 'peekToken' | 'readBuffer' | 'ignore'>
+): Promise<IXingInfoTag> {
   const flags = await tokenizer.readToken(XingHeaderFlags);
   const xingInfoTag: IXingInfoTag = { numFrames: null, streamSize: null, vbrScale: null };
   if (flags.frames) {
