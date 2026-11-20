@@ -6,16 +6,12 @@ import { hasID3v1Header } from '../id3v1/ID3v1Parser.js';
 import { AbstractID3Parser } from '../id3v2/AbstractID3Parser.js';
 import { AdtsFrameHeader } from './AdtsFrameHeader.js';
 import { MpegContentError, MpegFrameHeader } from './MpegFrameHeader.js';
+import { MpegFrameReader } from './MpegFrameReader.js';
 import { InfoTagHeaderTag, type IXingInfoTag, LameEncoderVersion, readXingHeader } from './XingTag.js';
 
 const debug = initDebug('music-metadata:parser:mpeg');
 
 export { MpegContentError } from './MpegFrameHeader.js';
-
-/**
- * Cache buffer size used for searching synchronization preamble
- */
-const maxPeekLen = 1024;
 
 function getVbrCodecProfile(vbrScale: number): string {
   return `V${Math.floor((100 - vbrScale) / 10)}`;
@@ -46,10 +42,7 @@ export class MpegParser extends AbstractID3Parser {
    */
   private mpegOffset: number | null = null;
 
-  private syncPeek = {
-    buf: new Uint8Array(maxPeekLen),
-    len: 0
-  };
+  private frameReader = new MpegFrameReader(this.tokenizer);
 
   /**
    * Called after ID3 headers have been parsed
@@ -120,49 +113,48 @@ export class MpegParser extends AbstractID3Parser {
 
     while (true) {
       let bo = 0;
-      this.syncPeek.len = await this.tokenizer.peekBuffer(this.syncPeek.buf, { length: maxPeekLen, mayBeLess: true });
-      if (this.syncPeek.len >= 128 && this.syncPeek.len < maxPeekLen) {
-        const footer = this.syncPeek.len - 128;
-        const end = this.tokenizer.position + this.syncPeek.len;
+      const cached = this.frameReader.syncBuffer();
+      if (!cached) {
+        await this.frameReader.refresh();
+      }
+      // Search only the returned prefix, never stale bytes after a short peek.
+      const buffer = cached ?? this.frameReader.buffer.subarray(0, this.frameReader.length);
+      const length = buffer.length;
+      const shortPeek = !cached && length < this.frameReader.buffer.length;
+      if (length >= 128 && shortPeek) {
+        const footer = length - 128;
+        const end = this.tokenizer.position + length;
         if (
           (this.tokenizer.fileInfo.size === undefined || this.tokenizer.fileInfo.size === end) &&
-          this.syncPeek.buf[footer] === 0x54 &&
-          this.syncPeek.buf[footer + 1] === 0x41 &&
-          this.syncPeek.buf[footer + 2] === 0x47
+          buffer[footer] === 0x54 &&
+          buffer[footer + 1] === 0x41 &&
+          buffer[footer + 2] === 0x47
         ) {
           this.audioEnd = end - 128;
         }
       }
       const audioEndReached = this.audioEnd !== undefined && this.tokenizer.position >= this.audioEnd;
       const fullMpegScan = this.calculateEofDuration && this.audioFrameHeader !== undefined;
-      const id3v1Tail =
-        this.syncPeek.len >= 3 &&
-        this.syncPeek.buf[0] === 0x54 &&
-        this.syncPeek.buf[1] === 0x41 &&
-        this.syncPeek.buf[2] === 0x47;
+      const id3v1Tail = length >= 3 && buffer[0] === 0x54 && buffer[1] === 0x41 && buffer[2] === 0x47;
       if (
-        this.syncPeek.len < 2 ||
+        length < 2 ||
         audioEndReached ||
-        (this.syncPeek.len <= 163 && this.audioFrameHeader !== undefined && (!fullMpegScan || id3v1Tail))
+        (length <= 163 && this.audioFrameHeader !== undefined && (!fullMpegScan || id3v1Tail))
       ) {
         throw new EndOfStreamError();
       }
       while (true) {
-        if (gotFirstSync && bo === this.syncPeek.len) {
+        if (gotFirstSync && bo === length) {
           // Keep a possible sync byte at the end of a lookahead buffer.
           await this.tokenizer.ignore(bo - 1);
           gotFirstSync = false;
           break;
         }
-        if (gotFirstSync && (this.syncPeek.buf[bo] & 0xe0) === 0xe0) {
+        if (gotFirstSync && (buffer[bo] & 0xe0) === 0xe0) {
           this.frameHeaderBuffer[0] = 0xff;
-          this.frameHeaderBuffer[1] = this.syncPeek.buf[bo];
+          this.frameHeaderBuffer[1] = buffer[bo];
           // Retain the MPEG tail policy; a complete ADTS frame can be much smaller.
-          if (
-            this.syncPeek.len <= 163 &&
-            !AdtsFrameHeader.matches(this.frameHeaderBuffer) &&
-            (!fullMpegScan || id3v1Tail)
-          ) {
+          if (length <= 163 && !AdtsFrameHeader.matches(this.frameHeaderBuffer) && (!fullMpegScan || id3v1Tail)) {
             throw new EndOfStreamError();
           }
           await this.tokenizer.ignore(bo);
@@ -176,12 +168,12 @@ export class MpegParser extends AbstractID3Parser {
           return; // sync
         }
         gotFirstSync = false;
-        bo = this.syncPeek.buf.indexOf(0xff, bo);
+        bo = buffer.indexOf(0xff, bo);
         if (bo === -1) {
-          if (this.syncPeek.len < this.syncPeek.buf.length) {
+          if (shortPeek) {
             throw new EndOfStreamError();
           }
-          await this.tokenizer.ignore(this.syncPeek.len);
+          await this.tokenizer.ignore(length);
           break; // continue with next buffer
         }
         ++bo;
@@ -199,7 +191,7 @@ export class MpegParser extends AbstractID3Parser {
       this.mpegOffset = this.tokenizer.position - 1;
     }
 
-    await this.tokenizer.peekBuffer(this.frameHeaderTail, { length: 3 });
+    await this.frameReader.peekBuffer(this.frameHeaderTail);
 
     let header: MpegFrameHeader | AdtsFrameHeader;
     try {
@@ -318,7 +310,7 @@ export class MpegParser extends AbstractID3Parser {
       return;
     }
     const buffer = new Uint8Array(58);
-    if ((await this.tokenizer.peekBuffer(buffer, { mayBeLess: true })) < buffer.length) {
+    if ((await this.frameReader.peekBuffer(buffer, { mayBeLess: true })) < buffer.length) {
       return;
     }
     const view = new DataView(buffer.buffer);
@@ -348,7 +340,7 @@ export class MpegParser extends AbstractID3Parser {
   }
 
   private async parseAdts(header: AdtsFrameHeader): Promise<boolean> {
-    await this.tokenizer.readBuffer(this.adtsHeaderBuffer);
+    await this.frameReader.readBuffer(this.adtsHeaderBuffer);
     const frameLength = header.frameLength + common.getBitAllignedNumber(this.adtsHeaderBuffer, 0, 0, 11);
     if (frameLength <= header.headerLength) {
       throw new MpegContentError(`Invalid ADTS frame length: ${frameLength}`);
@@ -394,14 +386,14 @@ export class MpegParser extends AbstractID3Parser {
   private async skipSideInformation(): Promise<void> {
     if (this.audioFrameHeader) {
       const sideInfoLength = this.audioFrameHeader.sideInfoLength;
-      await this.tokenizer.readBuffer(this.sideInfoBuffer, { length: sideInfoLength });
+      await this.frameReader.readBuffer(this.sideInfoBuffer, { length: sideInfoLength });
       this.offset += sideInfoLength;
       await this.readXtraInfoHeader();
     }
   }
 
   private async readXtraInfoHeader(): Promise<IXingInfoTag | null> {
-    const headerTag = await this.tokenizer.readToken(InfoTagHeaderTag);
+    const headerTag = await this.frameReader.readToken(InfoTagHeaderTag);
     this.offset += InfoTagHeaderTag.len;
 
     switch (headerTag) {
@@ -423,7 +415,7 @@ export class MpegParser extends AbstractID3Parser {
         break;
 
       case 'LAME': {
-        const version = await this.tokenizer.readToken(LameEncoderVersion);
+        const version = await this.frameReader.readToken(LameEncoderVersion);
         if (this.frameSize >= this.offset + LameEncoderVersion.len) {
           this.offset += LameEncoderVersion.len;
           this.metadata.setFormat('tool', `LAME ${version}`);
@@ -450,7 +442,7 @@ export class MpegParser extends AbstractID3Parser {
    */
   private async readXingInfoHeader(): Promise<IXingInfoTag> {
     const offset = this.tokenizer.position;
-    const infoTag = await readXingHeader(this.tokenizer);
+    const infoTag = await readXingHeader(this.frameReader);
     this.offset += this.tokenizer.position - offset;
 
     if (infoTag.lame) {
