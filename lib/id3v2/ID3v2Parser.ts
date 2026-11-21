@@ -5,7 +5,7 @@ import { getMaxChapterCount, getMaxMetadataEntries, readBuffer } from '../common
 import type { TagType } from '../common/GenericTagTypes.js';
 import type { INativeMetadataCollector, IWarningCollector } from '../common/MetadataCollector.js';
 import type { AnyTagValue, IChapter, IOptions, ITag } from '../type.js';
-import { getFrameHeaderLength, readFrameHeader } from './FrameHeader.js';
+import { getFrameHeaderLength, getId3v24FrameLength, readFrameHeader } from './FrameHeader.js';
 import { type Chapter, FrameParser, Id3v2ContentError, type ITextTag, type TableOfContents } from './FrameParser.js';
 import { ID3v2Header, type ID3v2MajorVersion, type IID3v2header, UINT32SYNCSAFE } from './ID3v2Token.js';
 
@@ -256,6 +256,9 @@ export class ID3v2Parser {
       const frameHeaderBytes = data.subarray(offset, offset + frameHeaderLength);
       offset += frameHeaderLength;
       const frameHeader = readFrameHeader(frameHeaderBytes, this.id3Header.version.major, this.metadata);
+      if (this.id3Header.version.major === 4) {
+        frameHeader.length = getId3v24FrameLength(data, offset, frameHeaderBytes, frameHeader.length);
+      }
       if (++frameCount > getMaxMetadataEntries(this.options)) {
         throw new Id3v2ContentError('Frame count exceeds entry limit');
       }
