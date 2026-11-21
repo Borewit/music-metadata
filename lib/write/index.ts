@@ -6,7 +6,7 @@ import { writeBuffer } from './core/chunks.js';
 import { assertPatch, buildUpdate } from './core/shared.js';
 import { openSource } from './core/source.js';
 import type { TagPatch, WriteOptions, WriteResult } from './core/types.js';
-import { writeChunks } from './core/writer.js';
+import { writeFileTags } from './file.js';
 import { normalizeCommonPatch } from './mapping/common.js';
 
 export {
@@ -41,22 +41,7 @@ export { PICTURE_TYPES } from './flac/picture.js';
  * temporary file and atomically renamed into place.
  */
 export async function updateFile(filePath: string, patch: TagPatch, options: WriteOptions = {}): Promise<WriteResult> {
-  assertPatch(patch);
-  patch = normalizeCommonPatch(patch);
-  const source = await openSource(filePath);
-  try {
-    const update = await buildUpdate(source, patch, options);
-    const result = await writeChunks(filePath, update.chunks, {
-      atomic: options.atomic ?? true,
-      stageToFile: update.stageToFile,
-      backup: options.backup ?? false,
-      dryRun: options.dryRun ?? false,
-      beforeReplace: () => source.close()
-    });
-    return { format: update.format, ...result, paddingBytes: update.paddingBytes };
-  } finally {
-    await source.close();
-  }
+  return writeFileTags(filePath, patch, options);
 }
 
 /**

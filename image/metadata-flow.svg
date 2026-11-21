@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1120" height="648" viewBox="0 0 1120 648" role="img" aria-labelledby="title description">
-  <title id="title">Audio metadata: read any media format, normalize, write conventional</title>
-  <desc id="description">Three example readers map native tag names to metadata.common: APEv2 Title, Artist and Album; Vorbis TITLE, ARTIST and ALBUM; and ID3v2 TIT2, TPE1 and TALB become title, artist and album. Select and edit fields to create a write patch. The writer maps that patch to the target format's conventional tag names: APEv2 for Monkey's Audio, Vorbis comments for FLAC, or ID3v2.4 for MP3. These are alternative formats, not a merge of files or an audio conversion.</desc>
+  <title id="title">Reading, editing and saving audio metadata</title>
+  <desc id="description">MediaFile.open reads a local file with parseFile. APEv2, Vorbis comments and ID3v2.3 illustrate how native tags map to common title, artist and album fields. After optional edits, file.save passes the common tags to updateFile for the same path. The writer preserves the audio and writes the container's conventional tags. For an MP3 with ID3v2.3, explicit ID3 replacement writes ID3v2.4.</desc>
   <defs>
     <style>
       text { font-family: Arial, Helvetica, sans-serif; fill: #172b3a; }
@@ -34,12 +34,12 @@
   <rect x="784" y="16" width="320" height="584" rx="14" fill="#fff5eb" stroke="#ecd4bc"/>
 
   <!-- Three stages, with alternatives shown on each side. -->
-  <text x="36" y="58" class="heading">Read any media format</text>
-  <text x="36" y="89" class="subtitle">Supported formats · examples</text>
-  <text x="420" y="58" class="heading">Common</text>
-  <text x="420" y="89" class="subtitle">Normalized field names</text>
-  <text x="804" y="58" class="heading">Write conventional</text>
-  <text x="804" y="89" class="subtitle">Same audio format · examples</text>
+  <text x="36" y="58" class="heading">Input tags</text>
+  <text x="36" y="89" class="subtitle">Native tags in the file</text>
+  <text x="420" y="58" class="heading">MediaFile</text>
+  <text x="420" y="89" class="subtitle">Editable metadata for one file</text>
+  <text x="804" y="58" class="heading">Output tags</text>
+  <text x="804" y="89" class="subtitle">Conventional tags in the same file</text>
 
   <!-- Read-side native tags. Field order corresponds to the common fields. -->
   <g>
@@ -57,7 +57,7 @@
   <g>
     <rect x="32" y="460" width="272" height="126" rx="10" fill="#ffffff" stroke="#b8cfe2"/>
     <text x="48" y="495" class="format">MP3</text>
-    <text x="48" y="524" class="tag-format">ID3v2</text>
+    <text x="48" y="524" class="tag-format">ID3v2.3</text>
     <text x="48" y="561" class="fields">TIT2 · TPE1 · TALB</text>
   </g>
 
@@ -66,12 +66,12 @@
   <path class="read-line" d="M 352 300 H 416" marker-end="url(#read-arrow)"/>
   <rect x="322" y="257" width="77" height="27" rx="4" fill="#ffffff"/>
   <text x="360" y="278" text-anchor="middle" class="step">Normalize</text>
-  <rect x="329" y="311" width="62" height="24" rx="4" fill="#ffffff"/>
-  <text x="360" y="328" text-anchor="middle" class="api">parse*</text>
+  <rect x="317" y="311" width="86" height="24" rx="4" fill="#ffffff"/>
+  <text x="360" y="328" text-anchor="middle" class="api">parseFile</text>
 
   <!-- Normalization is a read result, not an implicit write patch. -->
   <rect x="416" y="192" width="272" height="188" rx="10" fill="#ffffff" stroke="#8dbba0"/>
-  <text x="436" y="223" class="subtitle">Read result</text>
+  <text x="436" y="223" class="api">MediaFile.open(path)</text>
   <text x="436" y="255" class="common-field" font-weight="700">metadata.common</text>
   <line x1="436" y1="270" x2="668" y2="270" stroke="#d4e8dc"/>
   <text x="436" y="300" class="common-field">title</text>
@@ -79,11 +79,11 @@
   <text x="436" y="362" class="common-field">album</text>
 
   <path d="M 552 380 V 474" fill="none" stroke="#33765b" stroke-width="2.5" stroke-dasharray="6 5" marker-end="url(#edit-arrow)"/>
-  <text x="568" y="420" class="subtitle">Select fields</text>
-  <text x="568" y="444" class="subtitle">and edit values</text>
+  <text x="568" y="420" class="subtitle">Edit values</text>
+  <text x="568" y="444" class="subtitle">as needed</text>
   <rect x="416" y="474" width="272" height="100" rx="10" fill="#ffffff" stroke="#8dbba0"/>
-  <text x="436" y="511" class="format">Write patch</text>
-  <text x="436" y="545" class="subtitle">Selected fields / changes</text>
+  <text x="436" y="511" class="api">file.save(options)</text>
+  <text x="436" y="545" class="subtitle">Apply common tags as a patch</text>
 
   <!-- Write paths are alternatives chosen by the file's audio format. -->
   <path class="write-line" d="M 688 524 H 752 V 223"/>
@@ -92,8 +92,8 @@
   <path class="write-line" d="M 752 523 H 800" marker-end="url(#write-arrow)"/>
   <rect x="705" y="419" width="78" height="26" rx="4" fill="#ffffff"/>
   <text x="746" y="439" text-anchor="middle" class="step">Map fields</text>
-  <rect x="710" y="447" width="72" height="24" rx="4" fill="#ffffff"/>
-  <text x="746" y="463" text-anchor="middle" class="api">update*</text>
+  <rect x="698" y="447" width="96" height="24" rx="4" fill="#ffffff"/>
+  <text x="746" y="463" text-anchor="middle" class="api">updateFile</text>
 
   <g>
     <rect x="800" y="160" width="288" height="126" rx="10" fill="#ffffff" stroke="#dcbf9e"/>
@@ -114,5 +114,5 @@
     <text x="816" y="561" class="fields">TIT2 · TPE1 · TALB</text>
   </g>
 
-  <text x="560" y="630" text-anchor="middle" class="note">Metadata is mapped; audio is not converted or re-encoded.</text>
+  <text x="560" y="630" text-anchor="middle" class="note">The writer preserves the audio payload. ID3v2.3 replacement requires replaceId3: true.</text>
 </svg>

@@ -6,7 +6,7 @@ A contributor overview of how music-metadata reads media, maps metadata, and wri
 
 | Export condition (`package.json`) | File | Functions |
 |---|---|---|
-| `node` | `lib/index.ts` | `parseFile`, `parseStream` (Node streams and files, via `strtok3` `fromFile`/`fromStream`). Also exports `updateFile`, `updateBuffer` from the writer. Re-exports everything from `core.ts`. |
+| `node` | `lib/index.ts` | `parseFile`, `parseStream` (Node streams and files, via `strtok3` `fromFile`/`fromStream`). Also exports `MediaFile`, `updateFile`, `updateBuffer` from the writer. Re-exports everything from `core.ts`. |
 | `default` (browsers, other runtimes) | `lib/core.ts` | `parseBuffer`, `parseBlob`, `parseWebStream`, `parseFromTokenizer`, plus helpers `orderTags`, `ratingToStars`, `selectCover`, `getSupportedMimeTypes`. Re-exports `updateBuffer` (Blob/Uint8Array) from `lib/write/browser.ts`. Its `parseFile`/`parseStream` stubs always throw. |
 
 The input adapters build a `strtok3` tokenizer using `getTokenizerOptions` in [Allocation.ts](../lib/common/Allocation.ts). `parseBuffer`, `parseBlob`, `parseWebStream` and `parseStream` pass it to `parseFromTokenizer`, which delegates to `ParserFactory.parse()`. `parseFile` calls the factory directly, passing a loader if its extension is recognized.
@@ -16,6 +16,10 @@ The input adapters build a `strtok3` tokenizer using `getTokenizerOptions` in [A
 ## Writer architecture (`lib/write/`)
 
 The writing capability is implemented in `lib/write/` and exposes `updateFile` (Node.js) and `updateBuffer` (Node.js and browser) through the package root entry points.
+
+The Node.js `MediaFile` object connects the file parser to the patch writer through their shared common-tag model.
+It retains the resolved path and parsed metadata between operations. On save, the writer maps the current common
+tags to the destination container’s native representation and copies the audio payload.
 
 ### Core writer modules (`lib/write/core/`)
 

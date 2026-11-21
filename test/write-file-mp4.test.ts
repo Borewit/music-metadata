@@ -8,6 +8,7 @@ import {
   type IChapter,
   InvalidFileError,
   InvalidPatchError,
+  MediaFile,
   orderTags,
   parseBuffer,
   parseFile,
@@ -364,16 +365,20 @@ describe('MP4 metadata', () => {
     }
   });
 
-  it('supports atomic file writes, backup and dry-run', async () => {
+  it('saves MP4 metadata through MediaFile with atomic replacement, backup and dry run', async () => {
     const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'editor-mp4-'));
     try {
       const file = path.join(dir, 'track.m4a');
       const input = await fixture('aac-faststart');
       await fs.writeFile(file, input);
-      const dry = await updateFile(file, { title: 'Dry run' }, { dryRun: true });
+      const mediaFile = await MediaFile.open(file);
+      expect(mediaFile.metadata.common.movementIndex).toEqual({ no: null, of: null });
+      mediaFile.metadata.common.title = 'Dry run';
+      const dry = await mediaFile.save({ dryRun: true });
       expect(dry.format).toBe('mp4');
       expect(await fs.readFile(file)).toEqual(input);
-      const result = await updateFile(file, { title: 'File title' }, { backup: true });
+      mediaFile.metadata.common.title = 'File title';
+      const result = await mediaFile.save({ backup: true });
       expect(result.format).toBe('mp4');
       expect(result.atomic).toBe(true);
       expect((await readTags(file)).common.title).toBe('File title');
@@ -382,6 +387,185 @@ describe('MP4 metadata', () => {
     } finally {
       await fs.rm(dir, { recursive: true, force: true });
     }
+  });
+
+  it('applies a year-only edit without the unchanged date overriding it', async () => {
+    const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'editor-mp4-date-'));
+    try {
+      const file = path.join(dir, 'track.m4a');
+      await fs.writeFile(file, await updateBuffer(await fixture('aac-faststart'), { date: '2001-02-03' }));
+      const mediaFile = await MediaFile.open(file);
+      expect(mediaFile.metadata.common).toMatchObject({ year: 2001, date: '2001-02-03' });
+
+      mediaFile.metadata.common.year = 2015;
+      await mediaFile.save();
+      expect((await parseFile(file)).common).toMatchObject({ year: 2015, date: '2015' });
+
+      mediaFile.metadata.common.title = 'Another edit';
+      await mediaFile.save();
+      expect((await parseFile(file)).common).toMatchObject({ title: 'Another edit', year: 2015, date: '2015' });
+
+      mediaFile.metadata.common.year = 2016;
+      await mediaFile.save();
+      expect((await parseFile(file)).common).toMatchObject({ year: 2016, date: '2016' });
+
+      mediaFile.metadata.common.date = '1999-12-31';
+      await mediaFile.save();
+      expect((await parseFile(file)).common).toMatchObject({ year: 1999, date: '1999-12-31' });
+    } finally {
+      await fs.rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('saves singular artist edits and gives edited plural values precedence', async () => {
+    const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'editor-mp4-artists-'));
+    try {
+      const pathName = path.join(dir, 'track.m4a');
+      await fs.writeFile(
+        pathName,
+        await updateBuffer(await fixture('aac-faststart'), {
+          artists: ['Original'],
+          albumartists: ['Original album artist']
+        })
+      );
+      const file = await MediaFile.open(pathName);
+      const tags = file.metadata.common;
+      tags.artist = 'Solo';
+      tags.albumartist = 'Album solo';
+      await file.save();
+      expect((await parseFile(pathName)).common).toMatchObject({
+        artist: 'Solo',
+        artists: ['Solo'],
+        albumartist: 'Album solo',
+        albumartists: ['Album solo']
+      });
+      expect(tags.artists).toEqual(['Solo']);
+      expect(tags.albumartists).toEqual(['Album solo']);
+      tags.artists!.push('Guest');
+      tags.albumartists = ['Ensemble'];
+      tags.artist = 'Conflicting singular';
+      await file.save();
+      const saved = { artist: 'Solo', artists: ['Solo', 'Guest'], albumartist: 'Ensemble', albumartists: ['Ensemble'] };
+      expect((await parseFile(pathName)).common).toMatchObject(saved);
+      expect(tags).toMatchObject(saved);
+
+      tags.artist = 'Next';
+      tags.albumartist = 'Next album artist';
+      await file.save({ dryRun: true });
+      expect(tags.artists).toEqual(saved.artists);
+      expect(tags.albumartists).toEqual(saved.albumartists);
+      await file.save();
+      await file.save();
+      expect((await parseFile(pathName)).common).toMatchObject({
+        artist: 'Next',
+        artists: ['Next'],
+        albumartist: 'Next album artist',
+        albumartists: ['Next album artist']
+      });
+    } finally {
+      await fs.rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('preserves a populated MP4 movement name and index when saving a title edit', async () => {
+    const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'editor-mp4-movement-'));
+    try {
+      const file = path.join(dir, 'track.m4a');
+      const input = await fixture('aac-faststart');
+      await fs.writeFile(
+        file,
+        await updateBuffer(input, {
+          stik: 2,
+          hdVideo: 2,
+          showMovement: true,
+          native: {
+            catg: ['Classical', 'Music'],
+            egid: 'episode-1',
+            keyw: ['live', 'concert'],
+            '----:com.apple.iTunes:Movement Name': 'Allegro',
+            '----:com.apple.iTunes:Movement': '1',
+            '----:com.apple.iTunes:Movement Total': '3'
+          }
+        })
+      );
+
+      const mediaFile = await MediaFile.open(file);
+      expect(mediaFile.metadata.common.movementIndex).toEqual({ no: 1, of: 3 });
+      mediaFile.metadata.common.title = 'New title';
+      await mediaFile.save();
+
+      const { common, native } = await parseFile(file);
+      expect(common.title).toBe('New title');
+      expect(common).toMatchObject({
+        stik: 2,
+        hdVideo: 2,
+        showMovement: true,
+        category: ['Classical', 'Music'],
+        podcastId: 'episode-1',
+        keywords: ['live', 'concert']
+      });
+      expect(common.movement).toBe('Allegro');
+      expect(common.movementIndex).toEqual({ no: 1, of: 3 });
+      expect(native.iTunes).toEqual(
+        expect.arrayContaining([
+          { id: '©mvn', value: 'Allegro' },
+          { id: '©mvi', value: 1 },
+          { id: '©mvc', value: 3 }
+        ])
+      );
+      mediaFile.metadata.common.movementIndex = { no: null, of: null };
+      await mediaFile.save({ dryRun: true });
+      expect((await parseFile(file)).common.movementIndex).toEqual({ no: 1, of: 3 });
+      await mediaFile.save();
+      expect((await parseFile(file)).common.movementIndex).toEqual({ no: null, of: null });
+      expect(mdat(await fs.readFile(file))).toEqual(mdat(input));
+    } finally {
+      await fs.rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('removes MP4 movement name and index tags when cleared', async () => {
+    const input = await updateBuffer(await fixture('aac-faststart'), {
+      movement: 'Allegro',
+      movementIndex: { no: 1, of: 3 },
+      native: {
+        '----:com.apple.iTunes:Movement Name': 'Allegro',
+        '----:com.apple.iTunes:Movement': '1/3',
+        '----:com.apple.iTunes:Movement Total': '3'
+      }
+    });
+
+    const output = await updateBuffer(input, { movement: null, movementIndex: null });
+    const { common, native } = await parseBuffer(output, 'audio/mp4');
+    expect(common.movement).toBeUndefined();
+    expect(common.movementIndex).toEqual({ no: null, of: null });
+    const ids = (native.iTunes ?? []).map(tag => tag.id);
+    for (const id of [
+      '©mvn',
+      '©mvi',
+      '©mvc',
+      '----:com.apple.iTunes:Movement Name',
+      '----:com.apple.iTunes:Movement',
+      '----:com.apple.iTunes:Movement Total'
+    ]) {
+      expect(ids).not.toContain(id);
+    }
+    expect(mdat(output)).toEqual(mdat(input));
+  });
+
+  it('preserves the total in a combined movement alias when editing only the number', async () => {
+    const input = await updateBuffer(await fixture('aac-faststart'), {
+      native: { '----:com.apple.iTunes:Movement': '1/3' }
+    });
+    const output = await updateBuffer(input, { movementIndex: { no: 2 } });
+    expect((await parseBuffer(output, 'audio/mp4')).common.movementIndex).toEqual({ no: 2, of: 3 });
+  });
+
+  it('rejects an MP4 movement number that exceeds int32', async () => {
+    const input = await fixture('aac-faststart');
+    await expect(updateBuffer(input, { movementIndex: { no: 0x80000000, of: null } })).rejects.toThrow(
+      'MP4 movement number exceeds int32'
+    );
   });
 
   it('rejects fragmented MP4 before changing a file', async () => {

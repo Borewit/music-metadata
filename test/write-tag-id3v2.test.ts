@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import type { TagPatch } from '../lib/index.js';
-import { parseBuffer, parseFile, updateBuffer, updateFile } from '../lib/index.js';
+import { MediaFile, parseBuffer, parseFile, updateBuffer, updateFile } from '../lib/index.js';
 import { UINT32SYNCSAFE } from '../lib/tokens/id3v2.js';
 import { encodeFrame, makeFrames, syncSafe } from '../lib/write/id3v2/frames.js';
 
@@ -34,7 +34,9 @@ describe('ID3v2.4 metadata transfer', () => {
   it('writes all common tags to a new MP3', async () => {
     const { common } = await parseFile(sample);
     await withCopy(async target => {
-      const result = await updateFile(target, common);
+      const file = await MediaFile.open(target);
+      file.metadata.common = common;
+      const result = await file.save();
       expect(result.format).toBe('mp3');
       expect(result.atomic).toBe(true);
       const after = await parseFile(target);
@@ -188,7 +190,8 @@ describe('explicit ID3 replacement', () => {
     try {
       const target = path.join(directory, 'legacy.mp3');
       await writeFile(target, source);
-      const before = await parseFile(target);
+      const file = await MediaFile.open(target);
+      const before = file.metadata;
       expect(before.format.tagTypes).toContain('ID3v2.3');
       expect(before.native['ID3v2.3']).toEqual(
         expect.arrayContaining([
@@ -201,12 +204,8 @@ describe('explicit ID3 replacement', () => {
       await expect(updateFile(target, { title: 'Updated title' })).rejects.toThrow('Only ID3v2.4');
       expect(await readFile(target)).toEqual(source);
 
-      const patch: TagPatch = {
-        title: 'Updated title — 新标题',
-        artist: before.common.artist!,
-        album: before.common.album!
-      };
-      const result = await updateFile(target, patch, { replaceId3: true });
+      file.metadata.common.title = 'Updated title — 新标题';
+      const result = await file.save({ replaceId3: true });
       expect(result.format).toBe('mp3');
       const output = await readFile(target);
       expect([...output.subarray(0, 6)]).toEqual([73, 68, 51, 4, 0, 0]);
@@ -215,7 +214,7 @@ describe('explicit ID3 replacement', () => {
       expect(after.format.tagTypes).toEqual(['ID3v2.4']);
       expect(after.native['ID3v2.3']).toBeUndefined();
       expect(after.native.ID3v1).toBeUndefined();
-      expect(after.common.title).toBe(patch.title);
+      expect(after.common.title).toBe(file.metadata.common.title);
       expect(after.common.artist).toBe(before.common.artist);
       expect(after.common.album).toBe(before.common.album);
     } finally {
@@ -657,14 +656,16 @@ describe('ADTS AAC ID3v2.4 writing', () => {
       // Detection must follow the media, not this misleading extension.
       const target = path.join(temporary, 'legacy.mp3');
       await writeFile(target, legacy);
-      const before = await parseFile(target, { duration: true });
+      const file = await MediaFile.open(target, { duration: true });
+      const before = file.metadata;
       expect(before.format.container).toBe('ADTS/MPEG-2');
       expect(before.format.tagTypes).toEqual(['ID3v2.3', 'ID3v1']);
       expect(legacy.subarray(-128, -125).toString('ascii')).toBe('TAG');
       expect(before.common.title).toBe('Legacy AAC title');
       await expect(updateFile(target, { title: 'New title' })).rejects.toThrow('Only ID3v2.4');
       expect(await readFile(target)).toEqual(legacy);
-      const result = await updateFile(target, { ...before.common, title: 'New title' }, { atomic, replaceId3: true });
+      file.metadata.common.title = 'New title';
+      const result = await file.save({ atomic, replaceId3: true });
       expect(result.format).toBe('aac');
       expect(result.atomic).toBe(atomic);
       const output = await readFile(target);

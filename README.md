@@ -32,7 +32,7 @@ Readers map native tags to normalized fields in metadata.common. For example, AP
 
 Simply choose which fields to update, and the writer maps those changes to the conventional tag format for the file. This follows a straightforward philosophy: **Read the past, write the future.** Legacy tag formats remain readable, while new metadata is written using modern, widely adopted standards.
 
-![Metadata flow: read supported media formats, normalize native tags to common fields, select edits, and write conventional tags](./image/metadata-flow.svg)
+![MediaFile reads native tags into common fields and saves those fields to the same audio file](./image/metadata-flow.svg)
 
 ### Support for audio file types
 
@@ -939,6 +939,26 @@ tags are not supported for writing.
 
 Consumers migrating from `music-metadata-editor` should import the write functions
 and types from `music-metadata`.
+
+#### Editing a local file with MediaFile (Node.js)
+
+`MediaFile.open(path, readOptions?)` reads a file with the same options as `parseFile`.
+Edit `file.metadata.common`, then call `file.save(writeOptions?)` to apply the current common tags
+to the same path. It accepts the same options and returns the same `WriteResult` as `updateFile`.
+
+For example, to edit the title of an ID3v2.3 MP3 and write its common tags back as ID3v2.4:
+
+```js
+import { MediaFile } from 'music-metadata';
+
+const file = await MediaFile.open('track.mp3');
+file.metadata.common.title = 'New title';
+await file.save({ replaceId3: true });
+```
+
+Replacement preserves the audio payload and discards old ID3 frames without a writable common equivalent.
+To apply tags from another source, assign its parsed `common` object to `file.metadata.common` before saving.
+The native tags and format information describe the original read. Reopen the file to inspect the saved tags.
 
 #### WMA / ASF
 
