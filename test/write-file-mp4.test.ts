@@ -372,6 +372,114 @@ describe('MP4 metadata', () => {
     }
   });
 
+  it('applies common and native patches and refreshes the MediaFile snapshot', async () => {
+    const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'editor-mp4-patch-'));
+    try {
+      const file = path.join(dir, 'track.m4a');
+      const input = await updateBuffer(await fixture('aac-faststart'), { date: '2001-02-03' });
+      await fs.writeFile(file, input);
+      const mediaFile = await MediaFile.open(file);
+      const original = mediaFile.metadata;
+      original.common.album = 'Unsaved';
+      const patch = {
+        title: 'Imported',
+        date: '2010-04-05',
+        native: { '----:com.apple.iTunes:CATALOG_ID': 'identity' }
+      };
+
+      expect((await mediaFile.applyPatch(patch, { dryRun: true })).refresh).toEqual({
+        status: 'skipped',
+        reason: 'dry-run'
+      });
+      expect(mediaFile.metadata).toBe(original);
+      expect(await fs.readFile(file)).toEqual(Buffer.from(input));
+
+      await expect(mediaFile.applyPatch(patch)).rejects.toThrow('unsaved common edits');
+      expect(await fs.readFile(file)).toEqual(Buffer.from(input));
+      const result = await mediaFile.applyPatch(patch, { discardUnsavedChanges: true });
+      expect(result.format).toBe('mp4');
+      expect(result.refresh).toEqual({ status: 'ok' });
+      expect(mediaFile.metadata.common).toMatchObject({ title: 'Imported', date: '2010-04-05' });
+      expect(mediaFile.metadata.common.album).toBe((await parseBuffer(input)).common.album);
+      expect(mediaFile.metadata.native.iTunes).toContainEqual({
+        id: '----:com.apple.iTunes:CATALOG_ID',
+        value: 'identity'
+      });
+
+      mediaFile.metadata.common.year = 2015;
+      await mediaFile.save();
+      expect((await parseFile(file)).common).toMatchObject({ title: 'Imported', date: '2015' });
+    } finally {
+      await fs.rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('keeps a committed patch when the reload fails and blocks saving stale metadata', async () => {
+    const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'editor-mp4-patch-reload-'));
+    try {
+      const file = path.join(dir, 'track.m4a');
+      await fs.writeFile(file, await fixture('aac-faststart'));
+      const mediaFile = await MediaFile.open(file);
+      const stale = mediaFile.metadata;
+      const error = new Error('reload failed');
+      const open = vi.spyOn(MediaFile, 'open').mockRejectedValueOnce(error);
+      try {
+        expect(await mediaFile.applyPatch({ title: 'Committed' })).toMatchObject({
+          format: 'mp4',
+          refresh: { status: 'failed', error }
+        });
+      } finally {
+        open.mockRestore();
+      }
+      expect((await parseFile(file)).common.title).toBe('Committed');
+      expect(mediaFile.metadata).toBe(stale);
+      await expect(mediaFile.save()).rejects.toBeInstanceOf(WriteError);
+      expect((await parseFile(file)).common.title).toBe('Committed');
+
+      await mediaFile.reload();
+      expect(mediaFile.metadata.common.title).toBe('Committed');
+      mediaFile.metadata.common.album = 'Saved';
+      await mediaFile.save();
+      expect((await parseFile(file)).common).toMatchObject({ title: 'Committed', album: 'Saved' });
+    } finally {
+      await fs.rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('runs MediaFile operations in order and rejects a save of replaced metadata', async () => {
+    const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'editor-mp4-patch-queue-'));
+    try {
+      const file = path.join(dir, 'track.m4a');
+      await fs.writeFile(file, await updateBuffer(await fixture('aac-faststart'), { title: 'Old' }));
+      const mediaFile = await MediaFile.open(file);
+      const open = MediaFile.open.bind(MediaFile);
+      let release!: () => void;
+      const gate = new Promise<void>(resolve => {
+        release = resolve;
+      });
+      const spy = vi.spyOn(MediaFile, 'open').mockImplementationOnce(async (...args) => {
+        await gate;
+        return open(...args);
+      });
+      try {
+        const patch = mediaFile.applyPatch({ title: 'Committed' }, { discardUnsavedChanges: true });
+        mediaFile.metadata.common.album = 'Lost';
+        const staleSave = expect(mediaFile.save()).rejects.toBeInstanceOf(WriteError);
+        const reload = mediaFile.reload();
+        release();
+        await Promise.all([patch, reload]);
+        await staleSave;
+        mediaFile.metadata.common.album = 'Saved';
+        await mediaFile.save();
+      } finally {
+        spy.mockRestore();
+      }
+      expect((await parseFile(file)).common).toMatchObject({ title: 'Committed', album: 'Saved' });
+    } finally {
+      await fs.rm(dir, { recursive: true, force: true });
+    }
+  });
+
   it('saves MP4 metadata through MediaFile with atomic replacement, backup and dry run', async () => {
     const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'editor-mp4-'));
     try {

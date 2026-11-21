@@ -33,7 +33,29 @@ export class FileTagSnapshot {
     this.hasMovementIndex = movementIndex.no !== null || movementIndex.of !== null;
   }
 
-  normalize(patch: TagPatch): void {
+  /** Capture both values and alias precedence before a save enters the operation queue. */
+  prepare(input: CommonTags): { patch: TagPatch; record: (format: WriteResult['format']) => CommonTags } {
+    const submitted = structuredClone(input);
+    const patch: TagPatch = { ...submitted };
+    this.normalize(patch);
+    const normalized = normalizeCommonPatch(patch);
+    return {
+      patch: normalized,
+      record: format => {
+        const saved = structuredClone(submitted);
+        this.recordSave(patch);
+        for (const target of [input, saved]) {
+          this.recordDate(target, submitted, normalized.date);
+          if (format === 'mp4') {
+            this.recordMp4Artists(target, submitted, patch);
+          }
+        }
+        return saved;
+      }
+    };
+  }
+
+  private normalize(patch: TagPatch): void {
     if (!this.hasMovementIndex && patch.movementIndex?.no === null && patch.movementIndex.of === null) {
       delete patch.movementIndex;
     }
@@ -48,7 +70,7 @@ export class FileTagSnapshot {
   }
 
   // MP4 stores both aliases in one atom. Synchronize them only after the write succeeds.
-  recordMp4Artists(input: TagPatch, submitted: TagPatch, patch: TagPatch): void {
+  private recordMp4Artists(input: TagPatch, submitted: TagPatch, patch: TagPatch): void {
     for (const [singular, plural] of artistPairs) {
       const list = patch[plural];
       const name = patch[singular];
@@ -68,12 +90,12 @@ export class FileTagSnapshot {
     }
   }
 
-  recordSave(patch: TagPatch): void {
+  private recordSave(patch: TagPatch): void {
     const movement = patch.movementIndex;
     this.hasMovementIndex = movement?.no != null || movement?.of != null;
   }
 
-  recordDate(input: TagPatch, submitted: TagPatch, date: TagPatch['date']): void {
+  private recordDate(input: TagPatch, submitted: TagPatch, date: TagPatch['date']): void {
     if (typeof date === 'string' || date === null) {
       this.date = typeof date === 'string' ? date : undefined;
       // Match the reader's year derived from the saved date.
@@ -92,22 +114,10 @@ export class FileTagSnapshot {
 export async function writeFileTags(
   filePath: string,
   input: TagPatch,
-  options: WriteOptions = {},
-  snapshot?: FileTagSnapshot
+  options: WriteOptions = {}
 ): Promise<WriteResult> {
   assertPatch(input);
-  const submitted = snapshot ? { ...input } : input;
-  if (snapshot) {
-    for (const [, plural] of artistPairs) {
-      const list = submitted[plural];
-      if (Array.isArray(list)) {
-        submitted[plural] = list.slice();
-      }
-    }
-  }
-  const patch = snapshot ? { ...submitted } : input;
-  snapshot?.normalize(patch);
-  const normalized = normalizeCommonPatch(patch);
+  const normalized = normalizeCommonPatch(input);
   const source = await openSource(filePath);
   try {
     const update = await buildUpdate(source, normalized, options);
@@ -118,13 +128,6 @@ export async function writeFileTags(
       dryRun: options.dryRun ?? false,
       beforeReplace: () => source.close()
     });
-    if (!options.dryRun) {
-      snapshot?.recordSave(patch);
-      snapshot?.recordDate(input, submitted, normalized.date);
-      if (update.format === 'mp4') {
-        snapshot?.recordMp4Artists(input, submitted, patch);
-      }
-    }
     return { format: update.format, ...result, paddingBytes: update.paddingBytes };
   } finally {
     await source.close();

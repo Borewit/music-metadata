@@ -12,7 +12,7 @@ import type { IAudioMetadata, IOptions } from './type.js';
 export * from './core.js';
 export { parseFile } from './parseFile.js';
 export { updateBuffer, updateFile } from './write/index.js';
-export { MediaFile } from './write/MediaFile.js';
+export { type ApplyPatchOptions, type ApplyPatchResult, MediaFile, type ReloadOptions } from './write/MediaFile.js';
 
 /**
  * Parse audio from Node Stream.Readable

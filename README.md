@@ -958,7 +958,29 @@ await file.save({ replaceId3: true });
 
 Replacement preserves the audio payload and discards old ID3 frames without a writable common equivalent.
 To apply tags from another source, assign its parsed `common` object to `file.metadata.common` before saving.
-The native tags and format information describe the original read. Reopen the file to inspect the saved tags.
+The native tags and format information describe the last read; `save()` does not reparse the file. Call `file.reload()` to inspect the saved tags.
+
+Use `file.applyPatch(patch, writeOptions?)` to write selected common and native fields together. For example, an M4A can store a title and an application-specific identifier in one atomic write.
+
+```js
+const result = await file.applyPatch({
+  title: 'New title',
+  native: { '----:com.apple.iTunes:CATALOG_ID': 'recording-42' }
+});
+
+if (result.refresh.status === 'failed') {
+  // The tags were written. Do not retry the write just because refreshing failed.
+  console.warn('Tags saved, but metadata could not be refreshed:', result.refresh.error);
+}
+```
+
+`applyPatch()` returns an `ApplyPatchResult`: the usual `WriteResult` fields plus a `refresh` outcome of `{ status: 'ok' }`, `{ status: 'failed', error }`, or `{ status: 'skipped', reason: 'dry-run' }`. A committed patch is followed by a reload using the read options captured by `MediaFile.open()`. A dry run neither writes nor replaces the current metadata.
+
+By default, `applyPatch()` and `reload()` reject with `WriteError` if there are unsaved common-tag edits, before writing or replacing metadata. Save those edits first, or explicitly allow their removal with `file.applyPatch(patch, { discardUnsavedChanges: true })` or `file.reload({ discardUnsavedChanges: true })`. This permission also allows discarding edits made while the operation is running; it is ignored for dry runs. Native tags and format information are read results, not editable state.
+
+Without that permission, edits made while a patch is being written or reloaded are retained. The committed patch then returns a failed refresh outcome rather than silently dropping the edits. Any failed post-write refresh leaves the old metadata in place and blocks `save()` until `reload()` or a subsequent patch refreshes it successfully. Preserve any unsaved edits you need before explicitly discarding them for recovery; the on-disk patch has already committed.
+
+`save()`, `applyPatch()` and `reload()` run one at a time within each instance. Saves and patches capture their inputs and options when called, including nested values and artwork bytes; later edits are not included in that operation. A queued save rejects if an earlier operation replaced its metadata. This serialization does not coordinate separate `MediaFile` instances or external file writers.
 
 #### WMA / ASF
 
