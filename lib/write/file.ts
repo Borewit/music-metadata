@@ -71,10 +71,20 @@ export class FileTagSnapshot {
   recordSave(patch: TagPatch): void {
     const movement = patch.movementIndex;
     this.hasMovementIndex = movement?.no != null || movement?.of != null;
-    // Keep suppressing a stale full date across later saves after a year-only edit.
-    if (typeof patch.date === 'string') {
-      this.date = patch.date;
-      this.year = patch.year ?? undefined;
+  }
+
+  recordDate(input: TagPatch, submitted: TagPatch, date: TagPatch['date']): void {
+    if (typeof date === 'string' || date === null) {
+      this.date = typeof date === 'string' ? date : undefined;
+      // Match the reader's year derived from the saved date.
+      const year = Number.parseInt(this.date?.slice(0, 4) ?? '', 10);
+      this.year = Number.isNaN(year) ? undefined : year;
+      if (input.date === submitted.date) {
+        input.date = this.date;
+      }
+      if (input.year === submitted.year) {
+        input.year = this.year;
+      }
     }
   }
 }
@@ -110,6 +120,7 @@ export async function writeFileTags(
     });
     if (!options.dryRun) {
       snapshot?.recordSave(patch);
+      snapshot?.recordDate(input, submitted, normalized.date);
       if (update.format === 'mp4') {
         snapshot?.recordMp4Artists(input, submitted, patch);
       }
