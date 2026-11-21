@@ -257,7 +257,13 @@ export class ID3v2Parser {
       offset += frameHeaderLength;
       const frameHeader = readFrameHeader(frameHeaderBytes, this.id3Header.version.major, this.metadata);
       if (this.id3Header.version.major === 4) {
-        frameHeader.length = getId3v24FrameLength(data, offset, frameHeaderBytes, frameHeader.length);
+        const frameLength = getId3v24FrameLength(data, offset, frameHeaderBytes, frameHeader.length);
+        if (frameLength !== frameHeader.length) {
+          this.metadata.addWarning(
+            `ID3v2.4 frame ${frameHeader.id} size is not a synchsafe integer, read it as a plain 32-bit integer`
+          );
+          frameHeader.length = frameLength;
+        }
       }
       if (++frameCount > getMaxMetadataEntries(this.options)) {
         throw new Id3v2ContentError('Frame count exceeds entry limit');
