@@ -227,6 +227,19 @@ describe('Decode MP3/ID3v2.4', () => {
       assert.strictEqual(common.title, title, 'common.title');
       assert.strictEqual(common.artist, 'Artist', 'common.artist');
     });
+
+    it('should not take frame-ID-like text at the synchsafe end for the next frame', async () => {
+      const title = 'T'.repeat(255); // 'TTTT' at synchsafe 128 has no frame size that fits in the tag
+      const { common } = await mm.parseBuffer(makeTag(title), { mimeType: 'audio/mpeg' });
+      assert.strictEqual(common.title, title, 'common.title');
+      assert.strictEqual(common.artist, 'Artist', 'common.artist');
+    });
+
+    it('should not take a zero byte at the synchsafe end for padding', async () => {
+      const title = `${'t'.repeat(127)}\x00${'t'.repeat(127)}`; // zero byte at synchsafe 128, text after it
+      const { common } = await mm.parseBuffer(makeTag(title), { mimeType: 'audio/mpeg' });
+      assert.strictEqual(common.artist, 'Artist', 'common.artist');
+    });
   });
 
   describe('MusicBrainz tags', () => {
