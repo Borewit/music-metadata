@@ -250,6 +250,15 @@ describe('Decode MP3/ID3v2.4', () => {
       const { common } = await mm.parseBuffer(makeTag(title), { mimeType: 'audio/mpeg' });
       assert.strictEqual(common.artist, 'Artist', 'common.artist');
     });
+
+    it('should read a candidate frame size with its most significant bit set as a plain integer', async () => {
+      // Title frame: plain size 336 (synchsafe reading 208). At payload offset 208 sits a 'TPE1' header
+      // with size bytes 00 00 00 FF: as synchsafe 127 fits in the tag, but the plain 255 does not.
+      const fakeHeader = 'TPE1\x00\x00\x00\xff\x00\x00';
+      const title = `${'t'.repeat(207)}${fakeHeader}${'t'.repeat(335 - 207 - fakeHeader.length)}`;
+      const { common } = await mm.parseBuffer(makeTag(title), { mimeType: 'audio/mpeg' });
+      assert.strictEqual(common.artist, 'Artist', 'common.artist');
+    });
   });
 
   describe('MusicBrainz tags', () => {

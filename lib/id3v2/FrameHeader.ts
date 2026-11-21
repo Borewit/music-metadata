@@ -125,6 +125,10 @@ function isFrameBoundary(data: Uint8Array, offset: number): boolean {
     return false;
   }
   const remaining = data.length - offset - 10;
+  if (data.subarray(offset + 4, offset + 8).some(byte => byte & 0x80)) {
+    // Same rule as getId3v24FrameLength: such a size can only be a plain 32-bit integer
+    return Token.UINT32_BE.get(data, offset + 4) <= remaining;
+  }
   return UINT32SYNCSAFE.get(data, offset + 4) <= remaining || Token.UINT32_BE.get(data, offset + 4) <= remaining;
 }
 
