@@ -117,9 +117,15 @@ function isFrameBoundary(data: Uint8Array, offset: number): boolean {
     return offset === data.length;
   }
   if (data[offset] === 0) {
-    return true; // padding
+    // Padding: only zero bytes up to the end of the tag
+    return data.subarray(offset).every(byte => byte === 0);
   }
-  return offset + 4 <= data.length && /^[A-Z0-9]{4}$/.test(textDecode(data.subarray(offset, offset + 4), 'ascii'));
+  // Next frame: a valid frame ID and a frame size that fits in the rest of the tag
+  if (offset + 10 > data.length || !/^[A-Z0-9]{4}$/.test(textDecode(data.subarray(offset, offset + 4), 'ascii'))) {
+    return false;
+  }
+  const remaining = data.length - offset - 10;
+  return UINT32SYNCSAFE.get(data, offset + 4) <= remaining || Token.UINT32_BE.get(data, offset + 4) <= remaining;
 }
 
 /**
