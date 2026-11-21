@@ -1,7 +1,9 @@
 import * as Token from 'token-types';
-import { encodeUtf8 } from '../core/bytes.js';
+import { CommonTagMapper } from '../../common/GenericTagMapper.js';
+import { decodeUtf8, encodeUtf8 } from '../core/bytes.js';
 import { InvalidFileError, InvalidPatchError, UnsupportedFeatureError } from '../core/errors.js';
 import { lyricsText, normalizeLyrics } from '../core/lyrics.js';
+import { normalizeNumberPair } from '../core/patch.js';
 import type { TagPatch } from '../core/types.js';
 import { type AtomBudget, atom, type Box, boxes, copyBox, header, maxAtoms, zeros } from './atoms.js';
 
@@ -11,6 +13,9 @@ const u32 = (n: number) => {
   return b;
 };
 const textAtoms: Record<string, string> = {
+  category: 'catg',
+  podcastId: 'egid',
+  keywords: 'keyw',
   title: '©nam',
   artist: '©ART',
   artists: '©ART',
@@ -26,6 +31,7 @@ const textAtoms: Record<string, string> = {
   description: 'desc',
   longDescription: 'ldes',
   work: '©wrk',
+  movement: '©mvn',
   encodedby: '©too',
   grouping: '©grp',
   albumsort: 'soal',
@@ -153,7 +159,13 @@ export function editItems(
   const canonical = (key: string) => (key.startsWith('----:') ? key.toLowerCase() : key);
   const replace = (key: string, value: Uint8Array | null) => replacements.set(canonical(key), value);
   const entries = patch as Record<string, unknown>;
-  const aliases = new Set(['totaltracks', 'totaldiscs', 'replaygain_track_gain_ratio', 'replaygain_track_peak_ratio']);
+  const aliases = new Set([
+    'totaltracks',
+    'totaldiscs',
+    'movementTotal',
+    'replaygain_track_gain_ratio',
+    'replaygain_track_peak_ratio'
+  ]);
   for (const [field, value] of Object.entries(entries)) {
     if (
       aliases.has(field) ||
@@ -164,7 +176,11 @@ export function editItems(
       field === 'lyrics' ||
       field === 'track' ||
       field === 'disk' ||
+      field === 'movementIndex' ||
       field === 'bpm' ||
+      field === 'stik' ||
+      field === 'hdVideo' ||
+      field === 'showMovement' ||
       field === 'compilation' ||
       field === 'gapless'
     ) {
@@ -227,6 +243,67 @@ export function editItems(
     Token.UINT16_BE.put(pair, 4, of);
     replace(key, atom(key, data(0, pair)));
   }
+  const movement = normalizeNumberPair(patch.movementIndex, 'movementIndex');
+  const movementAlias = '----:com.apple.iTunes:Movement';
+  if (movement && (movement.no === undefined) !== (movement.of === undefined)) {
+    const alias = existing.find(e => canonical(e.key) === canonical(movementAlias));
+    if (alias) {
+      const body = alias.bytes;
+      const child = boxes(body, header(body, 0, body.length).header, body.length, budget).find(b => b.type === 'data');
+      if (
+        child &&
+        child.end >= child.start + child.header + 8 &&
+        [1, 18].includes(Token.UINT32_BE.get(body, child.start + child.header))
+      ) {
+        const pair = CommonTagMapper.normalizeTrack(
+          decodeUtf8(body.subarray(child.start + child.header + 8, child.end))
+        );
+        if (movement.no === undefined && !existing.some(e => e.key === '©mvi')) {
+          movement.no = pair.no;
+        }
+        if (
+          movement.of === undefined &&
+          !existing.some(e => e.key === '©mvc' || canonical(e.key) === canonical(`${movementAlias} Total`))
+        ) {
+          movement.of = pair.of;
+        }
+        replace(movementAlias, null);
+      }
+    }
+  }
+  for (const [key, alias, value] of [
+    ['©mvi', 'Movement', movement === null ? null : movement?.no],
+    ['©mvc', 'Movement Total', movement === null ? null : movement?.of]
+  ] as const) {
+    if (value === undefined) {
+      continue;
+    }
+    replace(`----:com.apple.iTunes:${alias}`, null);
+    if (value === null) {
+      replace(key, null);
+      continue;
+    }
+    if (value > 0x7fffffff) {
+      throw new InvalidPatchError('MP4 movement number exceeds int32');
+    }
+    replace(key, atom(key, data(21, u32(value))));
+  }
+  if (patch.movement !== undefined) {
+    replace('----:com.apple.iTunes:Movement Name', null);
+  }
+  for (const [field, key] of [
+    ['stik', 'stik'],
+    ['hdVideo', 'hdvd']
+  ] as const) {
+    const value = patch[field];
+    if (value === undefined) {
+      continue;
+    }
+    if (value !== null && (!Number.isInteger(value) || value < 0 || value > 255)) {
+      throw new InvalidPatchError(`MP4 ${field} exceeds uint8`);
+    }
+    replace(key, value === null ? null : atom(key, data(22, Uint8Array.of(value))));
+  }
   if (patch.bpm !== undefined) {
     if (patch.bpm === null) {
       replace('tmpo', null);
@@ -242,7 +319,8 @@ export function editItems(
   }
   for (const [field, key] of [
     ['compilation', 'cpil'],
-    ['gapless', 'pgap']
+    ['gapless', 'pgap'],
+    ['showMovement', 'shwm']
   ] as const) {
     const value = patch[field];
     if (value === undefined) {

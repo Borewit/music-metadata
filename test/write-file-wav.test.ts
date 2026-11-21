@@ -2,7 +2,7 @@ import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { parseBuffer, updateBuffer, updateFile } from '../lib/index.js';
+import { MediaFile, parseBuffer, updateBuffer } from '../lib/index.js';
 import { readTags } from './helpers/read.js';
 
 function chunk(id: string, data: Buffer, pad = 0) {
@@ -124,9 +124,11 @@ describe('WAV ID3v2.4 writing', () => {
       const target = path.join(dir, 'test.wav');
       const input = wav();
       await writeFile(target, input);
-      const dry = await updateFile(target, { title: 'New' }, { dryRun: true });
+      const file = await MediaFile.open(target);
+      file.metadata.common.title = 'New';
+      const dry = await file.save({ dryRun: true });
       expect(await readFile(target)).toEqual(input);
-      const result = await updateFile(target, { title: 'New' }, { backup: true });
+      const result = await file.save({ backup: true });
       expect(result.format).toBe('wav');
       expect(result.atomic).toBe(true);
       expect(result.bytesWritten).toBe(dry.bytesWritten);

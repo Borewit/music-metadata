@@ -2,8 +2,8 @@ import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import type { Picture, TagPatch } from '../lib/index.js';
-import { InvalidFileError, InvalidPatchError, parseFile, updateFile } from '../lib/index.js';
+import type { Picture } from '../lib/index.js';
+import { InvalidFileError, InvalidPatchError, MediaFile, parseFile, updateFile } from '../lib/index.js';
 import { applyVorbisPatch } from '../lib/write/mapping/vorbis.js';
 import {
   parseVorbisComment,
@@ -385,15 +385,13 @@ describe('Beth Hart FLAC metadata transfer', () => {
   });
 
   it('writes common metadata to a new file with identical music-metadata common output', async () => {
-    const { common } = await parseFile(bethHartSample);
-    await withUntaggedCopy(async target => {
-      // No native fallback or common-to-Vorbis translation in the test.
-      // The reader's full common type includes shapes outside TagPatch;
-      // this fixture's complete common result must nevertheless round-trip.
-      await updateFile(target, common as unknown as TagPatch);
+    await withUntaggedCopy(async (target, before) => {
+      const file = await MediaFile.open(target);
+      file.metadata.common = before.common;
+      await file.save();
 
       const { common: writtenCommon } = await parseFile(target);
-      expect(writtenCommon).toEqual(common);
+      expect(writtenCommon).toEqual(before.common);
     });
   });
 });

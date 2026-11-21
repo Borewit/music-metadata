@@ -155,6 +155,8 @@ interface CustomTagPatch {
   label?: TextPatch;
   catalognumber?: TextPatch;
   isrc?: TextPatch;
+  /** iTunes MP4 media kind. */
+  stik?: number | null;
   bpm?: number | string | null;
   copyright?: TextPatch;
   media?: TextPatch;
