@@ -23,50 +23,7 @@ afterEach(async () => {
   await Promise.all(temporaryDirectories.splice(0).map(directory => rm(directory, { recursive: true, force: true })));
 });
 
-describe('FLAC reading', () => {
-  it('reads Vorbis Comments and common tags', async () => {
-    const input = makeFlac({
-      comments: [
-        { key: 'TITLE', value: 'Original title' },
-        { key: 'ARTIST', value: 'First artist' },
-        { key: 'ARTIST', value: 'Second artist' },
-        { key: 'ALBUM', value: 'An album' },
-        { key: 'DATE', value: '2024-01-02' },
-        { key: 'TRACKNUMBER', value: '3' },
-        { key: 'TRACKTOTAL', value: '12' },
-        { key: 'DISCNUMBER', value: '1' },
-        { key: 'DISCTOTAL', value: '2' },
-        { key: 'GENRE', value: 'Rock' },
-        { key: 'GENRE', value: 'Pop' },
-        { key: 'MUSICBRAINZ_TRACKID', value: 'recording-id' },
-        { key: 'MUSICBRAINZ_RELEASETRACKID', value: 'release-track-id' }
-      ]
-    });
-
-    const result = await readTags(input);
-
-    expect(result.format).toBe('flac');
-    expect(result.common.title).toBe('Original title');
-    expect(result.common.artist).toBe('First artist');
-    expect(result.common.artists).toEqual(['First artist', 'Second artist']);
-    expect(result.common.album).toBe('An album');
-    expect(result.common.date).toBe('2024-01-02');
-    expect(result.common.track).toEqual({ no: 3, of: 12 });
-    expect(result.common.disk).toEqual({ no: 1, of: 2 });
-    expect(result.common.genre).toEqual(['Rock', 'Pop']);
-    expect(result.common.musicbrainz_recordingid).toBe('recording-id');
-    expect(result.common.musicbrainz_trackid).toBe('release-track-id');
-    expect(vorbisValues(result, 'TITLE')).toEqual(['Original title']);
-    expect(vorbisValues(result, 'ARTIST')).toEqual(['First artist', 'Second artist']);
-  });
-
-  it('handles files without a Vorbis Comment block', async () => {
-    const input = makeFlac({ comments: [] });
-    const result = await readTags(input);
-    expect(result.common.track).toEqual({ no: null, of: null });
-    expect(result.common.disk).toEqual({ no: null, of: null });
-  });
-
+describe('FLAC writing', () => {
   it('adds a Vorbis Comment block when the file has none', async () => {
     const audio = makeAudio(2048);
     const input = makeFlac({ withVorbisComment: false, audio });
@@ -79,26 +36,6 @@ describe('FLAC reading', () => {
     expect(extractAudio(output)).toEqual(audio);
   });
 
-  it('reads native FLAC PICTURE blocks', async () => {
-    const input = makeFlac({
-      pictures: [
-        {
-          format: 'image/png',
-          type: 'Cover (front)',
-          description: 'front',
-          data: Uint8Array.from([1, 2, 3, 4])
-        }
-      ]
-    });
-
-    const result = await readTags(input);
-    expect(result.pictures).toHaveLength(1);
-    expect(result.pictures[0]?.format).toBe('image/png');
-    expect(result.pictures[0]?.type).toBe('Cover (front)');
-    expect(result.pictures[0]?.description).toBe('front');
-    expect(result.common.picture?.[0]?.data).toEqual(Uint8Array.from([1, 2, 3, 4]));
-  });
-
   it('preserves an ID3v2 prefix', async () => {
     const prefix = makeId3Prefix(7);
     const input = makeFlac({ id3Prefix: prefix, comments: [{ key: 'TITLE', value: 'Old' }] });
@@ -109,9 +46,7 @@ describe('FLAC reading', () => {
     const result = await readTags(output);
     expect(result.common.title).toBe('New');
   });
-});
 
-describe('FLAC writing', () => {
   it('sets, preserves, and deletes tags', async () => {
     const input = makeFlac({
       comments: [

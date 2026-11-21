@@ -7,7 +7,7 @@ import { Readable } from 'node:stream';
 import * as tokens from 'music-metadata/tokens';
 import * as flacTokens from 'music-metadata/tokens/flac';
 import { fromBuffer, fromStream } from 'strtok3';
-import { assert } from 'vitest';
+import { assert, expect } from 'vitest';
 import {
   BlockStreamInfo,
   flacChannelCount,
@@ -17,8 +17,75 @@ import {
 import * as mm from '../lib/index.js';
 import { LyricsContentType, TimestampFormat, UnexpectedFileContentError } from '../lib/index.js';
 import { type IVorbisPicture, VorbisPictureToken } from '../lib/ogg/vorbis/Vorbis.js';
+import { makeFlac } from './helpers/flac.js';
 import { Parsers } from './helpers/metadata-parsers.js';
 import { samplePath } from './helpers/util.js';
+
+describe('Read synthetic FLAC metadata', () => {
+  it('reads Vorbis Comments and common tags', async () => {
+    const input = makeFlac({
+      comments: [
+        { key: 'TITLE', value: 'Original title' },
+        { key: 'ARTIST', value: 'First artist' },
+        { key: 'ARTIST', value: 'Second artist' },
+        { key: 'ALBUM', value: 'An album' },
+        { key: 'DATE', value: '2024-01-02' },
+        { key: 'TRACKNUMBER', value: '3' },
+        { key: 'TRACKTOTAL', value: '12' },
+        { key: 'DISCNUMBER', value: '1' },
+        { key: 'DISCTOTAL', value: '2' },
+        { key: 'GENRE', value: 'Rock' },
+        { key: 'GENRE', value: 'Pop' },
+        { key: 'MUSICBRAINZ_TRACKID', value: 'recording-id' },
+        { key: 'MUSICBRAINZ_RELEASETRACKID', value: 'release-track-id' }
+      ]
+    });
+
+    const result = await mm.parseBuffer(input, { mimeType: 'audio/flac' });
+
+    expect(result.format.container).toBe('FLAC');
+    expect(result.common.title).toBe('Original title');
+    expect(result.common.artist).toBe('First artist');
+    expect(result.common.artists).toEqual(['First artist', 'Second artist']);
+    expect(result.common.album).toBe('An album');
+    expect(result.common.date).toBe('2024-01-02');
+    expect(result.common.track).toEqual({ no: 3, of: 12 });
+    expect(result.common.disk).toEqual({ no: 1, of: 2 });
+    expect(result.common.genre).toEqual(['Rock', 'Pop']);
+    expect(result.common.musicbrainz_recordingid).toBe('recording-id');
+    expect(result.common.musicbrainz_trackid).toBe('release-track-id');
+    expect(mm.orderTags(result.native.vorbis).TITLE).toEqual(['Original title']);
+    expect(mm.orderTags(result.native.vorbis).ARTIST).toEqual(['First artist', 'Second artist']);
+  });
+
+  it('handles files without a Vorbis Comment block', async () => {
+    const input = makeFlac({ withVorbisComment: false });
+    const result = await mm.parseBuffer(input, { mimeType: 'audio/flac' });
+    expect(result.native.vorbis).toBeUndefined();
+    expect(result.common.track).toEqual({ no: null, of: null });
+    expect(result.common.disk).toEqual({ no: null, of: null });
+  });
+
+  it('reads native FLAC PICTURE blocks', async () => {
+    const input = makeFlac({
+      pictures: [
+        {
+          format: 'image/png',
+          type: 'Cover (front)',
+          description: 'front',
+          data: Uint8Array.from([1, 2, 3, 4])
+        }
+      ]
+    });
+
+    const result = await mm.parseBuffer(input, { mimeType: 'audio/flac' });
+    expect(result.common.picture).toHaveLength(1);
+    expect(result.common.picture?.[0]?.format).toBe('image/png');
+    expect(result.common.picture?.[0]?.type).toBe('Cover (front)');
+    expect(result.common.picture?.[0]?.description).toBe('front');
+    expect(result.common.picture?.[0]?.data).toEqual(Uint8Array.from([1, 2, 3, 4]));
+  });
+});
 
 describe('Parse FLAC Vorbis comment', () => {
   const flacFilePath = path.join(samplePath, 'flac');
