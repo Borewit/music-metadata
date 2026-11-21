@@ -214,18 +214,28 @@ describe('Decode MP3/ID3v2.4', () => {
       return tag;
     }
 
-    it('should use the plain size when a size byte has its most significant bit set', async () => {
-      const title = 't'.repeat(200); // 0x000000C9 is not a valid synchsafe integer
-      const { common } = await mm.parseBuffer(makeTag(title), { mimeType: 'audio/mpeg' });
-      assert.strictEqual(common.title, title, 'common.title');
+    it('should read frame sizes written as plain 32-bit integers, as iTunes does', async () => {
+      // Fixture: valid MP3 with an ID3v2.4 tag whose frame sizes are plain 32-bit integers.
+      // TIT2 has 200 payload bytes (0x000000C8: a size byte with its most significant bit set),
+      // TALB has 256 (0x00000100: read as synchsafe it is 128, which ends inside the album text).
+      const filePath = path.join(samplePath, 'id3v2.4-itunes-plain-frame-size.mp3');
+      const { common, quality } = await mm.parseFile(filePath);
+      assert.strictEqual(
+        common.title,
+        'Frame size written as a plain 32-bit integer by iTunes '.repeat(4).slice(0, 199),
+        'common.title'
+      );
+      assert.strictEqual(common.album, 'Not a synchsafe integer '.repeat(12).slice(0, 255), 'common.album');
       assert.strictEqual(common.artist, 'Artist', 'common.artist');
-    });
-
-    it('should use the plain size when only the plain size reaches the next frame', async () => {
-      const title = 't'.repeat(255); // 0x00000100: synchsafe 128 points into the title text
-      const { common } = await mm.parseBuffer(makeTag(title), { mimeType: 'audio/mpeg' });
-      assert.strictEqual(common.title, title, 'common.title');
-      assert.strictEqual(common.artist, 'Artist', 'common.artist');
+      assert.deepEqual(common.genre, ['Silence'], 'common.genre');
+      assert.deepEqual(
+        quality.warnings.map(warning => warning.message),
+        [
+          'ID3v2.4 frame TIT2 size is not a synchsafe integer, read it as a plain 32-bit integer',
+          'ID3v2.4 frame TALB size is not a synchsafe integer, read it as a plain 32-bit integer'
+        ],
+        'quality.warnings'
+      );
     });
 
     it('should not take frame-ID-like text at the synchsafe end for the next frame', async () => {
