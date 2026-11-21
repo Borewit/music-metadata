@@ -9,5 +9,12 @@ reviews:
     docstrings:
       mode: "off"
 
+knowledge_base:
+  code_guidelines:
+    enabled: true
+    filePatterns:
+      - "CONTRIBUTING.md"
+      - "doc/architecture.md"
+
 chat:
   art: false
