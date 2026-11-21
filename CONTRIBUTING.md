@@ -48,6 +48,7 @@ the format or behavior being tested, then place the case next to related tests:
 | Shared ID3v2 headers, padding, encodings, lyrics and embedded tags | `test/read-id3v2.test.ts` |
 | Version-specific ID3 frames and mappings | `test/read-id3v1.1.test.ts`, `test/read-id3v2.2.test.ts`, `test/read-id3v2.3.test.ts`, `test/read-id3v2.4.test.ts` |
 | APEv2 tags and shared Vorbis comment decoding | `test/read-apev2.test.ts`, `test/read-vorbis-comments.test.ts` |
+| File/container writing | The matching `test/write-file-*.test.ts` suite. Shared APEv2 writing for Monkey’s Audio, WavPack and Musepack uses `test/write-file-ape.test.ts`. |
 | Cross-format tag mapping | The existing `test/read-common.test.ts`, `test/read-picard-parsing.test.ts`, `test/read-discogs.test.ts`, `test/read-comment-mapping.test.ts`, or `test/read-replay-gain.test.ts` suite |
 | Public API behavior and shared policies | The existing `test/read-options.test.ts`, `test/read-mime.test.ts`, `test/read-parse-file.test.ts`, `test/read-async.test.ts`, `test/read-trackinfo.test.ts`, or `test/read-allocation-limits.test.ts` suite |
 
