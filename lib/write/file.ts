@@ -1,3 +1,4 @@
+import type { IAudioMetadata } from '../type.js';
 import { assertPatch, buildUpdate } from './core/shared.js';
 import { openSource } from './core/source.js';
 import type { CommonTags, TagPatch, WriteOptions, WriteResult } from './core/types.js';
@@ -25,7 +26,13 @@ export class FileTagSnapshot {
   private date: string | undefined;
   private hasMovementIndex: boolean;
 
-  constructor(common: CommonTags) {
+  private separateArtists: boolean;
+  private readonly hasItunesTags: boolean;
+
+  constructor({ common, native }: IAudioMetadata) {
+    this.hasItunesTags = native.iTunes !== undefined;
+    this.separateArtists =
+      native.iTunes?.some(tag => tag.id.toLowerCase() === '----:com.apple.itunes:artists') ?? false;
     const { artist, artists, albumartist, albumartists, movementIndex } = common;
     this.artists = { artist, artists: artists?.slice(), albumartist, albumartists: albumartists?.slice() };
     this.year = common.year;
@@ -40,6 +47,12 @@ export class FileTagSnapshot {
     if (patch.year !== this.year && patch.date === this.date) {
       delete patch.date;
     }
+    if (this.hasItunesTags && patch.artist === this.artists.artist) {
+      if (sameArtists(patch.artists, this.artists.artists)) {
+        delete patch.artists;
+      }
+      delete patch.artist;
+    }
     for (const [singular, plural] of artistPairs) {
       if (patch[singular] !== this.artists[singular] && sameArtists(patch[plural], this.artists[plural])) {
         delete patch[plural];
@@ -47,9 +60,18 @@ export class FileTagSnapshot {
     }
   }
 
-  // MP4 stores both aliases in one atom. Synchronize them only after the write succeeds.
+  // Synchronize MP4 aliases after a successful write, keeping Picard artist lists independent.
   recordMp4Artists(input: TagPatch, submitted: TagPatch, patch: TagPatch): void {
     for (const [singular, plural] of artistPairs) {
+      if (
+        singular === 'artist' &&
+        (this.separateArtists || (patch.artist !== undefined && patch.artists !== undefined))
+      ) {
+        this.separateArtists = true;
+        this.artists.artist = typeof submitted.artist === 'string' ? submitted.artist : undefined;
+        this.artists.artists = Array.isArray(submitted.artists) ? submitted.artists.slice() : undefined;
+        continue;
+      }
       const list = patch[plural];
       const name = patch[singular];
       if (!Array.isArray(list) && typeof name !== 'string') {

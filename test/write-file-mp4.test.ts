@@ -436,7 +436,7 @@ describe('MP4 metadata', () => {
     }
   });
 
-  it('saves singular artist edits and gives edited plural values precedence', async () => {
+  it('saves independent artist credits and keeps album artist aliases synchronized', async () => {
     const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'editor-mp4-artists-'));
     try {
       const pathName = path.join(dir, 'track.m4a');
@@ -462,22 +462,31 @@ describe('MP4 metadata', () => {
       expect(tags.albumartists).toEqual(['Album solo']);
       tags.artists!.push('Guest');
       tags.albumartists = ['Ensemble'];
-      tags.artist = 'Conflicting singular';
+      tags.artist = 'Solo with Guest';
       await file.save();
-      const saved = { artist: 'Solo', artists: ['Solo', 'Guest'], albumartist: 'Ensemble', albumartists: ['Ensemble'] };
+      const saved = {
+        artist: 'Solo with Guest',
+        artists: ['Solo', 'Guest'],
+        albumartist: 'Ensemble',
+        albumartists: ['Ensemble']
+      };
       expect((await parseFile(pathName)).common).toMatchObject(saved);
       expect(tags).toMatchObject(saved);
+      await file.applyPatch({ title: 'Imported', native: { '----:com.apple.iTunes:CATALOG_ID': 'identity' } });
+      expect(file.metadata.common).toMatchObject({ ...saved, title: 'Imported' });
+      expect(file.metadata.native.iTunes).toContainEqual({ id: '----:com.apple.iTunes:CATALOG_ID', value: 'identity' });
 
-      tags.artist = 'Next';
-      tags.albumartist = 'Next album artist';
+      const refreshed = file.metadata.common;
+      refreshed.artist = 'Next';
+      refreshed.albumartist = 'Next album artist';
       await file.save({ dryRun: true });
-      expect(tags.artists).toEqual(saved.artists);
-      expect(tags.albumartists).toEqual(saved.albumartists);
+      expect(refreshed.artists).toEqual(saved.artists);
+      expect(refreshed.albumartists).toEqual(saved.albumartists);
       await file.save();
       await file.save();
       expect((await parseFile(pathName)).common).toMatchObject({
         artist: 'Next',
-        artists: ['Next'],
+        artists: ['Solo', 'Guest'],
         albumartist: 'Next album artist',
         albumartists: ['Next album artist']
       });

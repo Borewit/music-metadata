@@ -119,6 +119,9 @@ describe('FLAC writing', () => {
     expect(result.common.artist).toBe('Artist A');
     expect(result.common.albumartists).toEqual(['Album Artist A', 'Album Artist B']);
     expect(result.common.albumartist).toBe('Album Artist A');
+    const credited = await updateBuffer(output, { artist: 'A & B', artists: ['A', 'B'] });
+    const solo = await updateBuffer(credited, { artists: ['A'] });
+    expect((await readTags(solo)).common).toMatchObject({ artist: 'A & B', artists: ['A'] });
   });
 
   it('writes and removes pictures', async () => {
