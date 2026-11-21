@@ -181,6 +181,54 @@ describe('Decode MP3/ID3v2.4', () => {
     assert.strictEqual(textFrames[textFrames.length - 1].value, 'A', 'the byte after the NUL run survives');
   });
 
+  describe('frame size written as a plain 32-bit integer', () => {
+    // Intended defect: ID3v2.4 section 4 requires a synchsafe frame size, but iTunes and other writers store
+    // the size as a plain 32-bit integer, like ID3v2.3. Sizes below 128 are the same in both encodings.
+    const ascii = (text: string) => Uint8Array.from(text, character => character.charCodeAt(0));
+    const synchSafe = (size: number) =>
+      Uint8Array.from([(size >>> 21) & 0x7f, (size >>> 14) & 0x7f, (size >>> 7) & 0x7f, size & 0x7f]);
+    const uint32 = (size: number) =>
+      Uint8Array.from([size >>> 24, (size >>> 16) & 0xff, (size >>> 8) & 0xff, size & 0xff]);
+
+    function makeTag(title: string): Uint8Array {
+      const titleData = ascii(`\x00${title}`); // ISO-8859-1
+      const artistData = ascii('\x00Artist');
+      const parts = [
+        ascii('TIT2'),
+        uint32(titleData.length),
+        new Uint8Array(2),
+        titleData,
+        ascii('TPE1'),
+        uint32(artistData.length),
+        new Uint8Array(2),
+        artistData
+      ];
+      const tagSize = parts.reduce((total, part) => total + part.length, 0);
+      parts.unshift(ascii('ID3'), Uint8Array.from([4, 0, 0]), synchSafe(tagSize));
+      const tag = new Uint8Array(tagSize + 10);
+      let offset = 0;
+      for (const part of parts) {
+        tag.set(part, offset);
+        offset += part.length;
+      }
+      return tag;
+    }
+
+    it('should use the plain size when a size byte has its most significant bit set', async () => {
+      const title = 't'.repeat(200); // 0x000000C9 is not a valid synchsafe integer
+      const { common } = await mm.parseBuffer(makeTag(title), { mimeType: 'audio/mpeg' });
+      assert.strictEqual(common.title, title, 'common.title');
+      assert.strictEqual(common.artist, 'Artist', 'common.artist');
+    });
+
+    it('should use the plain size when only the plain size reaches the next frame', async () => {
+      const title = 't'.repeat(255); // 0x00000100: synchsafe 128 points into the title text
+      const { common } = await mm.parseBuffer(makeTag(title), { mimeType: 'audio/mpeg' });
+      assert.strictEqual(common.title, title, 'common.title');
+      assert.strictEqual(common.artist, 'Artist', 'common.artist');
+    });
+  });
+
   describe('MusicBrainz tags', () => {
     it('should MusicBrainz tags with id3v2.4', async () => {
       const filename = 'id3v2.4-musicbrainz.mp3';

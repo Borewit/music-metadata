@@ -81,6 +81,48 @@ function readFrameFlags(b: Uint8Array, majorVer: 3 | 4): IFrameFlags {
 }
 
 /**
+ * Get the payload length of an ID3v2.4 frame.
+ *
+ * ID3v2.4 section 4 requires a synchsafe frame size, but iTunes and other writers store it as a plain
+ * 32-bit integer, like ID3v2.3. Both encodings give the same value below 128.
+ * Use the plain size when the synchsafe reading cannot be right: a size byte has its most significant bit set,
+ * or only the plain size ends where the next frame, the padding or the tag ends.
+ *
+ * @param data - Frame data of the tag
+ * @param offset - Offset of the frame payload in `data`, directly after the frame header
+ * @param header - The 10 frame header bytes
+ * @param syncSafeLength - Frame size decoded as a synchsafe integer
+ */
+export function getId3v24FrameLength(
+  data: Uint8Array,
+  offset: number,
+  header: Uint8Array,
+  syncSafeLength: number
+): number {
+  const plainLength = Token.UINT32_BE.get(header, 4);
+  if (plainLength === syncSafeLength) {
+    return syncSafeLength;
+  }
+  if (header.subarray(4, 8).some(byte => byte & 0x80)) {
+    return plainLength;
+  }
+  if (!isFrameBoundary(data, offset + syncSafeLength) && isFrameBoundary(data, offset + plainLength)) {
+    return plainLength;
+  }
+  return syncSafeLength;
+}
+
+function isFrameBoundary(data: Uint8Array, offset: number): boolean {
+  if (offset >= data.length) {
+    return offset === data.length;
+  }
+  if (data[offset] === 0) {
+    return true; // padding
+  }
+  return offset + 4 <= data.length && /^[A-Z0-9]{4}$/.test(textDecode(data.subarray(offset, offset + 4), 'ascii'));
+}
+
+/**
  * Factory: parse a frame header from its header bytes (6 for v2.2, 10 for v2.3/v2.4).
  *
  * Note: It only *parses* and does light validation. It does not read payload bytes.
