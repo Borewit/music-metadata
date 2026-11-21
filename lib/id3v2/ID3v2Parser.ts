@@ -9,6 +9,10 @@ import { getFrameHeaderLength, getId3v24FrameLength, readFrameHeader } from './F
 import { type Chapter, FrameParser, Id3v2ContentError, type ITextTag, type TableOfContents } from './FrameParser.js';
 import { ID3v2Header, type ID3v2MajorVersion, type IID3v2header, UINT32SYNCSAFE } from './ID3v2Token.js';
 
+export interface FrameWarningCollector extends IWarningCollector {
+  addWarning(message: string, recovery?: 'plain-frame-length'): void;
+}
+
 interface IFrameFlags {
   status: {
     tag_alter_preservation: boolean;
@@ -120,15 +124,14 @@ export class ID3v2Parser {
     this.metadata.setFormat('chapters', chapters);
   }
 
-  private getExtendedHeaderSize(data: Uint8Array): number {
+  private static getExtendedHeaderSize(data: Uint8Array, major: ID3v2MajorVersion): number {
     if (data.length < Token.UINT32_BE.len) {
       throw new Id3v2ContentError('ID3v2 extended header size field exceeds tag boundary');
     }
     // The ID3v2.3 size excludes its own 4 bytes, the synchsafe ID3v2.4 size includes them
-    const extendedHeaderSize =
-      this.id3Header.version.major === 4 ? UINT32SYNCSAFE.get(data, 0) : Token.UINT32_BE.get(data, 0) + 4;
+    const extendedHeaderSize = major === 4 ? UINT32SYNCSAFE.get(data, 0) : Token.UINT32_BE.get(data, 0) + 4;
     // An ID3v2.3 extended header takes at least 10 bytes, an ID3v2.4 one at least 6
-    const minimumSize = this.id3Header.version.major === 4 ? 6 : 10;
+    const minimumSize = major === 4 ? 6 : 10;
     if (extendedHeaderSize < minimumSize || extendedHeaderSize > data.length) {
       throw new Id3v2ContentError(`Invalid ID3v2 extended header size: ${extendedHeaderSize}`);
     }
@@ -137,20 +140,13 @@ export class ID3v2Parser {
 
   public async parseId3Data(dataLen: number): Promise<void> {
     // Own the complete on-disk body before resynchronising, including custom tokenizer inputs.
-    let uint8Array = await readBuffer(
+    const uint8Array = await readBuffer(
       this.tokenizer,
       dataLen,
       this.options,
       undefined,
       message => new Id3v2ContentError(message)
     );
-    // ID3v2.2 and ID3v2.3 unsynchronise the whole tag, ID3v2.4 flags each frame
-    if (this.id3Header.flags.unsynchronisation && this.id3Header.version.major < 4) {
-      uint8Array = ID3v2Parser.removeUnsyncBytes(uint8Array);
-    }
-    if (this.id3Header.flags.isExtendedHeader) {
-      uint8Array = uint8Array.subarray(this.getExtendedHeaderSize(uint8Array));
-    }
     const tags = this.parseMetadata(uint8Array);
     for (const tag of tags) {
       switch (tag.id) {
@@ -227,11 +223,16 @@ export class ID3v2Parser {
     await this.metadata.addTag(this.headerType, id, value);
   }
 
-  private parseMetadata(data: Uint8Array): ITag[] {
+  public static *frames(data: Uint8Array, header: IID3v2header, warnings: FrameWarningCollector, maxEntries: number) {
+    // ID3v2.2 and ID3v2.3 unsynchronise the whole tag, ID3v2.4 flags each frame
+    if (header.flags.unsynchronisation && header.version.major < 4) {
+      data = ID3v2Parser.removeUnsyncBytes(data);
+    }
+    if (header.flags.isExtendedHeader) {
+      data = data.subarray(ID3v2Parser.getExtendedHeaderSize(data, header.version.major));
+    }
     let offset = 0;
     let frameCount = 0;
-    const tags: { id: string; value: AnyTagValue }[] = [];
-
     while (true) {
       if (offset === data.length) {
         break;
@@ -241,36 +242,49 @@ export class ID3v2Parser {
       // Check before requiring a complete frame header: padding can be shorter.
       if (data[offset] === 0) {
         if (data.subarray(offset).some(byte => byte !== 0)) {
-          this.metadata.addWarning('Non-zero bytes found in ID3v2 padding');
+          warnings.addWarning('Non-zero bytes found in ID3v2 padding');
         }
         break;
       }
 
-      const frameHeaderLength = getFrameHeaderLength(this.id3Header.version.major);
+      const frameHeaderLength = getFrameHeaderLength(header.version.major);
 
       if (offset + frameHeaderLength > data.length) {
-        this.metadata.addWarning('Illegal ID3v2 tag length');
+        warnings.addWarning('Illegal ID3v2 tag length');
         break;
       }
 
       const frameHeaderBytes = data.subarray(offset, offset + frameHeaderLength);
       offset += frameHeaderLength;
-      const frameHeader = readFrameHeader(frameHeaderBytes, this.id3Header.version.major, this.metadata);
-      if (this.id3Header.version.major === 4) {
+      const frameHeader = readFrameHeader(frameHeaderBytes, header.version.major, warnings);
+      if (header.version.major === 4) {
         const frameLength = getId3v24FrameLength(data, offset, frameHeaderBytes, frameHeader.length);
         if (frameLength !== frameHeader.length) {
-          this.metadata.addWarning(
-            `ID3v2.4 frame ${frameHeader.id} size is not a synchsafe integer, read it as a plain 32-bit integer`
+          warnings.addWarning(
+            `ID3v2.4 frame ${frameHeader.id} size is not a synchsafe integer, read it as a plain 32-bit integer`,
+            'plain-frame-length'
           );
           frameHeader.length = frameLength;
         }
       }
-      if (++frameCount > getMaxMetadataEntries(this.options)) {
+      if (++frameCount > maxEntries) {
         throw new Id3v2ContentError('Frame count exceeds entry limit');
       }
 
       const frameDataBytes = data.subarray(offset, offset + frameHeader.length);
       offset += frameHeader.length;
+      yield { frameHeader, frameDataBytes };
+    }
+  }
+
+  private parseMetadata(data: Uint8Array): ITag[] {
+    const tags: ITag[] = [];
+    for (const { frameHeader, frameDataBytes } of ID3v2Parser.frames(
+      data,
+      this.id3Header,
+      this.metadata,
+      getMaxMetadataEntries(this.options)
+    )) {
       const values = ID3v2Parser.readFrameData(
         frameDataBytes,
         frameHeader,

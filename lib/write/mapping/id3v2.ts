@@ -1,5 +1,5 @@
-import { textEncode } from '@borewit/text-codec';
-import { InvalidPatchError, UnsupportedFeatureError } from '../core/errors.js';
+import { textDecode, textEncode } from '@borewit/text-codec';
+import { InvalidFileError, InvalidPatchError, UnsupportedFeatureError } from '../core/errors.js';
 import { normalizeLyrics } from '../core/lyrics.js';
 import { normalizeComments, normalizeNumberPair, textValues, validatePictures } from '../core/patch.js';
 import type { TagPatch } from '../core/types.js';
@@ -51,6 +51,36 @@ const textFields = {
   replaygain_album_gain: 'TXXX:REPLAYGAIN_ALBUM_GAIN',
   replaygain_album_peak: 'TXXX:REPLAYGAIN_ALBUM_PEAK'
 } as const;
+
+function ratingFrames(frames: Frame[], ratings: NonNullable<TagPatch['rating']>) {
+  const existing = new Map<string, Uint8Array>();
+  for (const frame of frames) {
+    if (frame.id !== 'POPM') {
+      continue;
+    }
+    if (frame.flags & 0x4f) {
+      throw new UnsupportedFeatureError('Cannot edit flagged POPM frames');
+    }
+    const end = frame.data.indexOf(0);
+    if (end < 0 || end + 1 >= frame.data.length) {
+      throw new InvalidFileError('Malformed POPM frame');
+    }
+    existing.set(textDecode(frame.data.subarray(0, end), 'latin1'), frame.data);
+  }
+  return ratings.map(({ source = '', rating }) => {
+    if (rating !== undefined && (!Number.isFinite(rating) || rating < 0 || rating > 1)) {
+      throw new InvalidPatchError('rating must be between 0 and 1');
+    }
+    const score = rating === undefined ? 0 : Math.round(rating * 254) + 1;
+    const body = existing.get(source)?.slice();
+    if (!body) {
+      return { email: source, rating: score, counter: 0 };
+    }
+    // Retain the original counter bytes, including an omitted or extended counter.
+    body[body.indexOf(0) + 1] = score;
+    return body;
+  });
+}
 
 export function applyId3Patch(frames: Frame[], patch: TagPatch, replace: (key: string, value: unknown) => void): void {
   for (const key of EXTRA_COMMON_FIELDS) {
@@ -209,15 +239,7 @@ export function applyId3Patch(frames: Frame[], patch: TagPatch, replace: (key: s
     }
   }
   if (patch.rating !== undefined) {
-    replace(
-      'POPM',
-      patch.rating?.map(value => {
-        if (value.rating === undefined || !Number.isFinite(value.rating) || value.rating < 0 || value.rating > 1) {
-          throw new InvalidPatchError('rating must be between 0 and 1');
-        }
-        return { email: value.source ?? '', rating: Math.round(value.rating * 254) + 1, counter: 0 };
-      }) ?? null
-    );
+    replace('POPM', patch.rating?.length ? ratingFrames(frames, patch.rating) : null);
   }
   const roles = ['producer', 'engineer', 'arranger', 'mixer', 'djmixer'] as const;
   if (roles.some(role => patch[role] !== undefined)) {

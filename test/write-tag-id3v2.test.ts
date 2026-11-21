@@ -31,6 +31,67 @@ async function withCopy(verify: (target: string) => Promise<void>) {
 }
 
 describe('ID3v2.4 metadata transfer', () => {
+  it('uses a recovered plain POPM frame length during replacement', async () => {
+    const source = 'x'.repeat(130);
+    const [frame] = makeFrames('POPM', { email: source, rating: 0, counter: 42 });
+    const encoded = Buffer.from(encodeFrame(frame!));
+    encoded.writeUInt32BE(frame!.data.length, 4);
+    const patch = { rating: [{ source, rating: 1 }] };
+    const options = { replaceId3: true };
+    const saved = await parseBuffer(await updateBuffer(tag(encoded), patch, options));
+    expect(saved.native['ID3v2.4']).toContainEqual({ id: 'POPM', value: { email: source, rating: 255, counter: 42 } });
+    await expect(updateBuffer(tag(encoded.subarray(0, -1)), patch, options)).rejects.toThrow('Truncated POPM');
+    await expect(updateBuffer(tag(Buffer.concat([encoded, Buffer.from('X')])), patch, options)).rejects.toThrow(
+      'Illegal ID3v2 tag length'
+    );
+  });
+
+  it('decodes unsynchronised POPM data and strips its length indicator on an ordinary rating edit', async () => {
+    const data = Uint8Array.of(0, 0, 0, 7, 65, 0, 0, 0, 0, 255, 0, 224);
+    const frame = (flags: number) => tag(encodeFrame({ id: 'POPM', flags, data }));
+    const patch = { rating: [{ source: 'A', rating: 1 }] };
+    const output = await updateBuffer(frame(3), patch);
+    expect(output[19]).toBe(0);
+    expect((await parseBuffer(output)).native['ID3v2.4']).toContainEqual({
+      id: 'POPM',
+      value: { email: 'A', rating: 255, counter: 0xffe0 }
+    });
+    for (const flag of [4, 8, 64]) {
+      await expect(updateBuffer(frame(flag | 3), patch)).rejects.toThrow('flagged POPM');
+      await expect(updateBuffer(frame(flag | 3), patch, { replaceId3: true })).rejects.toThrow('encoded POPM');
+    }
+  });
+
+  it.each([3, 4])('preserves POPM owners and counters when saving ID3v2.%i', async version => {
+    const owners = [
+      { email: 'first', rating: 0, counter: 42 },
+      { email: 'second', rating: 128, counter: 67890 }
+    ];
+    const source = tag(Buffer.concat(makeFrames('POPM', owners).map(encodeFrame)));
+    // Short unflagged frames have identical size encodings in both versions.
+    source[3] = version;
+    await withCopy(async target => {
+      for (const editScore of [false, true]) {
+        await writeFile(target, source);
+        const file = await MediaFile.open(target);
+        if (editScore) {
+          file.metadata.common.rating!.find(entry => entry.source === 'second')!.rating = 1;
+        } else {
+          file.metadata.common.title = 'Updated title';
+        }
+        await file.save({ replaceId3: version === 3 });
+        const saved = await parseFile(target);
+        expect(saved.native['ID3v2.4']!.filter(frame => frame.id === 'POPM').map(frame => frame.value)).toEqual([
+          owners[0],
+          { ...owners[1], rating: editScore ? 255 : 128 }
+        ]);
+        if (!editScore) {
+          expect(saved.common.title).toBe('Updated title');
+        }
+      }
+    });
+  });
+
   it('writes all common tags to a new MP3', async () => {
     const { common } = await parseFile(sample);
     await withCopy(async target => {
