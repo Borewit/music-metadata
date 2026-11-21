@@ -960,6 +960,18 @@ Replacement preserves the audio payload and discards old ID3 frames without a wr
 To apply tags from another source, assign its parsed `common` object to `file.metadata.common` before saving.
 The native tags and format information describe the original read. Reopen the file to inspect the saved tags.
 
+Use `file.applyPatch(patch, writeOptions?)` to write selected common and native fields together. For example, an M4A can store a display credit, the individual artist names, and an application-specific identity in one atomic write.
+
+```js
+await file.applyPatch({
+  artist: 'Artist A & Artist B',
+  artists: ['Artist A', 'Artist B'],
+  native: { '----:com.apple.iTunes:CATALOG_ID': 'recording-42' }
+});
+```
+
+A successful patch reloads `file.metadata` with the original read options and replaces any unsaved in-memory edits. A dry run keeps the current metadata.
+
 #### WMA / ASF
 
 WMA writing supports complete, unencrypted, audio-only ASF files and returns

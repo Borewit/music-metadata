@@ -158,6 +158,9 @@ export function editItems(
   const replacements = new Map<string, Uint8Array | null>();
   const canonical = (key: string) => (key.startsWith('----:') ? key.toLowerCase() : key);
   const replace = (key: string, value: Uint8Array | null) => replacements.set(canonical(key), value);
+  const artistsKey = '----:com.apple.iTunes:ARTISTS';
+  const separateArtists =
+    patch.artist !== undefined || existing.some(entry => canonical(entry.key) === canonical(artistsKey));
   const entries = patch as Record<string, unknown>;
   const aliases = new Set([
     'totaltracks',
@@ -186,14 +189,14 @@ export function editItems(
     ) {
       continue;
     }
-    const key = textAtoms[field] ?? (freeform[field] ? `----:com.apple.iTunes:${freeform[field]}` : undefined);
+    const key =
+      field === 'artists' && separateArtists
+        ? artistsKey
+        : (textAtoms[field] ?? (freeform[field] ? `----:com.apple.iTunes:${freeform[field]}` : undefined));
     if (!key) {
       throw new UnsupportedFeatureError(`MP4 common field is not writable: ${field}`);
     }
-    if (
-      (field === 'artist' && entries.artists !== undefined) ||
-      (field === 'albumartist' && entries.albumartists !== undefined)
-    ) {
+    if (field === 'albumartist' && entries.albumartists !== undefined) {
       continue;
     }
     // Full dates take precedence over a year alias.
