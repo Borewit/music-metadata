@@ -1,5 +1,7 @@
 import { TokenWriter } from 'strtok3';
 import { UINT8 } from 'token-types';
+import { type FrameWarningCollector, ID3v2Parser } from '../../id3v2/ID3v2Parser.js';
+import { ID3v2Header } from '../../id3v2/ID3v2Token.js';
 import { AdtsFrameHeader } from '../../mpeg/AdtsFrameHeader.js';
 import { UINT32SYNCSAFE } from '../../tokens/id3v2.js';
 import {
@@ -14,6 +16,41 @@ import { applyId3Patch } from '../mapping/id3v2.js';
 import { decodeText, encodeFrame, type Frame, makeFrames, syncSafe } from './frames.js';
 
 const MAX_TAG_SIZE = 64 * 1024 * 1024;
+
+function ratingBody(data: Uint8Array, unsynchronised: boolean, hasLengthIndicator: boolean): Uint8Array {
+  const body = unsynchronised ? ID3v2Parser.removeUnsyncBytes(data) : data;
+  return hasLengthIndicator ? body.subarray(4) : body;
+}
+
+/** Seed only the POPM bodies so the common rating patch can reuse the original counter bytes. */
+function collectReplacementRatings(frames: Frame[], header: Uint8Array, body: Uint8Array): void {
+  const tag = ID3v2Header.get(header, 0);
+  const warnings: FrameWarningCollector = {
+    addWarning(message, recovery) {
+      if (recovery !== 'plain-frame-length') {
+        throw new InvalidFileError(message);
+      }
+    }
+  };
+  for (const { frameHeader, frameDataBytes } of ID3v2Parser.frames(body, tag, warnings, 100_000)) {
+    if (frameHeader.id !== 'POPM' && frameHeader.id !== 'POP') {
+      continue;
+    }
+    if (frameDataBytes.length !== frameHeader.length) {
+      throw new InvalidFileError('Truncated POPM frame');
+    }
+    const flags = frameHeader.flags?.format;
+    if (flags?.compression || flags?.encryption || flags?.grouping_identity) {
+      throw new UnsupportedFeatureError('Cannot edit encoded POPM frames');
+    }
+    const data = ratingBody(
+      frameDataBytes,
+      !!flags?.unsynchronisation || (tag.version.major === 4 && tag.flags.unsynchronisation),
+      !!flags?.data_length_indicator
+    );
+    frames.push({ id: 'POPM', flags: 0, data });
+  }
+}
 
 /** Validate the first audio header without interpreting or rewriting the payload. */
 function validateAudioHeader(audio: Uint8Array, audioLength: number): 'mp3' | 'aac' {
@@ -92,6 +129,9 @@ export async function buildId3Update(source: ByteSource, patch: TagPatch, option
           throw new InvalidFileError('Invalid ID3 footer');
         }
       }
+      if (patch.rating?.length) {
+        collectReplacementRatings(frames, header, await source.read(10, length));
+      }
     } else {
       if (header[3] !== 4) {
         throw new UnsupportedFeatureError('Only ID3v2.4 tags are writable');
@@ -134,7 +174,12 @@ export async function buildId3Update(source: ByteSource, patch: TagPatch, option
         if (offset + 10 + size > data.length) {
           throw new InvalidFileError('ID3 frame exceeds tag size');
         }
-        frames.push({ id, flags, data: data.slice(offset + 10, offset + 10 + size) });
+        const frame: Frame = { id, flags, data: data.slice(offset + 10, offset + 10 + size) };
+        if (id === 'POPM' && patch.rating?.length && !(flags & 0x4c)) {
+          frame.data = ratingBody(frame.data, !!(flags & 2), !!(flags & 1));
+          frame.flags &= ~3;
+        }
+        frames.push(frame);
         offset += 10 + size;
         if (frames.length > 100_000) {
           throw new InvalidFileError('Too many ID3 frames');
