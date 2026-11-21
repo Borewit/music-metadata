@@ -400,6 +400,7 @@ describe('MP4 metadata', () => {
       mediaFile.metadata.common.year = 2015;
       await mediaFile.save();
       expect((await parseFile(file)).common).toMatchObject({ year: 2015, date: '2015' });
+      expect(mediaFile.metadata.common).toMatchObject({ year: 2015, date: '2015' });
 
       mediaFile.metadata.common.title = 'Another edit';
       await mediaFile.save();
@@ -409,9 +410,27 @@ describe('MP4 metadata', () => {
       await mediaFile.save();
       expect((await parseFile(file)).common).toMatchObject({ year: 2016, date: '2016' });
 
+      mediaFile.metadata.common.year = 2001;
+      await mediaFile.save();
+      expect((await parseFile(file)).common).toMatchObject({ year: 2001, date: '2001' });
+
       mediaFile.metadata.common.date = '1999-12-31';
       await mediaFile.save();
       expect((await parseFile(file)).common).toMatchObject({ year: 1999, date: '1999-12-31' });
+      expect(mediaFile.metadata.common).toMatchObject({ year: 1999, date: '1999-12-31' });
+
+      mediaFile.metadata.common.date = '2020-06-15';
+      const pendingDateSave = mediaFile.save();
+      mediaFile.metadata.common.year = 2021;
+      await pendingDateSave;
+      expect((await parseFile(file)).common).toMatchObject({ year: 2020, date: '2020-06-15' });
+      expect(mediaFile.metadata.common.year).toBe(2021);
+
+      const pendingYearSave = mediaFile.save();
+      mediaFile.metadata.common.date = '2022-07-16';
+      await pendingYearSave;
+      expect((await parseFile(file)).common).toMatchObject({ year: 2021, date: '2021' });
+      expect(mediaFile.metadata.common.date).toBe('2022-07-16');
     } finally {
       await fs.rm(dir, { recursive: true, force: true });
     }
