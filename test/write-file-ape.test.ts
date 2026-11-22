@@ -390,6 +390,15 @@ describe('APEv2 writing', () => {
     await expect(updateBuffer(Buffer.concat([id3, ape]), { title: 'Update' })).rejects.toThrow('leading ID3');
   });
 
+  it('accepts the empty movement index supplied by the reader', async () => {
+    const input = ape;
+    const { movementIndex } = (await parseBuffer(input)).common;
+    expect(movementIndex).toEqual({ no: null, of: null });
+    const updated = await updateBuffer(input, { title: 'Edited', movementIndex });
+    expect((await parseBuffer(updated)).common).toMatchObject({ title: 'Edited', movementIndex });
+    await expect(updateBuffer(input, { movementIndex: { no: 1 } })).rejects.toThrow(UnsupportedFeatureError);
+  });
+
   it('rejects partial number-pair edits on binary native values', async () => {
     const input = await updateBuffer(ape, { native: { Track: new Uint8Array([0, 1]) } });
     await expect(updateBuffer(input, { track: { no: 1 } })).rejects.toThrow('non-text');

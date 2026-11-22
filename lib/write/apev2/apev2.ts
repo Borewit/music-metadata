@@ -249,6 +249,10 @@ function applyPatch(items: Map<string, Item>, patch: TagPatch): boolean {
     if (value === undefined || field === 'native' || normalizedAliases.has(field)) {
       continue;
     }
+    // The reader supplies this empty pair even when the format has no movement tag.
+    if (field === 'movementIndex' && patch.movementIndex?.no === null && patch.movementIndex.of === null) {
+      continue;
+    }
     const keys = aliases.get(field);
     if (!keys) {
       throw new UnsupportedFeatureError(`APEv2 does not support common field: ${field}; use native for unmapped items`);
