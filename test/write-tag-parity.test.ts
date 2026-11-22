@@ -621,6 +621,11 @@ describe('lyrics patch semantics', () => {
   });
 });
 
+it('reads fractional Discogs ratings as numbers', async () => {
+  const updated = await updateBuffer(makeFlac(), { discogs_rating: 4.75 });
+  expect((await parseBuffer(updated)).common.discogs_rating).toBe(4.75);
+});
+
 describe('structured common values', () => {
   it('retains synchronized ID3 lyrics including descriptors, language and timestamps', async () => {
     const lyrics: NonNullable<ICommonTagsResult['lyrics']> = [
