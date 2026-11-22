@@ -170,7 +170,8 @@ describe('Parse MPEG', () => {
 
       function checkCommon(common: mm.ICommonTagsResult) {
         t.strictEqual(common.title, "You Don't Know", 'common.title');
-        t.deepEqual(common.artists, ['Reel Big Fish'], 'common.artists');
+        t.strictEqual(common.artist, 'Reel Big Fish', 'common.artists');
+        t.strictEqual(common.artists, undefined, 'a display credit is not an artist list');
         t.strictEqual(common.albumArtist, 'Reel Big Fish', 'common.albumartist');
         t.strictEqual(common.album, 'Why Do They Rock So Hard?', 'common.album');
         t.strictEqual(common.year, 1998, 'common.year');
@@ -239,7 +240,8 @@ describe('Parse MPEG', () => {
 
       function checkCommon(common: mm.ICommonTagsResult) {
         t.strictEqual(common.title, "I'm Cool", 'common.title');
-        t.deepEqual(common.artists, ['Reel Big Fish'], 'common.artists');
+        t.strictEqual(common.artist, 'Reel Big Fish', 'common.artists');
+        t.strictEqual(common.artists, undefined, 'a display credit is not an artist list');
         t.strictEqual(common.albumArtist, 'Reel Big Fish', 'common.albumartist');
         t.strictEqual(common.album, 'Why Do They Rock So Hard?', 'common.album');
         t.strictEqual(common.year, 1998, 'common.year');

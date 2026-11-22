@@ -15,13 +15,13 @@
     "description": "Literal written track artist e.g.: `\"Beth Hart & Joe Bonamassa\"`. If not directly specified in a tag, this is automatically filled with `common.artists`."
   },
   "artists": {
-    "description": "Track artists e.g.: `[\"Beth Hart\", \"Joe Bonamassa\"]`. If not directly specified in one or more tag, this is automatically filled with `common.artist`"
+    "description": "Track artists e.g.: `[\"Beth Hart\", \"Joe Bonamassa\"]`. Only names stored as a list, or as repeated artist values, are included. A single display credit such as `\"A feat. B\"` stays in `common.artist`."
   },
   "albumArtist": {
     "description": "Literal written album artist e.g.: `\"Beth Hart & Joe Bonamassa\"`"
   },
   "albumArtists": {
-    "description": "Album artists e.g.: `[\"Beth Hart\", \"Joe Bonamassa\"]`. If not directly specified in one or more tags, this is automatically filled with `common.albumArtist`"
+    "description": "Album artists e.g.: `[\"Beth Hart\", \"Joe Bonamassa\"]`. Only names stored as a list, or as repeated album artist values, are included. A single display credit stays in `common.albumArtist`."
   },
   "album": {
     "description": "Album title"

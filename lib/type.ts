@@ -83,6 +83,14 @@ export interface IRating {
   rating?: number;
 }
 
+/** Common tags with normalized accessors. The underlying tag fields are unchanged. */
+export interface ICommonMetadata extends ICommonTagsResult {
+  /** Return the display credit, or join the artist list with commas and an ampersand. */
+  getArtist(): string | undefined;
+  /** Return the artist list, or a one-entry list containing the display credit. */
+  getArtists(): string[] | undefined;
+}
+
 export interface ICommonTagsResult {
   /** Track number on the release. */
   trackNumber?: number;
@@ -101,7 +109,8 @@ export interface ICommonTagsResult {
    */
   artist?: string;
   /**
-   * Track artists, aims to capture every artist in a different string.
+   * Track artists, one individual name per entry. Set only from a stored list or repeated artist values;
+   * a single display credit such as "A feat. B" stays in `artist`.
    */
   artists?: string[];
   /**
@@ -109,7 +118,8 @@ export interface ICommonTagsResult {
    */
   albumArtist?: string;
   /**
-   * Track album artists, aims to capture every album artist in a different string.
+   * Track album artists, one individual name per entry. Set only from a stored list or repeated album
+   * artist values; a single display credit stays in `albumArtist`.
    */
   albumArtists?: string[];
   /**
@@ -1649,7 +1659,7 @@ export interface IAudioMetadata<T extends object = INativeTagTypeMap> extends IN
   /**
    * Metadata, form independent interface
    */
-  common: ICommonTagsResult;
+  common: ICommonMetadata;
 }
 
 /**

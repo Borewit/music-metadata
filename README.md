@@ -841,6 +841,26 @@ Individual track information. Defined in the TypeScript `ITrackInfo` interface:
 
 [Common tag documentation](doc/common_metadata.md) is automatically generated.
 
+The common result also provides normalized artist accessors:
+
+- `common.getArtist(): string | undefined` returns `common.artist` when present,
+  otherwise joins `common.artists` as `"A & B"` or `"A, B & C"`.
+- `common.getArtists(): string[] | undefined` returns `common.artists` when present,
+  otherwise returns `[common.artist]`. A credit such as `"A feat. B"` is not split.
+
+Both return `undefined` when there is no corresponding value or fallback (an empty
+artist list produces no display credit). They read the current fields without
+changing them, so a single credit still leaves `common.artists` undefined.
+The methods are non-enumerable: spreading or JSON-serializing `common` copies only
+its tag fields, not the accessors.
+
+```ts
+const metadata = await parseFile('audio.mp3');
+const credit = metadata.common.getArtist();
+const artists = metadata.common.getArtists();
+```
+
+
 #### Examples
 
 Some streamed formats require the file size to determine duration. Pass it in bytes

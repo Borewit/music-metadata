@@ -961,7 +961,8 @@ describe('Parse CAF (Core Audio File Format)', () => {
         { mimeType: cafMimeType },
         { maxMemoryAllocation: body.length }
       );
-      assert.deepEqual(common.artists, [value]);
+      assert.strictEqual(common.artist, value);
+      assert.isUndefined(common.artists, 'a display credit is not an artist list');
     });
 
     it('rejects an oversized Information chunk from an unknown-length stream before reading its body', async () => {
