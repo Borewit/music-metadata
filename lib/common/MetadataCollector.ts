@@ -4,7 +4,7 @@ import {
   type AnyTagValue,
   type IAudioMetadata,
   type IComment,
-  type ICommonTagsResult,
+  type ICommonMetadata,
   type IFormat,
   type INativeTags,
   type IOptions,
@@ -61,7 +61,7 @@ export interface INativeMetadataCollector extends IWarningCollector {
    */
   readonly format: IFormat;
 
-  readonly common: ICommonTagsResult;
+  readonly common: ICommonMetadata;
 
   readonly native: INativeTags;
 
@@ -104,7 +104,21 @@ export class MetadataCollector implements INativeMetadataCollector {
     return toNativeTyped(this.native);
   }
 
-  public readonly common: ICommonTagsResult = {};
+  public readonly common: ICommonMetadata = Object.defineProperties(
+    {},
+    {
+      getArtist: {
+        value(this: ICommonMetadata): string | undefined {
+          return this.artist ?? (this.artists?.length ? joinArtists(this.artists) : undefined);
+        }
+      },
+      getArtists: {
+        value(this: ICommonMetadata): string[] | undefined {
+          return this.artists ?? (this.artist !== undefined ? [this.artist] : undefined);
+        }
+      }
+    }
+  ) as ICommonMetadata;
 
   public readonly quality: IQualityInformation = {
     warnings: []
@@ -408,16 +422,24 @@ export class MetadataCollector implements INativeMetadataCollector {
     singularId: SingularArtistId,
     pluralId: PluralArtistId
   ): Promise<void> | void {
-    if (this.commonOrigin[singularId] === this.originPriority[tagType]) {
-      // Assume the singular field is used as plural (multiple values from same source)
+    const previousPriority = this.commonOrigin[singularId];
+    const priority = this.originPriority[tagType];
+    if (previousPriority === priority) {
+      // Repeated values from one source are individual names, starting with the first value.
+      const first = this.common[singularId];
+      if (!this.common[pluralId] && typeof first === 'string') {
+        this.setGenericTag('artificial', { id: pluralId, value: first });
+      }
       return this.postMap('artificial', { id: pluralId, value: tag.value });
     }
 
-    if (!this.common[pluralId]) {
-      // Fill plural using singular source
-      this.setGenericTag('artificial', { id: pluralId, value: tag.value });
+    // A higher-priority credit starts a new group. Native lists have their own source priority.
+    if (priority < previousPriority && this.commonOrigin[pluralId] === this.originPriority.artificial) {
+      delete this.common[pluralId];
+      delete this.commonOrigin[pluralId];
     }
 
+    // A single display credit, such as "A feat. B", is not a list of individual names.
     this.setGenericTag(tagType, tag);
   }
 

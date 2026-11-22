@@ -31,6 +31,7 @@ export {
   type IAudioTrack,
   type ICafNativeTagMap,
   type IChapter,
+  type ICommonMetadata,
   type ICommonTagsResult,
   type IFormat,
   type IID3v1NativeTagMap,

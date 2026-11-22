@@ -799,7 +799,8 @@ describe('Parse MPEG-4', () => {
 
         assert.strictEqual(common.title, 'Uprising');
         assert.deepEqual(common.composers, ['Muse']);
-        assert.deepEqual(common.artists, ['Muse']);
+        assert.strictEqual(common.artist, 'Muse');
+        assert.isUndefined(common.artists, 'a display credit is not an artist list');
         assert.deepEqual(common.genres, ['Rock']);
         assert.strictEqual(common.date, '2009');
         assert.strictEqual(common.encodedBy, 'iTunes 8.2.0.23, QuickTime 7.6.2');
@@ -896,7 +897,8 @@ describe('Parse MPEG-4', () => {
           assert.approximately(format.duration, 15726.689523809524, 0.000001);
 
           assert.strictEqual(common.title, 'GloriesIreland00-12_librivox');
-          assert.deepEqual(common.artists, ['Joseph Dunn']);
+          assert.strictEqual(common.artist, 'Joseph Dunn');
+          assert.isUndefined(common.artists, 'a display credit is not an artist list');
           assert.deepEqual(common.genres, ['Audiobook']);
           assert.strictEqual(common.encodedBy, 'Chapter and Verse V 1.5');
           assert.deepEqual(common.discNumber, undefined);
@@ -930,7 +932,8 @@ describe('Parse MPEG-4', () => {
           assert.deepEqual(common.tvShow, 'Mr. Pickles');
 
           assert.deepEqual(common.artist, 'Mr. Pickles');
-          assert.deepEqual(common.artists, ['Mr. Pickles']);
+          assert.strictEqual(common.artist, 'Mr. Pickles');
+          assert.isUndefined(common.artists, 'a display credit is not an artist list');
           assert.deepEqual(common.albumArtist, 'Mr. Pickles');
           assert.deepEqual(common.copyright, '© & TM - Cartoon Network - 2016');
 
@@ -979,7 +982,8 @@ describe('Parse MPEG-4', () => {
         assert.deepEqual(common.album, 'We Don`t Need to Whisper');
         assert.deepEqual(common.albumArtist, 'Angels and Airwaves');
         assert.deepEqual(common.artist, 'Angels and Airwaves');
-        assert.deepEqual(common.artists, ['Angels and Airwaves']);
+        assert.strictEqual(common.artist, 'Angels and Airwaves');
+        assert.isUndefined(common.artists, 'a display credit is not an artist list');
         assert.strictEqual(common.bpm, 89);
         assert.deepEqual(common.genres, ['Rock']);
         assert.strictEqual(common.title, 'Distraction');
@@ -1002,7 +1006,8 @@ describe('Parse MPEG-4', () => {
         assert.deepEqual(common.album, 'Trumpsta (Remixes)');
         assert.deepEqual(common.albumArtist, 'Contiez');
         assert.deepEqual(common.artist, 'Contiez');
-        assert.deepEqual(common.artists, ['Contiez']);
+        assert.strictEqual(common.artist, 'Contiez');
+        assert.isUndefined(common.artists, 'a display credit is not an artist list');
         assert.strictEqual(common.title, 'Trumpsta (Djuro Remix)');
       });
     });
@@ -3448,7 +3453,8 @@ describe('Parse MPEG-4', () => {
           assert.deepEqual(format.hasVideo, false, 'format.hasVideo');
 
           assert.strictEqual(common.title, 'Babys Songbook', 'common.title');
-          assert.deepEqual(common.artists, ['Walter Crane'], 'common.artists');
+          assert.strictEqual(common.artist, 'Walter Crane', 'common.artists');
+          assert.isUndefined(common.artists, 'a display credit is not an artist list');
           assert.deepEqual(common.genres, ['Audiobook']);
           assert.strictEqual(common.encodedBy, 'Chapter and Verse V 1.5');
           assert.deepEqual(common.discNumber, undefined, 'common.discNumber');

@@ -44,7 +44,8 @@ describe('Discogs mappings', () => {
             );
             assert.deepEqual(common.albumArtists, ['Last, First', 'Second']);
             assert.strictEqual(common.artist, 'Track Artist');
-            assert.deepEqual(common.artists, ['Track Artist']);
+            assert.strictEqual(common.artist, 'Track Artist');
+            assert.isUndefined(common.artists, 'a display credit is not an artist list');
             assert.isAbove(format.duration ?? 0, 0);
             assert.isTrue(format.hasAudio);
             const tags = mm.orderTags(native[tagType]);

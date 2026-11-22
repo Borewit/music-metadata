@@ -201,7 +201,8 @@ describe('Parse AIFF (Audio Interchange File Format)', () => {
     assert.strictEqual(format.codec, 'PCM', 'format.codec');
 
     assert.strictEqual(common.album, 'Hdtracks 2020 Hi-Res Sampler', 'common.album');
-    assert.deepStrictEqual(common.artists, ['Chris Jones'], 'common.artists');
+    assert.strictEqual(common.artist, 'Chris Jones', 'common.artists');
+    assert.isUndefined(common.artists, 'a display credit is not an artist list');
     assert.strictEqual(common.encoderSettings, 'Lavf58.29.100', 'common.encodersettings');
     assert.strictEqual(common.year, 2020, 'common.year');
   });

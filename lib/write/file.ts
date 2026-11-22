@@ -57,6 +57,7 @@ export class FileTagSnapshot {
   }
 
   // MP4 stores both aliases in one atom. Synchronize them only after the write succeeds.
+  // The reader returns a list only when the atom holds several names; one value is the display credit.
   recordMp4Artists(input: TagPatch, submitted: TagPatch, patch: TagPatch): void {
     for (const [singular, plural] of artistPairs) {
       const list = patch[plural];
@@ -64,15 +65,17 @@ export class FileTagSnapshot {
       if (!Array.isArray(list) && typeof name !== 'string') {
         continue;
       }
-      const saved: string[] = Array.isArray(list) ? list : [name as string];
-      this.artists[singular] = saved[0];
-      this.artists[plural] = saved.slice();
+      const savedName = Array.isArray(list) ? list[0] : (name as string);
+      const savedList = Array.isArray(list) && list.length > 1 ? list.slice() : undefined;
+      this.artists[singular] = savedName;
+      this.artists[plural] = savedList;
       // Retain edits the caller made while the write was in progress.
       if (input[singular] === submitted[singular]) {
-        input[singular] = saved[0];
+        input[singular] = savedName;
       }
-      if (sameArtists(input[plural], submitted[plural]) && !sameArtists(input[plural], saved)) {
-        input[plural] = saved.slice();
+      // A saved multi-name list already matches the submitted list.
+      if (savedList === undefined && input[plural] !== undefined && sameArtists(input[plural], submitted[plural])) {
+        delete input[plural];
       }
     }
   }

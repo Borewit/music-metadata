@@ -365,11 +365,6 @@ describe('Observer updates during asynchronous parsing', () => {
         value: 'Congratulations'
       },
       {
-        id: 'artists',
-        type: 'common',
-        value: 'MGMT'
-      },
-      {
         id: 'artist',
         type: 'common',
         value: 'MGMT'

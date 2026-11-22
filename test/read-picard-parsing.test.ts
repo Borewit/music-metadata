@@ -719,7 +719,16 @@ describe('Writing common metadata from Picard fixtures', () => {
         }
       }
       const rewritten = await updateBuffer(changed, patch, options);
-      assert.deepEqual((await parseBuffer(rewritten)).common, expected);
+      const expectedWritten = { ...expected };
+      // The ID3 and MP4 writers store album artists as display credits.
+      if (/\.(mp3|wav|aac|m4a|alac)$/.test(filename) && expected.albumArtists?.length === 1) {
+        delete expectedWritten.albumArtists;
+      }
+      // MP4 also represents the track artist list as display credits.
+      if ((filename.endsWith('.m4a') || filename.endsWith('.alac')) && expected.artists?.length === 1) {
+        delete expectedWritten.artists;
+      }
+      assert.deepEqual((await parseBuffer(rewritten)).common, expectedWritten);
     });
   }
 });
@@ -1113,8 +1122,8 @@ describe('Additional Picard metadata through common', () => {
         )
       ).common;
       assert.strictEqual(cleared.albumArtist, 'New display');
-      // Without a plural field, the reader falls back to the display credit.
-      assert.deepEqual(cleared.albumArtists, ['New display']);
+      // A display credit does not imply a list of individual artists.
+      assert.isUndefined(cleared.albumArtists);
       const pluralOnly = (
         await parseBuffer(
           await updateBuffer(tagged, {
