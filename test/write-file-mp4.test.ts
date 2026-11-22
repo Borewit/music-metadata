@@ -24,6 +24,11 @@ import { buildMp4Update } from '../lib/write/mp4/mp4.js';
 import { readTags } from './helpers/read.js';
 
 const fixture = (name: string) => fs.readFile(fileURLToPath(new URL(`./samples/mp4/${name}.m4a`, import.meta.url)));
+it('reads back the written initial key', async () => {
+  const updated = await updateBuffer(await fixture('alac'), { key: 'F#m' });
+  expect((await parseBuffer(updated)).common.key).toBe('F#m');
+});
+
 interface Atom {
   type: string;
   start: number;
