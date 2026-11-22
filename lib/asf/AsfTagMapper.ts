@@ -12,6 +12,7 @@ export const asfTagMap: INativeTagMap = {
   Title: 'title',
   Author: 'artist',
   'WM/AlbumArtist': 'albumartist',
+  'WM/AlbumArtists': 'albumartists',
   'WM/AlbumTitle': 'album',
   'WM/Year': 'date', // changed to 'year' to 'date' based on Picard mappings; ToDo: check me
   'WM/OriginalReleaseTime': 'originaldate',
