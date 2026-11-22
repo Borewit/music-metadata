@@ -263,6 +263,11 @@ export class MetadataCollector implements INativeMetadataCollector {
         break;
       }
 
+      case 'tvSeason':
+      case 'tvEpisode':
+      case 'hdVideo':
+      case 'stik':
+      case 'playCounter':
       case 'discogs_label_id':
       case 'discogs_release_id':
       case 'discogs_master_release_id':
@@ -270,6 +275,16 @@ export class MetadataCollector implements INativeMetadataCollector {
       case 'discogs_votes':
         tag.value = typeof tag.value === 'string' ? Number.parseInt(tag.value, 10) : tag.value;
         break;
+
+      case 'averageLevel':
+      case 'peakLevel': {
+        const value = typeof tag.value === 'string' && tag.value.trim() ? Number(tag.value) : tag.value;
+        if (typeof value !== 'number' || !Number.isFinite(value)) {
+          return;
+        }
+        tag.value = value;
+        break;
+      }
 
       case 'discogs_rating':
         tag.value = typeof tag.value === 'string' ? Number.parseFloat(tag.value) : tag.value;
