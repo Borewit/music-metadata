@@ -904,7 +904,7 @@ describe('Parse FLAC Vorbis comment', () => {
         assert.deepEqual(common.album, 'Oracular Spectacular / Congratulations', 'common.album');
         assert.deepEqual(common.track, { no: 7, of: 9 }, 'common.track');
         assert.deepEqual(common.disk, { no: 2, of: 2 }, 'common.disk');
-        assert.deepEqual(common.discsubtitle, 'Cogratulations', 'common.discsubtitle');
+        assert.deepEqual(common.discsubtitle, ['Cogratulations'], 'common.discsubtitle');
         assert.deepEqual(common.date, '2011-09-11', 'common.date');
         assert.deepEqual(common.year, 2011, 'common.year');
         assert.deepEqual(common.releasecountry, 'XE', 'common.releasecountry');

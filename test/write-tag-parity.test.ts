@@ -473,6 +473,12 @@ describe('file integrity across full common-tag rewrites', () => {
   }
 });
 
+it('preserves repeated disc subtitles in order', async () => {
+  const discsubtitle = ['Part one', 'Part two'];
+  const updated = await updateBuffer(makeFlac(), { discsubtitle });
+  expect((await parseBuffer(updated)).common.discsubtitle).toEqual(discsubtitle);
+});
+
 describe('lyrics patch semantics', () => {
   const mp3 = () => Uint8Array.from([255, 251, 144, 196, ...new Uint8Array(413)]);
   const nativeTags = (metadata: Awaited<ReturnType<typeof parseBuffer>>, id: string) =>
