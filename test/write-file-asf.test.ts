@@ -234,6 +234,17 @@ describe('WMA / ASF metadata writing', () => {
     });
   }
 
+  it('reads bare ARTISTS and replaces it with WM/ARTISTS on a common edit', async () => {
+    const artist = 'A feat. B';
+    const original = await updateBuffer(await fixture(), { artist, native: { ARTISTS: ['A', 'B'] } });
+    expect((await parseBuffer(original)).common).toMatchObject({ artist, artists: ['A', 'B'] });
+    const artists = ['A', 'Guest'];
+    const saved = await parseBuffer(await updateBuffer(original, { artists }));
+    expect(saved.common).toMatchObject({ artist, artists });
+    expect(saved.native.asf.filter(tag => tag.id === 'WM/ARTISTS').map(tag => tag.value)).toEqual(artists);
+    expect(saved.native.asf.some(tag => tag.id === 'ARTISTS')).toBe(false);
+  });
+
   it('preserves the album artist credit and individual names', async () => {
     const tags = { albumartist: 'A feat. B', albumartists: ['A', 'B'] };
     const updated = await updateBuffer(await fixture(), tags);
