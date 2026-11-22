@@ -79,6 +79,7 @@ export const asfTagMap: INativeTagMap = {
   'Acoustid/Fingerprint': 'acoustid_fingerprint',
   'MusicIP/PUID': 'musicip_puid',
   'WM/ARTISTS': 'artists',
+  ARTISTS: 'artists',
 
   'WM/InitialKey': 'key',
   ASIN: 'asin',
