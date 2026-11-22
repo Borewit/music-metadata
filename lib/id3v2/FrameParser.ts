@@ -453,9 +453,12 @@ export class FrameParser {
 
       case 'WFD':
       case 'WFED': {
-        const encoding = TextEncodingToken.get(uint8Array, 0);
-        uint8Array = uint8Array.subarray(1);
-        output = FrameParser.readNullTerminatedString(uint8Array, encoding).text;
+        // WFED is an iTunes extension. Accept both the ID3v2.4 §4.3 URL body
+        // and the encoding-prefixed text used by some podcast taggers.
+        const prefixed = uint8Array[0] <= 3;
+        output = prefixed
+          ? FrameParser.readNullTerminatedString(uint8Array.subarray(1), { encoding, bom }).text
+          : FrameParser.readNullTerminatedString(uint8Array, urlEnc).text;
         break;
       }
 
