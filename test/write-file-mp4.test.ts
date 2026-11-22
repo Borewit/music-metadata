@@ -441,7 +441,7 @@ describe('MP4 metadata', () => {
     }
   });
 
-  it('saves singular artist edits and gives edited plural values precedence', async () => {
+  it('saves singular artist edits without deriving a list and gives edited lists precedence', async () => {
     const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'editor-mp4-artists-'));
     try {
       const pathName = path.join(dir, 'track.m4a');
@@ -457,19 +457,23 @@ describe('MP4 metadata', () => {
       tags.artist = 'Solo';
       tags.albumartist = 'Album solo';
       await file.save();
-      expect((await parseFile(pathName)).common).toMatchObject({
-        artist: 'Solo',
-        artists: ['Solo'],
-        albumartist: 'Album solo',
-        albumartists: ['Album solo']
-      });
-      expect(tags.artists).toEqual(['Solo']);
-      expect(tags.albumartists).toEqual(['Album solo']);
-      tags.artists!.push('Guest');
-      tags.albumartists = ['Ensemble'];
+      // A single credit replaces the list in the shared atom; it is not itself a list.
+      const single = (await parseFile(pathName)).common;
+      expect(single).toMatchObject({ artist: 'Solo', albumartist: 'Album solo' });
+      expect(single.artists).toBeUndefined();
+      expect(single.albumartists).toBeUndefined();
+      expect(tags.artists).toBeUndefined();
+      expect(tags.albumartists).toBeUndefined();
+      tags.artists = ['Solo', 'Guest'];
+      tags.albumartists = ['Ensemble', 'Guest'];
       tags.artist = 'Conflicting singular';
       await file.save();
-      const saved = { artist: 'Solo', artists: ['Solo', 'Guest'], albumartist: 'Ensemble', albumartists: ['Ensemble'] };
+      const saved = {
+        artist: 'Solo',
+        artists: ['Solo', 'Guest'],
+        albumartist: 'Ensemble',
+        albumartists: ['Ensemble', 'Guest']
+      };
       expect((await parseFile(pathName)).common).toMatchObject(saved);
       expect(tags).toMatchObject(saved);
 
@@ -480,12 +484,12 @@ describe('MP4 metadata', () => {
       expect(tags.albumartists).toEqual(saved.albumartists);
       await file.save();
       await file.save();
-      expect((await parseFile(pathName)).common).toMatchObject({
-        artist: 'Next',
-        artists: ['Next'],
-        albumartist: 'Next album artist',
-        albumartists: ['Next album artist']
-      });
+      const next = (await parseFile(pathName)).common;
+      expect(next).toMatchObject({ artist: 'Next', albumartist: 'Next album artist' });
+      expect(next.artists).toBeUndefined();
+      expect(next.albumartists).toBeUndefined();
+      expect(tags.artists).toBeUndefined();
+      expect(tags.albumartists).toBeUndefined();
     } finally {
       await fs.rm(dir, { recursive: true, force: true });
     }

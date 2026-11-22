@@ -99,7 +99,8 @@ export interface ICommonTagsResult {
    */
   artist?: string;
   /**
-   * Track artists, aims to capture every artist in a different string.
+   * Track artists, one individual name per entry. Set only from a stored list or repeated artist values;
+   * a single display credit such as "A feat. B" stays in `artist`.
    */
   artists?: string[];
   /**
@@ -107,7 +108,8 @@ export interface ICommonTagsResult {
    */
   albumartist?: string;
   /**
-   * Track album artists, aims to capture every album artist in a different string.
+   * Track album artists, one individual name per entry. Set only from a stored list or repeated album
+   * artist values; a single display credit stays in `albumartist`.
    */
   albumartists?: string[];
   /**

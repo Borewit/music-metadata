@@ -385,15 +385,15 @@ export class MetadataCollector implements INativeMetadataCollector {
     pluralId: PluralArtistId
   ): Promise<void> | void {
     if (this.commonOrigin[singularId] === this.originPriority[tagType]) {
-      // Assume the singular field is used as plural (multiple values from same source)
+      // Repeated values from one source are individual names, starting with the first value.
+      const first = this.common[singularId];
+      if (!this.common[pluralId] && typeof first === 'string') {
+        this.setGenericTag('artificial', { id: pluralId, value: first });
+      }
       return this.postMap('artificial', { id: pluralId, value: tag.value });
     }
 
-    if (!this.common[pluralId]) {
-      // Fill plural using singular source
-      this.setGenericTag('artificial', { id: pluralId, value: tag.value });
-    }
-
+    // A single display credit, such as "A feat. B", is not a list of individual names.
     this.setGenericTag(tagType, tag);
   }
 

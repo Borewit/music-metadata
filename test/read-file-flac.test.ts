@@ -174,7 +174,8 @@ describe('Parse FLAC Vorbis comment', () => {
 
   function checkCommon(common: mm.ICommonTagsResult) {
     assert.strictEqual(common.title, 'Brian Eno', 'common.title');
-    assert.deepEqual(common.artists, ['MGMT'], 'common.artists');
+    assert.strictEqual(common.artist, 'MGMT', 'common.artists');
+    assert.isUndefined(common.artists, 'a display credit is not an artist list');
     assert.strictEqual(common.albumartist, undefined, 'common.albumartist');
     assert.strictEqual(common.album, 'Congratulations', 'common.album');
     assert.strictEqual(common.year, 2010, 'common.year');
@@ -899,7 +900,7 @@ describe('Parse FLAC Vorbis comment', () => {
         // Compare expectedCommonTags with result.common
         assert.deepEqual(common.title, 'Brian Eno', 'common.tagtitle');
         assert.deepEqual(common.artist, 'MGMT', 'common.artist');
-        assert.deepEqual(common.artists, ['MGMT'], 'common.artist');
+        assert.deepEqual(common.artists, ['MGMT'], 'stored ARTISTS list');
         assert.deepEqual(common.albumartist, 'MGMT', 'common.albumartist');
         assert.deepEqual(common.album, 'Oracular Spectacular / Congratulations', 'common.album');
         assert.deepEqual(common.track, { no: 7, of: 9 }, 'common.track');
@@ -1275,5 +1276,39 @@ describe('Public FLAC structural tokens', () => {
         'Cannot read'
       );
     }
+  });
+});
+
+describe('Artist display credit and artist list', () => {
+  const sample = fs.readFileSync(path.join(samplePath, 'flac', 'Lavf.flac'));
+  const read = async (native: Record<string, string[]>) =>
+    (await mm.parseBuffer(await mm.updateBuffer(sample, { native }), 'audio/flac')).common;
+
+  it('keeps a single display credit out of the artist list', async () => {
+    const common = await read({ ARTIST: ['A feat. B'], ALBUMARTIST: ['C feat. D'] });
+    assert.strictEqual(common.artist, 'A feat. B');
+    assert.isUndefined(common.artists);
+    assert.strictEqual(common.albumartist, 'C feat. D');
+    assert.isUndefined(common.albumartists);
+  });
+
+  it('reads repeated artist values as individual names, including the first', async () => {
+    const common = await read({ ARTIST: ['A', 'B'], ALBUMARTIST: ['C', 'D'] });
+    assert.strictEqual(common.artist, 'A');
+    assert.deepEqual(common.artists, ['A', 'B']);
+    assert.strictEqual(common.albumartist, 'C');
+    assert.deepEqual(common.albumartists, ['C', 'D']);
+  });
+
+  it('keeps a stored list next to the display credit', async () => {
+    const common = await read({ ARTIST: ['A feat. B'], ARTISTS: ['A', 'B'] });
+    assert.strictEqual(common.artist, 'A feat. B');
+    assert.deepEqual(common.artists, ['A', 'B']);
+  });
+
+  it('builds a display credit from a stored list', async () => {
+    const common = await read({ ARTISTS: ['A', 'B'] });
+    assert.strictEqual(common.artist, 'A & B');
+    assert.deepEqual(common.artists, ['A', 'B']);
   });
 });

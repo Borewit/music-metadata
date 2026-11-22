@@ -888,7 +888,8 @@ describe('ID3v2', () => {
       return mm.parseFile(filePath).then(result => {
         assert.equal(result.common.title, "It's All Over You Know", 'title');
         assert.equal(result.common.artist, 'The Apers', 'artist');
-        assert.deepEqual(result.common.artists, ['The Apers'], 'artist');
+        assert.strictEqual(result.common.artist, 'The Apers', 'artist');
+        assert.isUndefined(result.common.artists, 'a display credit is not an artist list');
         assert.equal(result.common.albumartist, 'The Apers', 'albumartist');
         assert.equal(result.common.album, 'Reanimate My Heart', 'album');
         assert.equal(result.common.year, 2007, 'year');

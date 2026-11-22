@@ -127,7 +127,8 @@ describe('Parse RIFF/WAVE audio format', () => {
     assert.deepEqual(exif.ITCH, ['Technician'], 'exif.ITCH: Technician');
 
     const common = metadata.common;
-    assert.deepEqual(common.artists, ['Wolfgang Amadeus Mozart']);
+    assert.strictEqual(common.artist, 'Wolfgang Amadeus Mozart');
+    assert.isUndefined(common.artists, 'a display credit is not an artist list');
     assert.deepEqual(common.title, 'The Magic Flute');
     assert.deepEqual(common.album, 'La clemenzo di Tito');
     assert.deepEqual(common.date, '2018-04-26T13:26:19-05:00');

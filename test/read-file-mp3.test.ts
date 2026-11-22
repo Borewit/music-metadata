@@ -538,7 +538,8 @@ describe('Parse MP3 files', () => {
 
       assert.strictEqual(common.title, "Do They Know It's Christmas?", 'common.artist');
       assert.strictEqual(common.artist, 'Band Aid', 'common.artist');
-      assert.deepEqual(common.artists, ['Band Aid'], 'common.artists');
+      assert.strictEqual(common.artist, 'Band Aid', 'common.artists');
+      assert.isUndefined(common.artists, 'a display credit is not an artist list');
       assert.strictEqual(common.album, "Now That's What I Call Xmas", 'common.album');
       assert.strictEqual(common.year, 2006, 'common.year');
       assert.deepEqual(
