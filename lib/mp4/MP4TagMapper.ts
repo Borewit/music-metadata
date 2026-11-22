@@ -69,6 +69,7 @@ const mp4TagMap: INativeTagMap = {
   '----:com.apple.iTunes:DISCSUBTITLE': 'discsubtitle',
   cpil: 'compilation',
   tmpo: 'bpm',
+  '----:com.apple.iTunes:initialkey': 'key',
   '----:com.apple.iTunes:MOOD': 'mood',
   '----:com.apple.iTunes:MEDIA': 'media',
   '----:com.apple.iTunes:CATALOGNUMBER': 'catalognumber',
