@@ -271,6 +271,10 @@ export class MetadataCollector implements INativeMetadataCollector {
         tag.value = typeof tag.value === 'string' ? Number.parseInt(tag.value, 10) : tag.value;
         break;
 
+      case 'discogs_rating':
+        tag.value = typeof tag.value === 'string' ? Number.parseFloat(tag.value) : tag.value;
+        break;
+
       case 'replaygain_track_gain':
       case 'replaygain_track_peak':
       case 'replaygain_album_gain':
