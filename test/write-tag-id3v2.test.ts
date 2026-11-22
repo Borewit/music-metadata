@@ -16,6 +16,23 @@ const input = await readFile(sample);
 const audioOffset = (data: Uint8Array) => (data[0] === 73 ? 10 + syncSafe(data, 6) : 0);
 const payload = input.subarray(audioOffset(input));
 
+it('preserves the complete podcast URL', async () => {
+  const podcasturl = 'https://example.org/épisodes';
+  const updated = await updateBuffer(payload, { podcasturl });
+  const body = Buffer.from(podcasturl, 'latin1');
+  expect(Buffer.from(updated.subarray(10, 20 + body.length))).toEqual(
+    Buffer.concat([Buffer.from('WFED'), Buffer.from([0, 0, 0, body.length, 0, 0]), body])
+  );
+  expect((await parseBuffer(updated)).common.podcasturl).toBe(podcasturl);
+});
+
+it('reads an encoding-prefixed podcast URL from a text-frame writer', async () => {
+  const podcasturl = 'https://example.org/音楽';
+  const data = Buffer.concat([Buffer.from([3]), Buffer.from(podcasturl, 'utf8')]);
+  const source = tag(encodeFrame({ id: 'WFED', flags: 0, data }));
+  expect((await parseBuffer(source)).common.podcasturl).toBe(podcasturl);
+});
+
 async function withCopy(verify: (target: string) => Promise<void>) {
   const directory = await mkdtemp(path.join(tmpdir(), 'id3v24-'));
   try {
