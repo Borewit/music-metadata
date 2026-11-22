@@ -167,6 +167,10 @@ export function applyPatch(objects: AsfObject[], patch: TagPatch, streams: Set<n
     if (value === undefined || field === 'native' || normalizedAliases.has(field)) {
       continue;
     }
+    // The reader supplies this empty pair even when the format has no movement tag.
+    if (field === 'movementIndex' && patch.movementIndex?.no === null && patch.movementIndex.of === null) {
+      continue;
+    }
     const keys = aliases.get(field);
     if (!keys) {
       throw new UnsupportedFeatureError(

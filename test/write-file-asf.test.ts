@@ -431,6 +431,15 @@ describe('WMA / ASF metadata writing', () => {
     expect((await tags(await updateBuffer(input, { track: { of: 12 } }))).track).toEqual({ no: 5, of: 12 });
   });
 
+  it('accepts the empty movement index supplied by the reader', async () => {
+    const input = await fixture();
+    const { movementIndex } = (await parseBuffer(input)).common;
+    expect(movementIndex).toEqual({ no: null, of: null });
+    const updated = await updateBuffer(input, { title: 'Edited', movementIndex });
+    expect((await parseBuffer(updated)).common).toMatchObject({ title: 'Edited', movementIndex });
+    await expect(updateBuffer(input, { movementIndex: { no: 1 } })).rejects.toThrow(UnsupportedFeatureError);
+  });
+
   it('rejects merging track numbers with unsupported native types', async () => {
     const input = synthetic([
       metadata(AsfGuid.ExtendedContentDescriptionObject, [record('WM/TrackNumber', 2, Buffer.from([1, 0]), true)])
