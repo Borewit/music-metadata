@@ -86,7 +86,7 @@ const commonTags: ITagInfoMap = {
   subtitle: { multiple: true },
   description: { multiple: true },
   longDescription: defaultTagInfo,
-  discsubtitle: defaultTagInfo,
+  discsubtitle: { multiple: true },
   totaltracks: defaultTagInfo,
   totaldiscs: defaultTagInfo,
   movementTotal: defaultTagInfo,
