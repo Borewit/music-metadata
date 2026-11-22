@@ -190,15 +190,18 @@ export function applyVorbisPatch(
     if (values === undefined) {
       continue;
     }
+    const field =
+      mapping.patch === 'artists' &&
+      (patch.artist !== undefined || comments.some(comment => comment.key.toUpperCase() === 'ARTISTS'))
+        ? 'ARTISTS'
+        : mapping.field;
     if (values === null) {
-      removeField(comments, mapping.field);
+      removeField(comments, field);
       continue;
     }
     if (!mapping.multiple && values.length > 1) {
       throw new InvalidPatchError(`${String(mapping.patch)} accepts a single value`);
     }
-    // Keep an explicit display artist separate from the individual artist list.
-    const field = mapping.patch === 'artists' && patch.artist !== undefined ? 'ARTISTS' : mapping.field;
     setField(comments, field, values);
   }
 

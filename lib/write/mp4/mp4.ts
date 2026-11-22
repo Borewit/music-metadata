@@ -5,7 +5,7 @@ import type { ByteSource } from '../core/source.shared.js';
 import type { TagPatch, WriteOptions } from '../core/types.js';
 import { type AtomBudget, atom, type Box, boxes, copyBox, fourcc, header, limit, maxAtoms, zeros } from './atoms.js';
 import { chapterUpdate } from './chapters.js';
-import { editItems } from './tags.js';
+import { editItems, itemKeys, mp4ArtistsItemKey } from './tags.js';
 
 /**
  * Rebuild only moov; copy media ranges unchanged and relocate absolute chunk offsets.
@@ -284,4 +284,64 @@ export async function buildMp4Update(
     ],
     paddingBytes: 0
   };
+}
+
+/** Whether the file contains the raw iTunes ARTISTS item, even when it has no data child. */
+export async function mp4HasArtistsItem(source: ByteSource): Promise<boolean> {
+  const budget: AtomBudget = { remaining: maxAtoms };
+  let movie: Box | undefined;
+  let scannedAtoms = 0;
+  for (let start = 0; start < source.size; ) {
+    if (++scannedAtoms > maxAtoms) {
+      return false;
+    }
+    const bytes = await source.read(start, Math.min(16, source.size - start));
+    if (bytes.length < 8) {
+      return false;
+    }
+    const raw = Token.UINT32_BE.get(bytes, 0);
+    const size =
+      raw === 1
+        ? bytes.length < 16
+          ? 0
+          : Number(Token.UINT64_BE.get(bytes, 8))
+        : raw === 0
+          ? source.size - start
+          : raw;
+    const headerLength = raw === 1 ? 16 : 8;
+    if (!Number.isSafeInteger(size) || size < headerLength || size > source.size - start) {
+      return false;
+    }
+    if (fourcc(bytes, 4) === 'moov') {
+      movie = { type: 'moov', start, end: start + size, header: headerLength };
+      break;
+    }
+    start += size;
+  }
+  if (!movie || movie.end - movie.start > limit) {
+    return false;
+  }
+  const original = await source.read(movie.start, movie.end - movie.start);
+  const root = boxes(original, movie.header, original.length, budget);
+  const metas = root.filter(box => box.type === 'meta');
+  for (const userData of root.filter(box => box.type === 'udta')) {
+    metas.push(
+      ...boxes(original, userData.start + userData.header, userData.end, budget).filter(box => box.type === 'meta')
+    );
+  }
+  const key = mp4ArtistsItemKey.toLowerCase();
+  for (const meta of metas) {
+    const body = meta.start + meta.header;
+    if (meta.end - body < 4 || Token.UINT32_BE.get(original, body) !== 0) {
+      continue;
+    }
+    const list = boxes(original, body + 4, meta.end, budget).find(box => box.type === 'ilst');
+    if (
+      list &&
+      itemKeys(original.subarray(list.start + list.header, list.end), budget).some(k => k.toLowerCase() === key)
+    ) {
+      return true;
+    }
+  }
+  return false;
 }

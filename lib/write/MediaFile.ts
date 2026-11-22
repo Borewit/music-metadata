@@ -12,7 +12,7 @@ export class MediaFile {
     private readonly filePath: string,
     public readonly metadata: IAudioMetadata
   ) {
-    this.snapshot = new FileTagSnapshot(metadata.common);
+    this.snapshot = new FileTagSnapshot(metadata);
   }
 
   static async open(filePath: string, options?: IOptions): Promise<MediaFile> {

@@ -441,7 +441,7 @@ describe('MP4 metadata', () => {
     }
   });
 
-  it('saves singular artist edits and gives edited plural values precedence', async () => {
+  it('saves independent artist credits and keeps album artist aliases synchronized', async () => {
     const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'editor-mp4-artists-'));
     try {
       const pathName = path.join(dir, 'track.m4a');
@@ -467,9 +467,14 @@ describe('MP4 metadata', () => {
       expect(tags.albumartists).toEqual(['Album solo']);
       tags.artists!.push('Guest');
       tags.albumartists = ['Ensemble'];
-      tags.artist = 'Conflicting singular';
+      tags.artist = 'Solo with Guest';
       await file.save();
-      const saved = { artist: 'Solo', artists: ['Solo', 'Guest'], albumartist: 'Ensemble', albumartists: ['Ensemble'] };
+      const saved = {
+        artist: 'Solo with Guest',
+        artists: ['Solo', 'Guest'],
+        albumartist: 'Ensemble',
+        albumartists: ['Ensemble']
+      };
       expect((await parseFile(pathName)).common).toMatchObject(saved);
       expect(tags).toMatchObject(saved);
 
@@ -482,10 +487,93 @@ describe('MP4 metadata', () => {
       await file.save();
       expect((await parseFile(pathName)).common).toMatchObject({
         artist: 'Next',
-        artists: ['Next'],
+        artists: ['Solo', 'Guest'],
         albumartist: 'Next album artist',
         albumartists: ['Next album artist']
       });
+    } finally {
+      await fs.rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('keeps a separate ARTISTS list and pending list edits when only the display credit changes', async () => {
+    const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'editor-mp4-artist-sync-'));
+    try {
+      const separate = path.join(dir, 'separate.m4a');
+      await fs.writeFile(separate, await updateBuffer(await fixture('alac'), { artist: 'X', artists: ['X'] }));
+      const editor = await MediaFile.open(separate);
+      editor.metadata.common.artist = 'Y';
+      await editor.save();
+      expect((await parseFile(separate)).common).toMatchObject({ artist: 'Y', artists: ['X'] });
+      expect(editor.metadata.common.artists).toEqual(['X']);
+
+      const single = path.join(dir, 'single.m4a');
+      await fs.writeFile(single, await updateBuffer(await fixture('alac'), { artist: 'Original' }));
+      const pending = await MediaFile.open(single);
+      const tags = pending.metadata.common;
+      tags.artist = 'Solo';
+      const save = pending.save();
+      tags.artists = ['Edited'];
+      await save;
+      expect(tags.artists).toEqual(['Edited']);
+    } finally {
+      await fs.rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  it.each([false, true])('saves an ARTISTS removal twice, with an intervening list edit: %s', async editDuringSave => {
+    const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'editor-mp4-remove-artists-'));
+    try {
+      const pathName = path.join(dir, 'track.m4a');
+      const artist = 'Display credit';
+      await fs.writeFile(pathName, await updateBuffer(await fixture('alac'), { artist, artists: ['A', 'B'] }));
+      const editor = await MediaFile.open(pathName);
+      const tags = editor.metadata.common;
+      expect(tags.artists).toEqual(['A', 'B']);
+      tags.artists = null;
+      const removal = editor.save();
+      if (editDuringSave) {
+        tags.artists = ['Replacement', 'Guest'];
+      }
+      await removal;
+      const first = await parseFile(pathName);
+      expect(first.common.artist).toBe(artist);
+      expect(first.native.iTunes?.some(tag => tag.id.toLowerCase() === '----:com.apple.itunes:artists')).toBe(false);
+      const liveArtistsAfterRemoval = tags.artists;
+
+      await editor.save();
+      const expected = editDuringSave ? ['Replacement', 'Guest'] : [artist];
+      const saved = await parseFile(pathName);
+      expect(saved.native.iTunes?.filter(tag => tag.id === '©ART').map(tag => tag.value)).toEqual(expected);
+      expect(saved.common.artist).toBe(expected[0]);
+      expect(tags.artist).toBe(expected[0]);
+      expect(liveArtistsAfterRemoval).toEqual(editDuringSave ? ['Replacement', 'Guest'] : undefined);
+    } finally {
+      await fs.rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('keeps an empty ARTISTS item separate after reopening and editing both artist fields', async () => {
+    const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'editor-mp4-empty-artists-'));
+    try {
+      const pathName = path.join(dir, 'track.m4a');
+      await fs.writeFile(pathName, await updateBuffer(await fixture('alac'), { artist: 'Display', artists: [] }));
+      const editor = await MediaFile.open(pathName);
+      const tags = editor.metadata.common;
+      expect(tags.artist).toBe('Display');
+
+      tags.artists = ['Replacement', 'Guest'];
+      await editor.save();
+      expect((await parseFile(pathName)).common).toMatchObject({
+        artist: 'Display',
+        artists: ['Replacement', 'Guest']
+      });
+
+      tags.artist = 'Replacement';
+      await editor.save();
+      const expected = { artist: 'Replacement', artists: ['Replacement', 'Guest'] };
+      expect((await parseFile(pathName)).common).toMatchObject(expected);
+      expect(tags).toMatchObject(expected);
     } finally {
       await fs.rm(dir, { recursive: true, force: true });
     }
@@ -1486,6 +1574,33 @@ describe('MP4 structure variants', () => {
     const movie = boxes(result).find(b => b.type === 'moov')!;
     expect(boxes(result, movie.start + movie.header, movie.end).filter(b => b.type === 'udta')).toHaveLength(1);
     expect(Buffer.from(mdat(result))).toEqual(Buffer.from(mdat(input)));
+  });
+
+  it('keeps a single artist atom when only artists changes on the second save', async () => {
+    const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'editor-mp4-artist-list-'));
+    try {
+      const file = path.join(dir, 'track.m4a');
+      const input = rewrite(await fixture('alac'), (box, body) => (box.type === 'udta' ? null : body));
+      await fs.writeFile(file, input);
+      const editor = await MediaFile.open(file);
+      expect(editor.metadata.native.iTunes).toBeUndefined();
+
+      editor.metadata.common.artist = 'Original';
+      await editor.save();
+      expect(editor.metadata.common.artists).toEqual(['Original']);
+
+      const artists = ['Replacement', 'Guest'];
+      editor.metadata.common.artists = artists;
+      await editor.save();
+      const saved = await parseFile(file);
+      expect(saved.native.iTunes?.filter(tag => tag.id === '©ART').map(tag => tag.value)).toEqual(artists);
+      expect(saved.native.iTunes?.some(tag => tag.id.toLowerCase() === '----:com.apple.itunes:artists')).toBe(false);
+      const expected = { artist: artists[0], artists };
+      expect(saved.common).toMatchObject(expected);
+      expect(editor.metadata.common).toMatchObject(expected);
+    } finally {
+      await fs.rm(dir, { recursive: true, force: true });
+    }
   });
 
   it('creates missing udta, preserves size-to-end children and repeated artists', async () => {

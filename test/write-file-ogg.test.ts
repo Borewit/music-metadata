@@ -2,7 +2,15 @@ import { mkdtemp, readdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { InvalidFileError, orderTags, parseBuffer, updateBuffer, updateFile } from '../lib/index.js';
+import {
+  InvalidFileError,
+  MediaFile,
+  orderTags,
+  parseBuffer,
+  parseFile,
+  updateBuffer,
+  updateFile
+} from '../lib/index.js';
 import { openSource } from '../lib/write/core/source.js';
 import { serializePicture } from '../lib/write/flac/picture.js';
 import { buildOggUpdate, crc } from '../lib/write/ogg/ogg.js';
@@ -685,3 +693,99 @@ it('rejects a final comment count above the parser limit before replacing a file
     await rm(directory, { recursive: true, force: true });
   }
 }, 30000);
+
+describe('Ogg MediaFile artist credits', () => {
+  async function tagged(patch: Parameters<typeof updateBuffer>[1]): Promise<{ dir: string; file: string }> {
+    const dir = await mkdtemp(path.join(tmpdir(), 'ogg-artist-credit-'));
+    const file = path.join(dir, 'track.ogg');
+    const input = await readFile(new URL('./samples/ogg/generated-vorbis.ogg', import.meta.url));
+    await writeFile(file, await updateBuffer(input, patch));
+    return { dir, file };
+  }
+
+  it('keeps the display credit when only the ARTISTS list changes', async () => {
+    const { dir, file } = await tagged({ artist: 'A feat. B', artists: ['A', 'Old'] });
+    try {
+      const editor = await MediaFile.open(file);
+      editor.metadata.common.artists = ['A', 'B'];
+      await editor.save();
+      expect((await parseFile(file)).common).toMatchObject({ artist: 'A feat. B', artists: ['A', 'B'] });
+      expect(editor.metadata.common.artist).toBe('A feat. B');
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('keeps an album artist list edit across a second save', async () => {
+    const { dir, file } = await tagged({ albumartist: 'A' });
+    try {
+      const editor = await MediaFile.open(file);
+      editor.metadata.common.albumartists = ['B'];
+      await editor.save();
+      expect(editor.metadata.common.albumartist).toBe('B');
+      await editor.save();
+      expect((await parseFile(file)).common).toMatchObject({ albumartist: 'B', albumartists: ['B'] });
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+  it('clears the album artist when the album artist list is emptied', async () => {
+    const { dir, file } = await tagged({ albumartist: 'A' });
+    try {
+      const editor = await MediaFile.open(file);
+      editor.metadata.common.albumartists = [];
+      await editor.save();
+      expect(editor.metadata.common.albumartist).toBeUndefined();
+      await editor.save();
+      expect((await parseFile(file)).common.albumartist).toBeUndefined();
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('replaces an album artist list when only the album artist changes', async () => {
+    const { dir, file } = await tagged({ albumartists: ['A', 'B'] });
+    try {
+      const editor = await MediaFile.open(file);
+      editor.metadata.common.albumartist = 'X';
+      await editor.save();
+      expect(editor.metadata.common.albumartists).toEqual(['X']);
+      await editor.save();
+      expect((await parseFile(file)).common).toMatchObject({ albumartist: 'X', albumartists: ['X'] });
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('keeps an independent Discogs album artist list when only the album artist changes', async () => {
+    const { dir, file } = await tagged({ albumartist: 'A', native: { DISCOGS_ALBUM_ARTISTS: ['A', 'B'] } });
+    try {
+      const editor = await MediaFile.open(file);
+      editor.metadata.common.albumartist = 'X';
+      await editor.save();
+      expect(editor.metadata.common.albumartists).toEqual(['A', 'B']);
+      expect((await parseFile(file)).common).toMatchObject({ albumartist: 'X', albumartists: ['A', 'B'] });
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('records an artist list removal without a display credit', async () => {
+    const { dir, file } = await tagged({ artists: ['A', 'B'] });
+    try {
+      const editor = await MediaFile.open(file);
+      const tags = editor.metadata.common;
+      delete tags.artist;
+      tags.artists = null;
+      await editor.save();
+      expect((await parseFile(file)).common.artist).toBeUndefined();
+      expect(tags.artists).toBeUndefined();
+      tags.artist = 'Z';
+      await editor.save();
+      expect(tags.artists).toEqual(['Z']);
+      expect((await parseFile(file)).common).toMatchObject({ artist: 'Z', artists: ['Z'] });
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+});

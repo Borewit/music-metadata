@@ -2,7 +2,7 @@ import { mkdtemp, readFile, rm, stat, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
-import { UnsupportedFormatError, updateBuffer, updateFile } from '../lib/index.js';
+import { MediaFile, parseFile, UnsupportedFormatError, updateBuffer, updateFile } from '../lib/index.js';
 import { BlockHeader, BlockType, decodePicture, PICTURE_TYPES, pictureTypeToNumber } from '../lib/tokens/flac.js';
 import { AttachedPictureType } from '../lib/tokens/id3v2.js';
 import { encodePicture } from '../lib/write/flac/write.js';
@@ -119,6 +119,9 @@ describe('FLAC writing', () => {
     expect(result.common.artist).toBe('Artist A');
     expect(result.common.albumartists).toEqual(['Album Artist A', 'Album Artist B']);
     expect(result.common.albumartist).toBe('Album Artist A');
+    const credited = await updateBuffer(output, { artist: 'A & B', artists: ['A', 'B'] });
+    const solo = await updateBuffer(credited, { artists: ['A'] });
+    expect((await readTags(solo)).common).toMatchObject({ artist: 'A & B', artists: ['A'] });
   });
 
   it('writes and removes pictures', async () => {
@@ -561,5 +564,26 @@ describe('competing FLAC tag families', () => {
     expect(deleted.common.title).toBeUndefined();
     expect(deleted.native['ID3v2.4']).toBeUndefined();
     expect(vorbisValues(deleted, 'TITLE')).toEqual([]);
+  });
+});
+
+describe('FLAC MediaFile artist credits', () => {
+  it('records saved artist lists so a later list reset is written', async () => {
+    const dir = await mkdtemp(path.join(os.tmpdir(), 'flac-artist-credit-'));
+    try {
+      const file = path.join(dir, 'track.flac');
+      const input = await readFile(new URL('./samples/flac/Lavf.flac', import.meta.url));
+      await writeFile(file, await updateBuffer(input, { artist: 'D', artists: ['A'] }));
+      const editor = await MediaFile.open(file);
+      const tags = editor.metadata.common;
+      tags.artists = ['X'];
+      await editor.save();
+      tags.artists = ['A'];
+      tags.artist = 'E';
+      await editor.save();
+      expect((await parseFile(file)).common).toMatchObject({ artist: 'E', artists: ['A'] });
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
   });
 });

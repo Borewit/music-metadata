@@ -40,6 +40,7 @@ const textAtoms: Record<string, string> = {
   albumartistsort: 'soaa',
   composersort: 'soco'
 };
+export const mp4ArtistsItemKey = '----:com.apple.iTunes:ARTISTS';
 const freeform: Record<string, string> = {
   lyricist: 'LYRICIST',
   conductor: 'CONDUCTOR',
@@ -127,6 +128,10 @@ function itemKey(bytes: Uint8Array, box: Box, budget: AtomBudget): string {
   };
   return `----:${text('mean')}:${text('name')}`;
 }
+/** List the keys of all metadata items in an ilst payload. */
+export function itemKeys(bytes: Uint8Array, budget: AtomBudget = { remaining: maxAtoms }): string[] {
+  return boxes(bytes, 0, bytes.length, budget).map(box => itemKey(bytes, box, budget));
+}
 /** Raw values contain the complete item body, including freeform identity children. */
 function rawItem(key: string, body: Uint8Array): Uint8Array {
   const bytes = atom(key.startsWith('----:') ? '----' : key, body);
@@ -158,6 +163,8 @@ export function editItems(
   const replacements = new Map<string, Uint8Array | null>();
   const canonical = (key: string) => (key.startsWith('----:') ? key.toLowerCase() : key);
   const replace = (key: string, value: Uint8Array | null) => replacements.set(canonical(key), value);
+  const separateArtists =
+    patch.artist !== undefined || existing.some(entry => canonical(entry.key) === canonical(mp4ArtistsItemKey));
   const entries = patch as Record<string, unknown>;
   const aliases = new Set([
     'totaltracks',
@@ -186,14 +193,14 @@ export function editItems(
     ) {
       continue;
     }
-    const key = textAtoms[field] ?? (freeform[field] ? `----:com.apple.iTunes:${freeform[field]}` : undefined);
+    const key =
+      field === 'artists' && separateArtists
+        ? mp4ArtistsItemKey
+        : (textAtoms[field] ?? (freeform[field] ? `----:com.apple.iTunes:${freeform[field]}` : undefined));
     if (!key) {
       throw new UnsupportedFeatureError(`MP4 common field is not writable: ${field}`);
     }
-    if (
-      (field === 'artist' && entries.artists !== undefined) ||
-      (field === 'albumartist' && entries.albumartists !== undefined)
-    ) {
+    if (field === 'albumartist' && entries.albumartists !== undefined) {
       continue;
     }
     // Full dates take precedence over a year alias.

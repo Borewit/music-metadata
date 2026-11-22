@@ -200,7 +200,7 @@ function normalizedExpected(field: Field): unknown {
 
 function batchExpected(format: Format, field: Field): unknown {
   if (field === 'artist' && format === 'mp4') {
-    return completePatch.artists[0];
+    return completePatch.artist;
   }
   if (field === 'albumartist' && ['flac', 'mp3', 'aac', 'wav', 'mp4', 'ogg'].includes(format)) {
     return completePatch.albumartists[0];
