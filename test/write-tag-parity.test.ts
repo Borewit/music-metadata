@@ -253,6 +253,82 @@ const completePatch: TagPatch = {
 };
 
 describe('complete common-tag writing', () => {
+  it('reads back Vorbis common text fields with their declared types', async () => {
+    const fields = [
+      'technician',
+      'longDescription',
+      'tvShow',
+      'tvShowSort',
+      'tvSeason',
+      'tvEpisode',
+      'tvEpisodeId',
+      'tvNetwork',
+      'podcast',
+      'podcasturl',
+      'gapless',
+      'musicip_fingerprint',
+      'performer:instrument',
+      'averageLevel',
+      'peakLevel',
+      'originalalbum',
+      'originalartist',
+      'category',
+      'hdVideo',
+      'keywords',
+      'movement',
+      'movementIndex',
+      'podcastId',
+      'showMovement',
+      'stik',
+      'playCounter'
+    ] as const;
+    const tags = Object.fromEntries(fields.map(field => [field, fullCommon[field]]));
+    const updated = await updateBuffer(makeFlac(), tags);
+    expect((await parseBuffer(updated)).common).toMatchObject(tags);
+  });
+
+  it('preserves fractional Vorbis average and peak levels', async () => {
+    const tags = { averageLevel: 0.125, peakLevel: 1.75 };
+    const updated = await updateBuffer(makeFlac(), tags);
+    expect((await parseBuffer(updated)).common).toMatchObject(tags);
+  });
+
+  it('omits invalid Vorbis levels from the common model', async () => {
+    const { common } = await parseBuffer(
+      makeFlac({
+        comments: [
+          { key: 'AVERAGELEVEL', value: '   ' },
+          { key: 'PEAKLEVEL', value: 'Infinity' }
+        ]
+      })
+    );
+    expect(common.averageLevel).toBeUndefined();
+    expect(common.peakLevel).toBeUndefined();
+  });
+
+  it('reads back ID3 common text fields with their declared types', async () => {
+    const fields = [
+      'work',
+      'technician',
+      'longDescription',
+      'tvShow',
+      'tvShowSort',
+      'tvSeason',
+      'tvEpisode',
+      'tvEpisodeId',
+      'tvNetwork',
+      'gapless',
+      'performer:instrument',
+      'notes',
+      'hdVideo',
+      'showMovement',
+      'stik'
+    ] as const;
+    const tags = Object.fromEntries(fields.map(field => [field, fullCommon[field]]));
+    const updated = await updateBuffer(Uint8Array.from([255, 251, 144, 196, ...new Uint8Array(413)]), tags);
+    expect((await parseBuffer(updated)).common).toMatchObject(tags);
+  });
+
   it('accounts for every common tag in the public mapping inventory', () => {
     expect(Object.keys(COMMON_FIELDS).sort()).toEqual(Object.keys(completePatch).sort());
   });

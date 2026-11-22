@@ -11,6 +11,21 @@ import type { ICustomDataTag, IIdentifierTag, IPopularimeter } from './FramePars
  * ID3v2.3/ID3v2.4 tag mappings
  */
 export const id3v24TagMap: INativeTagMap = {
+  'TXXX:WORK': 'work',
+  'TXXX:TECHNICIAN': 'technician',
+  'TXXX:LONGDESCRIPTION': 'longDescription',
+  'TXXX:TVSHOW': 'tvShow',
+  'TXXX:TVSHOWSORT': 'tvShowSort',
+  'TXXX:TVSEASON': 'tvSeason',
+  'TXXX:TVEPISODE': 'tvEpisode',
+  'TXXX:TVEPISODEID': 'tvEpisodeId',
+  'TXXX:TVNETWORK': 'tvNetwork',
+  'TXXX:GAPLESS': 'gapless',
+  'TXXX:PERFORMER:INSTRUMENT': 'performer:instrument',
+  'TXXX:NOTES': 'notes',
+  'TXXX:HDVIDEO': 'hdVideo',
+  'TXXX:SHOWMOVEMENT': 'showMovement',
+  'TXXX:STIK': 'stik',
   // id3v2.3
   TIT2: 'title',
   TPE1: 'artist',

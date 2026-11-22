@@ -33,10 +33,10 @@
     "description": "TV show title, formatted for alphabetic ordering"
   },
   "tvSeason": {
-    "description": "TV season title"
+    "description": "TV season number"
   },
   "tvEpisode": {
-    "description": "TV episode title"
+    "description": "TV episode number"
   },
   "tvEpisodeId": {
     "description": "TV episode ID"
