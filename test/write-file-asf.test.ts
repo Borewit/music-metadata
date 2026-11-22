@@ -234,6 +234,12 @@ describe('WMA / ASF metadata writing', () => {
     });
   }
 
+  it('preserves the album artist credit and individual names', async () => {
+    const tags = { albumartist: 'A feat. B', albumartists: ['A', 'B'] };
+    const updated = await updateBuffer(await fixture(), tags);
+    expect((await parseBuffer(updated)).common).toMatchObject(tags);
+  });
+
   it('creates missing metadata objects, writes large/multiple covers, and is identical in the browser', async () => {
     const input = synthetic([], [simpleIndex()]);
     const large = Buffer.concat([png, Buffer.alloc(80_000)]);

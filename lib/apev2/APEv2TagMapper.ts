@@ -10,6 +10,7 @@ export const apev2TagMap: INativeTagMap = {
   Artist: 'artist',
   Artists: 'artists',
   'Album Artist': 'albumartist',
+  'Album Artists': 'albumartists',
   Album: 'album',
   Year: 'date',
   Date: 'date',

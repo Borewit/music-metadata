@@ -176,6 +176,12 @@ describe('APEv2 writing', () => {
     });
   }
 
+  it('preserves the album artist credit and individual names', async () => {
+    const tags = { albumartist: 'A feat. B', albumartists: ['A', 'B'] };
+    const updated = await updateBuffer(ape, tags);
+    expect((await parseBuffer(updated)).common).toMatchObject(tags);
+  });
+
   it('reuses reader aliases, merges number pairs and applies native overrides last', async () => {
     const original = await updateBuffer(ape, {
       native: { Date: null, Year: '2001', Disc: null, DISCNUMBER: '2/4', Track: '3/9' }
