@@ -24,7 +24,28 @@ const apeAliases = ['totaltracks', 'totaldiscs', 'replaygain_track_gain_ratio', 
 const apeFields = [...new Set(Object.values(apev2TagMap).filter(field => field !== undefined))].map(String);
 const asfFields = [...new Set(Object.values(asfTagMap).filter(field => field !== undefined))].map(String);
 
+const mp4AdditionalFields = [
+  'djmixer',
+  'musicbrainz_trmid',
+  'acoustid_id',
+  'acoustid_fingerprint',
+  'musicip_puid',
+  'musicip_fingerprint',
+  'tvShow',
+  'tvShowSort',
+  'tvSeason',
+  'tvEpisode',
+  'tvEpisodeId',
+  'tvNetwork',
+  'podcast',
+  'podcasturl',
+  'replaygain_track_minmax',
+  'replaygain_album_minmax',
+  'replaygain_undo'
+] as const satisfies readonly Field[];
+
 const mp4Fields = [
+  ...mp4AdditionalFields,
   'track',
   'disk',
   'year',
@@ -311,5 +332,51 @@ it.each(cases)(
 
     const copy = await updateBuffer(input, common);
     expect((await parseBuffer(copy, { mimeType })).common).toStrictEqual(common);
+  }
+);
+
+// Empty common metadata still contains these number pairs on the current public API.
+const emptyCommon = {
+  track: { no: null, of: null },
+  disk: { no: null, of: null },
+  movementIndex: { no: null, of: null }
+};
+
+const cleanInputs = new Map<string, Promise<Uint8Array>>();
+
+function cleanInputFor(testCase: FormatCase): Promise<Uint8Array> {
+  let input = cleanInputs.get(testCase.fixture);
+  if (!input) {
+    input = (async () => {
+      const cleared = await updateBuffer(
+        await inputFor(testCase.fixture),
+        Object.fromEntries(testCase.writable.map(field => [field, null]))
+      );
+      expect((await parseBuffer(cleared, { mimeType: testCase.mimeType })).common).toEqual(emptyCommon);
+      return cleared;
+    })();
+    cleanInputs.set(testCase.fixture, input);
+  }
+  return input;
+}
+
+// Exercise both transfer directions with a different tag family, not just MP4 self-roundtrips.
+it.each([
+  ['mp3', 'mp4'],
+  ['mp4', 'mp3']
+] as const)(
+  'transfers identifiers, credits, TV/podcast and ReplayGain fields from %s to %s via common',
+  async (from, to) => {
+    const source = cases.find(testCase => testCase.format === from)!;
+    const destination = cases.find(testCase => testCase.format === to)!;
+    const expected = Object.fromEntries(mp4AdditionalFields.map(field => [field, completePatch[field]]));
+    const original = await updateBuffer(await cleanInputFor(source), expected);
+    const { common } = await parseBuffer(original, { mimeType: source.mimeType });
+    expect(common).toEqual({ ...emptyCommon, ...expected });
+    const copy = await updateBuffer(await cleanInputFor(destination), common);
+    expect((await parseBuffer(copy, { mimeType: destination.mimeType })).common).toEqual({
+      ...emptyCommon,
+      ...expected
+    });
   }
 );

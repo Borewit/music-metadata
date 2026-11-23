@@ -6,12 +6,14 @@ import * as Token from 'token-types';
 import { describe, expect, it, vi } from 'vitest';
 import {
   type IChapter,
+  type ICommonTagsResult,
   InvalidFileError,
   InvalidPatchError,
   MediaFile,
   orderTags,
   parseBuffer,
   parseFile,
+  type TagPatch,
   UnsupportedFeatureError,
   updateBuffer,
   updateFile,
@@ -1680,5 +1682,149 @@ describe('MP4 structure variants', () => {
     });
     expect((await readTags(result)).common.title).toBeUndefined();
     expect(original).toEqual(copy);
+  });
+});
+
+describe('MP4 existing-common write parity', () => {
+  // Literal external names, independent of the library's common mapping tables.
+  const fields = [
+    ['djmixer', '----:com.apple.iTunes:DJMIXER', ['DJ One', 'DJ Two']],
+    ['musicbrainz_trmid', '----:com.apple.iTunes:MusicBrainz TRM Id', 'trm-id'],
+    ['acoustid_id', '----:com.apple.iTunes:Acoustid Id', 'acoustid-id'],
+    ['acoustid_fingerprint', '----:com.apple.iTunes:Acoustid Fingerprint', 'fingerprint-value'],
+    ['musicip_puid', '----:com.apple.iTunes:MusicIP PUID', 'puid-id'],
+    ['musicip_fingerprint', '----:com.apple.iTunes:fingerprint', 'musicip-value'],
+    ['tvShow', 'tvsh', 'A Show'],
+    ['tvShowSort', 'sosn', 'Show, A'],
+    ['tvEpisodeId', 'tven', 'Episode ID'],
+    ['tvNetwork', 'tvnn', 'Network'],
+    ['podcasturl', 'purl', 'https://example.org/podcast.xml']
+  ] as const satisfies readonly (readonly [keyof ICommonTagsResult, string, unknown])[];
+
+  it.each(fields)('reads, rewrites and removes %s using its native key %s', async (field, key, value) => {
+    const input = await fixture('alac');
+    const seeded = await updateBuffer(input, { native: { [key]: value } });
+    expect((await parseBuffer(seeded)).common[field]).toEqual(value);
+    const output = await updateBuffer(input, { [field]: value });
+    expect((await parseBuffer(output)).common[field]).toEqual(value);
+    expect(orderTags((await parseBuffer(output)).native.iTunes)[key]).toEqual(Array.isArray(value) ? value : [value]);
+    const kept = await updateBuffer(output, { title: 'Unrelated' });
+    expect((await parseBuffer(kept)).common[field]).toEqual(value);
+    const removed = await updateBuffer(kept, { [field]: null });
+    const parsed = await parseBuffer(removed);
+    expect(parsed.common[field]).toBeUndefined();
+    expect(orderTags(parsed.native.iTunes)[key]).toBeUndefined();
+    for (const buffer of [seeded, output, kept, removed]) {
+      expect(Buffer.from(mdat(buffer))).toEqual(Buffer.from(mdat(input)));
+      expect(chunkHeads(buffer)).toEqual(chunkHeads(input));
+    }
+  });
+
+  function itemData(bytes: Uint8Array, key: string): Uint8Array {
+    let children = boxes(bytes);
+    for (const type of ['moov', 'udta', 'meta', 'ilst', key, 'data']) {
+      const child = children.find(box => box.type === type)!;
+      const start = child.start + child.header;
+      if (type === 'data') {
+        return bytes.subarray(start, child.end);
+      }
+      children = boxes(bytes, start + (type === 'meta' ? 4 : 0), child.end);
+    }
+    throw new Error('Missing data atom');
+  }
+
+  for (const [field, key] of [
+    ['tvSeason', 'tvsn'],
+    ['tvEpisode', 'tves']
+  ] as const) {
+    it.each([0, 1, 0x7fffffff, 0x80000000, Number.MAX_SAFE_INTEGER])(
+      `stores ${field} %s as a typed integer`,
+      async value => {
+        const input = await fixture('alac');
+        const output = await updateBuffer(input, { [field]: value });
+        const data = itemData(output, key);
+        expect(Token.UINT32_BE.get(data, 0)).toBe(21);
+        expect(data.length).toBe(8 + (value <= 0x7fffffff ? 4 : 8));
+        expect((await parseBuffer(output)).common[field]).toBe(value);
+        const removed = await updateBuffer(output, { [field]: null });
+        const parsed = await parseBuffer(removed);
+        expect(parsed.common[field]).toBeUndefined();
+        expect(orderTags(parsed.native.iTunes)[key]).toBeUndefined();
+        expect(Buffer.from(mdat(output))).toEqual(Buffer.from(mdat(input)));
+      }
+    );
+
+    it.each([-1, 1.5, Number.NaN, Number.POSITIVE_INFINITY, Number.MAX_SAFE_INTEGER + 1, '3'])(
+      `rejects invalid ${field} %s`,
+      async value => {
+        await expect(updateBuffer(await fixture('alac'), { [field]: value } as TagPatch)).rejects.toBeInstanceOf(
+          InvalidPatchError
+        );
+      }
+    );
+  }
+
+  it.each([true, false])('stores podcast %s as a one-byte integer, and removes it', async value => {
+    const output = await updateBuffer(await fixture('alac'), { podcast: value });
+    const data = itemData(output, 'pcst');
+    expect(Array.from(data)).toEqual([0, 0, 0, 21, 0, 0, 0, 0, value ? 1 : 0]);
+    expect((await parseBuffer(output)).common.podcast).toBe(value);
+    const removed = await parseBuffer(await updateBuffer(output, { podcast: null }));
+    expect(removed.common.podcast).toBeUndefined();
+    expect(orderTags(removed.native.iTunes).pcst).toBeUndefined();
+  });
+
+  it.each([0, 1, 'true'])('rejects invalid podcast %s', async value => {
+    await expect(updateBuffer(await fixture('alac'), { podcast: value } as unknown as TagPatch)).rejects.toBeInstanceOf(
+      InvalidPatchError
+    );
+  });
+
+  it.each(['tvsn', 'tves', 'pcst'])('requires a raw native item body for %s', async key => {
+    await expect(updateBuffer(await fixture('alac'), { native: { [key]: '1' } })).rejects.toBeInstanceOf(
+      InvalidPatchError
+    );
+    const width = key === 'pcst' ? 1 : 4;
+    const data = Buffer.alloc(8 + width);
+    data.writeUInt32BE(21);
+    data[data.length - 1] = 1;
+    const output = await updateBuffer(await fixture('alac'), { native: { [key]: atom('data', data) } });
+    expect(orderTags((await parseBuffer(output)).native.iTunes)[key]).toEqual([1]);
+  });
+
+  it('encodes structured ReplayGain fields as scalar text and removes them independently', async () => {
+    const fields = {
+      replaygain_track_minmax: [10, 120],
+      replaygain_album_minmax: [20, 200],
+      replaygain_undo: { leftChannel: -3, rightChannel: 5 }
+    } satisfies TagPatch;
+    const native = {
+      '----:com.apple.iTunes:replaygain_track_minmax': '10,120',
+      '----:com.apple.iTunes:replaygain_album_minmax': '20,200',
+      '----:com.apple.iTunes:replaygain_undo': '-3,5'
+    };
+    const input = await fixture('alac');
+    const seeded = await updateBuffer(input, { native });
+    expect((await parseBuffer(seeded)).common).toMatchObject(fields);
+    const output = await updateBuffer(input, fields);
+    const parsed = await parseBuffer(output);
+    expect(parsed.common).toMatchObject(fields);
+    expect(orderTags(parsed.native.iTunes)).toMatchObject(
+      Object.fromEntries(Object.entries(native).map(([key, value]) => [key, [value]]))
+    );
+    const removed = await parseBuffer(
+      await updateBuffer(output, { replaygain_track_minmax: null, replaygain_undo: null })
+    );
+    expect(removed.common.replaygain_track_minmax).toBeUndefined();
+    expect(removed.common.replaygain_undo).toBeUndefined();
+    expect(removed.common.replaygain_album_minmax).toEqual(fields.replaygain_album_minmax);
+  });
+
+  it.each([
+    { replaygain_track_minmax: [1] },
+    { replaygain_album_minmax: [1, Number.NaN] },
+    { replaygain_undo: { leftChannel: 0.5, rightChannel: 1 } }
+  ])('rejects malformed structured ReplayGain fields %j', async patch => {
+    await expect(updateBuffer(await fixture('alac'), patch)).rejects.toBeInstanceOf(InvalidPatchError);
   });
 });

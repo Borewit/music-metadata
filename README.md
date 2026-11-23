@@ -931,7 +931,7 @@ unchanged; it does not decode frames or validate audio CRCs. `WriteResult.format
 is `'aac'` for ADTS AAC, including files with a leading ID3 tag.
 `replaceId3: true` discards unspecified ID3v2 fields and, for MP3/ADTS AAC,
 removes a trailing ID3v1 tag; other trailing metadata is preserved unchanged.
-MP4 writing supports non-fragmented, self-contained files with iTunes metadata.
+MP4 writing supports non-fragmented, self-contained files with iTunes metadata. Common-field writing includes AcoustID/MusicIP identifiers and fingerprints, MusicBrainz TRM IDs, DJ mixers, TV/podcast metadata and structured ReplayGain min/max and undo values. TV season and episode numbers must be non-negative safe integers; podcast flags must be booleans.
 Monkey’s Audio 3.98+ (`.ape`), WavPack (`.wv`) and Musepack SV7/SV8 (`.mpc`)
 write APEv2 tail tags, supporting [common fields](doc/common_metadata.md), native fields and front/back cover
 art. Existing trailing ID3v1 tags are preserved. APEv1 and files with leading ID3
