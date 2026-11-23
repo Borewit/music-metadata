@@ -41,6 +41,7 @@ export const id3v24TagMap: INativeTagMap = {
   TPE1: 'artist',
   'TXXX:Artists': 'artists',
   TPE2: 'albumArtist',
+  'TXXX:ALBUMARTISTS': 'albumArtists',
   TALB: 'album',
   TDRV: 'date', // [ 'date', 'year' ] ToDo: improve 'year' mapping
   /**
@@ -90,7 +91,6 @@ export const id3v24TagMap: INativeTagMap = {
   TLAN: 'language',
   TCOP: 'copyright',
   'TXXX:LICENSE': 'license',
-  'TXXX:ALBUMARTISTS': 'albumArtists',
   WCOP: 'license',
   TENC: 'encodedBy',
   TSSE: 'encoderSettings',

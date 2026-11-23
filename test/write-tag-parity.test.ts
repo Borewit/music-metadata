@@ -215,7 +215,7 @@ describe('complete common-tag writing', () => {
 });
 
 const nativeOverrides: Record<string, string> = {
-  albumArtists: 'TPE2',
+  albumArtists: 'TXXX:ALBUMARTISTS',
   isrcs: 'TSRC',
   acoustId: 'TXXX:Acoustid Id',
   producers: 'TIPL',
@@ -259,17 +259,13 @@ describe('every common field has an observable write effect', () => {
             expect(parsed.common.picture).toHaveLength(1);
           } else {
             const field =
-              key === 'artists'
-                ? 'ARTIST'
-                : key === 'albumArtists'
-                  ? 'ALBUMARTIST'
-                  : key === 'rating'
-                    ? 'RATING:listener@example.com'
-                    : key === 'replayGainTrackGainRatio'
-                      ? 'REPLAYGAIN_TRACK_GAIN'
-                      : key === 'replayGainTrackPeakRatio'
-                        ? 'REPLAYGAIN_TRACK_PEAK'
-                        : COMMON_FIELDS[key].vorbis;
+              key === 'rating'
+                ? 'RATING:listener@example.com'
+                : key === 'replayGainTrackGainRatio'
+                  ? 'REPLAYGAIN_TRACK_GAIN'
+                  : key === 'replayGainTrackPeakRatio'
+                    ? 'REPLAYGAIN_TRACK_PEAK'
+                    : COMMON_FIELDS[key].vorbis;
             expect(
               parsed.native.vorbis?.some(tag => tag.id.toUpperCase() === field.toUpperCase()),
               key

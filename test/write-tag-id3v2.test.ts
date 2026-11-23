@@ -81,7 +81,7 @@ for (const flags of [1, 2, 3]) {
     const { common } = await parseBuffer(output);
     expect(common.license).toBe('New license');
     expect(common.albumArtist).toBe('New artist');
-    expect(common.albumArtists).toBeUndefined();
+    expect(common.albumArtists).toEqual(['New artist']);
     expect(common.notes).toEqual(['ÿà']);
   });
 

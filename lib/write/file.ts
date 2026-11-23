@@ -4,31 +4,14 @@ import type { CommonTags, TagPatch, WriteOptions, WriteResult } from './core/typ
 import { writeChunks } from './core/writer.js';
 import { normalizeCommonPatch } from './mapping/common.js';
 
-const artistPairs = [
-  ['artist', 'artists'],
-  ['albumArtist', 'albumArtists']
-] as const;
-
-function sameArtists(left: TagPatch['artists'], right: TagPatch['artists']): boolean {
-  return (
-    left === right ||
-    (Array.isArray(left) &&
-      Array.isArray(right) &&
-      left.length === right.length &&
-      left.every((value, index) => value === right[index]))
-  );
-}
-
 export class FileTagSnapshot {
-  private readonly artists: Pick<CommonTags, 'artist' | 'artists' | 'albumArtist' | 'albumArtists'>;
   private year: number | undefined;
   private date: string | undefined;
   private movementNumber: TagPatch['movementNumber'];
   private movementTotal: TagPatch['movementTotal'];
 
   constructor(common: CommonTags) {
-    const { artist, artists, albumArtist, albumArtists, movementNumber, movementTotal } = common;
-    this.artists = { artist, artists: artists?.slice(), albumArtist, albumArtists: albumArtists?.slice() };
+    const { movementNumber, movementTotal } = common;
     this.year = common.year;
     this.date = common.date;
     this.movementNumber = movementNumber;
@@ -48,35 +31,6 @@ export class FileTagSnapshot {
     }
     if (patch.year !== this.year && patch.date === this.date) {
       delete patch.date;
-    }
-    for (const [singular, plural] of artistPairs) {
-      if (patch[singular] !== this.artists[singular] && sameArtists(patch[plural], this.artists[plural])) {
-        delete patch[plural];
-      }
-    }
-  }
-
-  // MP4 stores both aliases in one atom. Synchronize them only after the write succeeds.
-  // The reader returns a list only when the atom holds several names; one value is the display credit.
-  recordMp4Artists(input: TagPatch, submitted: TagPatch, patch: TagPatch): void {
-    for (const [singular, plural] of artistPairs) {
-      const list = patch[plural];
-      const name = patch[singular];
-      if (!Array.isArray(list) && typeof name !== 'string') {
-        continue;
-      }
-      const savedName = Array.isArray(list) ? list[0] : (name as string);
-      const savedList = Array.isArray(list) && list.length > 1 ? list.slice() : undefined;
-      this.artists[singular] = savedName;
-      this.artists[plural] = savedList;
-      // Retain edits the caller made while the write was in progress.
-      if (input[singular] === submitted[singular]) {
-        input[singular] = savedName;
-      }
-      // A saved multi-name list already matches the submitted list.
-      if (savedList === undefined && input[plural] !== undefined && sameArtists(input[plural], submitted[plural])) {
-        delete input[plural];
-      }
     }
   }
 
@@ -114,10 +68,11 @@ export async function writeFileTags(
   assertPatch(input);
   const submitted = snapshot ? { ...input } : input;
   if (snapshot) {
-    for (const [, plural] of artistPairs) {
-      const list = submitted[plural];
+    // Capture list contents before asynchronous I/O without mutating the caller's model.
+    for (const field of ['artists', 'albumArtists'] as const) {
+      const list = submitted[field];
       if (Array.isArray(list)) {
-        submitted[plural] = list.slice();
+        submitted[field] = list.slice();
       }
     }
   }
@@ -137,9 +92,6 @@ export async function writeFileTags(
     if (!options.dryRun) {
       snapshot?.recordSave(normalized.movementIndex);
       snapshot?.recordDate(input, submitted, normalized.date);
-      if (update.format === 'mp4') {
-        snapshot?.recordMp4Artists(input, submitted, patch);
-      }
     }
     return { format: update.format, ...result, paddingBytes: update.paddingBytes };
   } finally {

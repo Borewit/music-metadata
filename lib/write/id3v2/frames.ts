@@ -94,7 +94,7 @@ export function makeFrames(key: string, value: unknown): Frame[] {
     throw new InvalidPatchError('Only TXXX and WXXX accept a description in the frame key');
   }
   const description = descriptionParts.join(':');
-  if (value === null) {
+  if (value === null || (Array.isArray(value) && value.length === 0)) {
     return [];
   }
   if (value instanceof Uint8Array) {

@@ -131,8 +131,9 @@ describe('Vorbis tag mapping', () => {
     expect(updated.comments).toEqual([
       { key: 'TITLE', value: 'New' },
       { key: 'UNKNOWN', value: 'keep' },
-      { key: 'ARTIST', value: 'A' },
-      { key: 'ARTIST', value: 'B' },
+      { key: 'ARTIST', value: 'Old artist' },
+      { key: 'ARTISTS', value: 'A' },
+      { key: 'ARTISTS', value: 'B' },
       { key: 'GENRE', value: 'Rock' },
       { key: 'TRACKNUMBER', value: '2' },
       { key: 'TRACKTOTAL', value: '10' },

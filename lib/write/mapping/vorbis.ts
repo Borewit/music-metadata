@@ -82,9 +82,9 @@ const TEXT_FIELDS: readonly TextFieldMapping[] = [
 
   { patch: 'title', field: 'TITLE', multiple: false },
   { patch: 'artist', field: 'ARTIST', multiple: false },
-  { patch: 'artists', field: 'ARTIST', multiple: true },
+  { patch: 'artists', field: 'ARTISTS', multiple: true },
   { patch: 'albumArtist', field: 'ALBUMARTIST', multiple: false },
-  { patch: 'albumArtists', field: 'ALBUMARTIST', multiple: true },
+  { patch: 'albumArtists', field: 'ALBUMARTISTS', multiple: true },
   { patch: 'album', field: 'ALBUM', multiple: false },
   { patch: 'date', field: 'DATE', multiple: false },
   { patch: 'originalDate', field: 'ORIGINALDATE', multiple: false },
@@ -202,6 +202,14 @@ export function applyVorbisPatch(
     }
   }
 
+  if (patch.artists !== undefined) {
+    removeField(comments, 'DISCOGS_ARTISTS');
+    removeField(comments, 'DISCOGS_ARTIST_NAME');
+  }
+  if (patch.albumArtists !== undefined) {
+    removeField(comments, 'DISCOGS_ALBUM_ARTISTS');
+  }
+
   for (const mapping of TEXT_FIELDS) {
     const value = patch[mapping.patch];
     if (value === undefined) {
@@ -211,25 +219,14 @@ export function applyVorbisPatch(
     if (values === undefined) {
       continue;
     }
-    if (mapping.patch === 'albumArtists') {
-      removeField(comments, 'ALBUMARTISTS');
-    }
-    // Keep explicit display credits separate from individual artist lists,
-    // including when clearing the list in the same patch.
-    const field =
-      mapping.patch === 'artists' && patch.artist !== undefined
-        ? 'ARTISTS'
-        : mapping.patch === 'albumArtists' && patch.albumArtist !== undefined
-          ? 'ALBUMARTISTS'
-          : mapping.field;
     if (values === null) {
-      removeField(comments, field);
+      removeField(comments, mapping.field);
       continue;
     }
     if (!mapping.multiple && values.length > 1) {
       throw new InvalidPatchError(`${String(mapping.patch)} accepts a single value`);
     }
-    setField(comments, field, values);
+    setField(comments, mapping.field, values);
   }
 
   if (patch.rating !== undefined) {

@@ -23,7 +23,7 @@ export const COMMON_FIELDS = {
   artist: { id3: 'TPE1', vorbis: 'ARTIST' },
   artists: { id3: 'TXXX:Artists', vorbis: 'ARTISTS' },
   albumArtist: { id3: 'TPE2', vorbis: 'ALBUMARTIST' },
-  albumArtists: { id3: 'TXXX:DISCOGS_ALBUM_ARTISTS', vorbis: 'DISCOGS_ALBUM_ARTISTS' },
+  albumArtists: { id3: 'TXXX:ALBUMARTISTS', vorbis: 'ALBUMARTISTS' },
   album: { id3: 'TALB', vorbis: 'ALBUM' },
   date: { id3: 'TDRC', vorbis: 'DATE' },
   originalDate: { id3: 'TDOR', vorbis: 'ORIGINALDATE' },

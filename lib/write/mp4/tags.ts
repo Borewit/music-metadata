@@ -24,9 +24,7 @@ const textAtoms: Record<string, string> = {
   keywords: 'keyw',
   title: '©nam',
   artist: '©ART',
-  artists: '©ART',
   albumArtist: 'aART',
-  albumArtists: 'aART',
   album: '©alb',
   date: '©day',
   year: '©day',
@@ -57,6 +55,8 @@ const freeform: Record<string, string> = {
   replayGainReferenceLoudness: 'REPLAYGAIN_REFERENCE_LOUDNESS',
   arrangers: 'ARRANGER',
   'performer:instrument': 'PERFORMER',
+  artists: 'ARTISTS',
+  albumArtists: 'ALBUMARTISTS',
   lyricists: 'LYRICIST',
   conductors: 'CONDUCTOR',
   remixers: 'REMIXER',
@@ -217,17 +217,6 @@ export function editItems(
     const key = textAtoms[field] ?? (freeform[field] ? `----:com.apple.iTunes:${freeform[field]}` : undefined);
     if (!key) {
       throw new UnsupportedFeatureError(`MP4 common field is not writable: ${field}`);
-    }
-    if (
-      (field === 'artist' && entries.artists !== undefined) ||
-      (field === 'albumArtist' && entries.albumArtists !== undefined)
-    ) {
-      continue;
-    }
-    if (field === 'artists' || field === 'albumArtists') {
-      // Picard can store an explicit list alongside the display atom. Do not
-      // let that stale list override a common plural edit.
-      replace(`----:com.apple.iTunes:${field.toUpperCase()}`, null);
     }
     // Full dates take precedence over a year alias.
     if (field === 'year' && entries.date !== undefined) {
