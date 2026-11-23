@@ -562,4 +562,29 @@ describe('competing FLAC tag families', () => {
     expect(deleted.native['ID3v2.4']).toBeUndefined();
     expect(vorbisValues(deleted, 'TITLE')).toEqual([]);
   });
+  const partialEditFlacFixtures = [
+    'flac/Lavf.flac',
+    "flac/MusicBrainz - Beth Hart - Sinner's Prayer.flac",
+    'flac/01. Make It Out Alive.flac'
+  ] as const;
+
+  it.each(partialEditFlacFixtures)('preserves untouched tags and audio when partially editing %s', async fixture => {
+    const input = await readFile(new URL(`./samples/${fixture}`, import.meta.url));
+    const before = await readTags(input);
+    const title = `Partial edit: ${fixture}`;
+    const comment = 'round-trip test';
+    const output = await updateBuffer(input, { title, comment });
+    const after = await readTags(output);
+
+    expect(after.common.title).toBe(title);
+    expect(after.common.comment?.map(entry => entry.text)).toEqual([comment]);
+    expect(after.native.vorbis?.filter(tag => tag.id.toUpperCase() === 'TITLE').map(tag => tag.value)).toEqual([title]);
+    expect(after.native.vorbis?.filter(tag => tag.id.toUpperCase() === 'COMMENT').map(tag => tag.value)).toEqual([
+      comment
+    ]);
+    const untouched = (tags: typeof before.native.vorbis) =>
+      tags?.filter(tag => !['TITLE', 'COMMENT'].includes(tag.id.toUpperCase()));
+    expect(untouched(after.native.vorbis)).toEqual(untouched(before.native.vorbis));
+    expect(Buffer.from(extractAudio(output))).toEqual(Buffer.from(extractAudio(input)));
+  });
 });
