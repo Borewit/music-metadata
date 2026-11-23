@@ -2,61 +2,62 @@ import { VorbisMovement } from '../../common/VorbisMovement.js';
 import { InvalidPatchError } from '../core/errors.js';
 import { lyricsToLrc, normalizeLyrics } from '../core/lyrics.js';
 import { normalizeComments, normalizeNumberPair, numberValue, textValues } from '../core/patch.js';
-import type { TagPatch, TextPatch } from '../core/types.js';
+import type { TextPatch } from '../core/types.js';
 import type { VorbisComment, VorbisFields } from '../vorbis/comment.js';
+import type { InternalPatch } from './common.js';
 import { COMMON_FIELDS, commonText, EXTRA_COMMON_FIELDS, structuredText } from './common.js';
 
 type TextPatchKey =
   | 'notes'
   | 'barcode'
-  | 'releasecountry'
+  | 'releaseCountry'
   | 'asin'
-  | 'albumartistsort'
-  | 'artistsort'
+  | 'albumArtistSort'
+  | 'artistSort'
   | 'script'
-  | 'releasestatus'
-  | 'releasetype'
-  | 'acoustid_id'
+  | 'releaseStatus'
+  | 'releaseType'
+  | 'acoustId'
   | 'title'
   | 'artist'
   | 'artists'
-  | 'albumartist'
-  | 'albumartists'
+  | 'albumArtist'
+  | 'albumArtists'
   | 'album'
   | 'date'
-  | 'originaldate'
-  | 'releasedate'
-  | 'genre'
-  | 'composer'
-  | 'lyricist'
-  | 'writer'
-  | 'conductor'
-  | 'remixer'
-  | 'arranger'
-  | 'engineer'
-  | 'producer'
-  | 'mixer'
-  | 'technician'
-  | 'label'
-  | 'catalognumber'
-  | 'isrc'
+  | 'originalDate'
+  | 'releaseDate'
+  | 'genres'
+  | 'composers'
+  | 'lyricists'
+  | 'writers'
+  | 'conductors'
+  | 'remixers'
+  | 'arrangers'
+  | 'engineers'
+  | 'producers'
+  | 'mixers'
+  | 'technicians'
+  | 'labels'
+  | 'catalogNumber'
+  | 'isrcs'
   | 'copyright'
   | 'media'
   | 'mood'
   | 'grouping'
-  | 'subtitle'
+  | 'subtitles'
   | 'website'
-  | 'musicbrainz_recordingid'
-  | 'musicbrainz_trackid'
-  | 'musicbrainz_albumid'
-  | 'musicbrainz_artistid'
-  | 'musicbrainz_albumartistid'
-  | 'musicbrainz_releasegroupid'
-  | 'musicbrainz_workid'
-  | 'replaygain_track_gain'
-  | 'replaygain_track_peak'
-  | 'replaygain_album_gain'
-  | 'replaygain_album_peak';
+  | 'mbRecordingId'
+  | 'mbReleaseTrackId'
+  | 'mbReleaseId'
+  | 'mbArtistId'
+  | 'mbAlbumArtistId'
+  | 'mbReleaseGroupId'
+  | 'mbWorkId'
+  | 'replayGainTrackGain'
+  | 'replayGainTrackPeak'
+  | 'replayGainAlbumGain'
+  | 'replayGainAlbumPeak';
 
 interface TextFieldMapping {
   /** Patch property name. */
@@ -70,55 +71,55 @@ interface TextFieldMapping {
 const TEXT_FIELDS: readonly TextFieldMapping[] = [
   { patch: 'notes', field: 'NOTES', multiple: true },
   { patch: 'barcode', field: 'BARCODE', multiple: false },
-  { patch: 'releasecountry', field: 'RELEASECOUNTRY', multiple: false },
+  { patch: 'releaseCountry', field: 'RELEASECOUNTRY', multiple: false },
   { patch: 'asin', field: 'ASIN', multiple: false },
-  { patch: 'albumartistsort', field: 'ALBUMARTISTSORT', multiple: false },
-  { patch: 'artistsort', field: 'ARTISTSORT', multiple: false },
+  { patch: 'albumArtistSort', field: 'ALBUMARTISTSORT', multiple: false },
+  { patch: 'artistSort', field: 'ARTISTSORT', multiple: false },
   { patch: 'script', field: 'SCRIPT', multiple: false },
-  { patch: 'releasestatus', field: 'RELEASESTATUS', multiple: false },
-  { patch: 'releasetype', field: 'RELEASETYPE', multiple: true },
-  { patch: 'acoustid_id', field: 'ACOUSTID_ID', multiple: false },
+  { patch: 'releaseStatus', field: 'RELEASESTATUS', multiple: false },
+  { patch: 'releaseType', field: 'RELEASETYPE', multiple: true },
+  { patch: 'acoustId', field: 'ACOUSTID_ID', multiple: false },
 
   { patch: 'title', field: 'TITLE', multiple: false },
   { patch: 'artist', field: 'ARTIST', multiple: false },
   { patch: 'artists', field: 'ARTIST', multiple: true },
-  { patch: 'albumartist', field: 'ALBUMARTIST', multiple: false },
-  { patch: 'albumartists', field: 'ALBUMARTIST', multiple: true },
+  { patch: 'albumArtist', field: 'ALBUMARTIST', multiple: false },
+  { patch: 'albumArtists', field: 'ALBUMARTIST', multiple: true },
   { patch: 'album', field: 'ALBUM', multiple: false },
   { patch: 'date', field: 'DATE', multiple: false },
-  { patch: 'originaldate', field: 'ORIGINALDATE', multiple: false },
-  { patch: 'releasedate', field: 'RELEASEDATE', multiple: false },
-  { patch: 'genre', field: 'GENRE', multiple: true },
-  { patch: 'composer', field: 'COMPOSER', multiple: true },
-  { patch: 'lyricist', field: 'LYRICIST', multiple: true },
-  { patch: 'writer', field: 'WRITER', multiple: true },
-  { patch: 'conductor', field: 'CONDUCTOR', multiple: true },
-  { patch: 'remixer', field: 'REMIXER', multiple: true },
-  { patch: 'arranger', field: 'ARRANGER', multiple: true },
-  { patch: 'engineer', field: 'ENGINEER', multiple: true },
-  { patch: 'producer', field: 'PRODUCER', multiple: true },
-  { patch: 'mixer', field: 'MIXER', multiple: true },
-  { patch: 'technician', field: 'TECHNICIAN', multiple: true },
-  { patch: 'label', field: 'LABEL', multiple: true },
-  { patch: 'catalognumber', field: 'CATALOGNUMBER', multiple: true },
-  { patch: 'isrc', field: 'ISRC', multiple: true },
+  { patch: 'originalDate', field: 'ORIGINALDATE', multiple: false },
+  { patch: 'releaseDate', field: 'RELEASEDATE', multiple: false },
+  { patch: 'genres', field: 'GENRE', multiple: true },
+  { patch: 'composers', field: 'COMPOSER', multiple: true },
+  { patch: 'lyricists', field: 'LYRICIST', multiple: true },
+  { patch: 'writers', field: 'WRITER', multiple: true },
+  { patch: 'conductors', field: 'CONDUCTOR', multiple: true },
+  { patch: 'remixers', field: 'REMIXER', multiple: true },
+  { patch: 'arrangers', field: 'ARRANGER', multiple: true },
+  { patch: 'engineers', field: 'ENGINEER', multiple: true },
+  { patch: 'producers', field: 'PRODUCER', multiple: true },
+  { patch: 'mixers', field: 'MIXER', multiple: true },
+  { patch: 'technicians', field: 'TECHNICIAN', multiple: true },
+  { patch: 'labels', field: 'LABEL', multiple: true },
+  { patch: 'catalogNumber', field: 'CATALOGNUMBER', multiple: true },
+  { patch: 'isrcs', field: 'ISRC', multiple: true },
   { patch: 'copyright', field: 'COPYRIGHT', multiple: false },
   { patch: 'media', field: 'MEDIA', multiple: false },
   { patch: 'mood', field: 'MOOD', multiple: false },
   { patch: 'grouping', field: 'GROUPING', multiple: false },
-  { patch: 'subtitle', field: 'SUBTITLE', multiple: true },
+  { patch: 'subtitles', field: 'SUBTITLE', multiple: true },
   { patch: 'website', field: 'WEBSITE', multiple: false },
-  { patch: 'musicbrainz_recordingid', field: 'MUSICBRAINZ_TRACKID', multiple: false },
-  { patch: 'musicbrainz_trackid', field: 'MUSICBRAINZ_RELEASETRACKID', multiple: false },
-  { patch: 'musicbrainz_albumid', field: 'MUSICBRAINZ_ALBUMID', multiple: false },
-  { patch: 'musicbrainz_artistid', field: 'MUSICBRAINZ_ARTISTID', multiple: true },
-  { patch: 'musicbrainz_albumartistid', field: 'MUSICBRAINZ_ALBUMARTISTID', multiple: true },
-  { patch: 'musicbrainz_releasegroupid', field: 'MUSICBRAINZ_RELEASEGROUPID', multiple: false },
-  { patch: 'musicbrainz_workid', field: 'MUSICBRAINZ_WORKID', multiple: false },
-  { patch: 'replaygain_track_gain', field: 'REPLAYGAIN_TRACK_GAIN', multiple: false },
-  { patch: 'replaygain_track_peak', field: 'REPLAYGAIN_TRACK_PEAK', multiple: false },
-  { patch: 'replaygain_album_gain', field: 'REPLAYGAIN_ALBUM_GAIN', multiple: false },
-  { patch: 'replaygain_album_peak', field: 'REPLAYGAIN_ALBUM_PEAK', multiple: false }
+  { patch: 'mbRecordingId', field: 'MUSICBRAINZ_TRACKID', multiple: false },
+  { patch: 'mbReleaseTrackId', field: 'MUSICBRAINZ_RELEASETRACKID', multiple: false },
+  { patch: 'mbReleaseId', field: 'MUSICBRAINZ_ALBUMID', multiple: false },
+  { patch: 'mbArtistId', field: 'MUSICBRAINZ_ARTISTID', multiple: true },
+  { patch: 'mbAlbumArtistId', field: 'MUSICBRAINZ_ALBUMARTISTID', multiple: true },
+  { patch: 'mbReleaseGroupId', field: 'MUSICBRAINZ_RELEASEGROUPID', multiple: false },
+  { patch: 'mbWorkId', field: 'MUSICBRAINZ_WORKID', multiple: false },
+  { patch: 'replayGainTrackGain', field: 'REPLAYGAIN_TRACK_GAIN', multiple: false },
+  { patch: 'replayGainTrackPeak', field: 'REPLAYGAIN_TRACK_PEAK', multiple: false },
+  { patch: 'replayGainAlbumGain', field: 'REPLAYGAIN_ALBUM_GAIN', multiple: false },
+  { patch: 'replayGainAlbumPeak', field: 'REPLAYGAIN_ALBUM_PEAK', multiple: false }
 ];
 
 export interface VorbisPatchOptions {
@@ -137,16 +138,16 @@ export interface VorbisPatchOptions {
  */
 export function applyVorbisPatch(
   fields: VorbisFields,
-  patch: TagPatch,
+  patch: InternalPatch,
   options: VorbisPatchOptions = {}
 ): VorbisFields {
   const comments = fields.comments.map(comment => ({ ...comment }));
   for (const key of EXTRA_COMMON_FIELDS) {
     if (patch[key] !== undefined && key !== 'movement') {
-      if (key === 'acoustid_fingerprint') {
+      if (key === 'acoustIdFingerprint') {
         removeField(comments, 'ACOUSTID_ID_FINGERPRINT');
       }
-      if (key === 'musicip_fingerprint') {
+      if (key === 'musicIpFingerprint') {
         for (let index = comments.length - 1; index >= 0; index--) {
           const comment = comments[index];
           if (comment.key.toUpperCase() === 'FINGERPRINT' && comment.value.startsWith('MusicMagic Fingerprint')) {
@@ -210,7 +211,7 @@ export function applyVorbisPatch(
     if (values === undefined) {
       continue;
     }
-    if (mapping.patch === 'albumartists') {
+    if (mapping.patch === 'albumArtists') {
       removeField(comments, 'ALBUMARTISTS');
     }
     // Keep explicit display credits separate from individual artist lists,
@@ -218,7 +219,7 @@ export function applyVorbisPatch(
     const field =
       mapping.patch === 'artists' && patch.artist !== undefined
         ? 'ARTISTS'
-        : mapping.patch === 'albumartists' && patch.albumartist !== undefined
+        : mapping.patch === 'albumArtists' && patch.albumArtist !== undefined
           ? 'ALBUMARTISTS'
           : mapping.field;
     if (values === null) {
@@ -251,7 +252,7 @@ export function applyVorbisPatch(
     }
   }
 
-  const commentsPatch = normalizeComments(patch.comment);
+  const commentsPatch = normalizeComments(patch.comments);
   if (commentsPatch !== undefined) {
     if (commentsPatch === null || commentsPatch.length === 0) {
       removeField(comments, 'COMMENT');
@@ -273,7 +274,7 @@ export function applyVorbisPatch(
     }
   }
 
-  const originalYear = numberValue(patch.originalyear);
+  const originalYear = numberValue(patch.originalYear);
   if (originalYear !== undefined) {
     if (originalYear === null) {
       removeField(comments, 'ORIGINALYEAR');

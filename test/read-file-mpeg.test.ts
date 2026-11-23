@@ -171,16 +171,16 @@ describe('Parse MPEG', () => {
       function checkCommon(common: mm.ICommonTagsResult) {
         t.strictEqual(common.title, "You Don't Know", 'common.title');
         t.deepEqual(common.artists, ['Reel Big Fish'], 'common.artists');
-        t.strictEqual(common.albumartist, 'Reel Big Fish', 'common.albumartist');
+        t.strictEqual(common.albumArtist, 'Reel Big Fish', 'common.albumartist');
         t.strictEqual(common.album, 'Why Do They Rock So Hard?', 'common.album');
         t.strictEqual(common.year, 1998, 'common.year');
-        t.strictEqual(common.track.no, 4, 'common.track.no');
-        t.strictEqual(common.track.of, null, 'common.track.of');
-        t.strictEqual(common.disk.no, null, 'common.disk.no');
-        t.strictEqual(common.disk.of, null, 'common.disk.of');
-        t.deepEqual(common.genre, ['Ska-Punk'], 'common.genre');
+        t.strictEqual(common.trackNumber, 4, 'common.track.no');
+        t.strictEqual(common.trackTotal, undefined, 'common.track.of');
+        t.strictEqual(common.discNumber, undefined, 'common.disk.no');
+        t.strictEqual(common.discTotal, undefined, 'common.disk.of');
+        t.deepEqual(common.genres, ['Ska-Punk'], 'common.genre');
         t.deepEqual(
-          common.comment,
+          common.comments,
           [
             {
               descriptor: '',
@@ -240,15 +240,15 @@ describe('Parse MPEG', () => {
       function checkCommon(common: mm.ICommonTagsResult) {
         t.strictEqual(common.title, "I'm Cool", 'common.title');
         t.deepEqual(common.artists, ['Reel Big Fish'], 'common.artists');
-        t.strictEqual(common.albumartist, 'Reel Big Fish', 'common.albumartist');
+        t.strictEqual(common.albumArtist, 'Reel Big Fish', 'common.albumartist');
         t.strictEqual(common.album, 'Why Do They Rock So Hard?', 'common.album');
         t.strictEqual(common.year, 1998, 'common.year');
-        t.strictEqual(common.track.no, 7, 'common.track.no');
-        t.strictEqual(common.track.of, null, 'common.track.of');
-        t.strictEqual(common.disk.no, null, 'common.disk.no');
-        t.strictEqual(common.disk.of, null, 'common.disk.of');
-        t.deepEqual(common.genre, ['Ska-Punk'], 'common.genre');
-        t.deepEqual(common.comment, [{ descriptor: '', language: 'eng', text: 'Jive' }], 'common.comment');
+        t.strictEqual(common.trackNumber, 7, 'common.track.no');
+        t.strictEqual(common.trackTotal, undefined, 'common.track.of');
+        t.strictEqual(common.discNumber, undefined, 'common.disk.no');
+        t.strictEqual(common.discTotal, undefined, 'common.disk.of');
+        t.deepEqual(common.genres, ['Ska-Punk'], 'common.genre');
+        t.deepEqual(common.comments, [{ descriptor: '', language: 'eng', text: 'Jive' }], 'common.comment');
       }
 
       function checkID3v23(native: mm.ITypedNativeTagDict<mm.IID3v23NativeTagMap>) {

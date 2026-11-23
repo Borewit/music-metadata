@@ -17,20 +17,20 @@ const audioOffset = (data: Uint8Array) => (data[0] === 73 ? 10 + syncSafe(data, 
 const payload = input.subarray(audioOffset(input));
 
 it('preserves the complete podcast URL', async () => {
-  const podcasturl = 'https://example.org/épisodes';
-  const updated = await updateBuffer(payload, { podcasturl });
-  const body = Buffer.from(podcasturl, 'latin1');
+  const podcastUrl = 'https://example.org/épisodes';
+  const updated = await updateBuffer(payload, { podcastUrl });
+  const body = Buffer.from(podcastUrl, 'latin1');
   expect(Buffer.from(updated.subarray(10, 20 + body.length))).toEqual(
     Buffer.concat([Buffer.from('WFED'), Buffer.from([0, 0, 0, body.length, 0, 0]), body])
   );
-  expect((await parseBuffer(updated)).common.podcasturl).toBe(podcasturl);
+  expect((await parseBuffer(updated)).common.podcastUrl).toBe(podcastUrl);
 });
 
 it('reads an encoding-prefixed podcast URL from a text-frame writer', async () => {
-  const podcasturl = 'https://example.org/音楽';
-  const data = Buffer.concat([Buffer.from([3]), Buffer.from(podcasturl, 'utf8')]);
+  const podcastUrl = 'https://example.org/音楽';
+  const data = Buffer.concat([Buffer.from([3]), Buffer.from(podcastUrl, 'utf8')]);
   const source = tag(encodeFrame({ id: 'WFED', flags: 0, data }));
-  expect((await parseBuffer(source)).common.podcasturl).toBe(podcasturl);
+  expect((await parseBuffer(source)).common.podcastUrl).toBe(podcastUrl);
 });
 
 async function withCopy(verify: (target: string) => Promise<void>) {
@@ -76,11 +76,11 @@ for (const flags of [1, 2, 3]) {
         withFrameFlags(makeFrames('TXXX:ALBUMARTISTS', 'Old artist')[0], flags)
       ])
     );
-    const output = await updateBuffer(source, { license: 'New license', albumartists: ['New artist'] });
+    const output = await updateBuffer(source, { license: 'New license', albumArtists: ['New artist'] });
     expect(output.subarray(10, 10 + unrelated.length)).toEqual(unrelated);
     const { common } = await parseBuffer(output);
     expect(common.license).toBe('New license');
-    expect(common.albumartists).toEqual(['New artist']);
+    expect(common.albumArtists).toEqual(['New artist']);
     expect(common.notes).toEqual(['ÿà']);
   });
 
@@ -88,14 +88,14 @@ for (const flags of [1, 2, 3]) {
     const cddb = withFrameFlags({ id: 'COMM', flags: 0, data: Buffer.from('\0engiTunes_CDDB_1\0ÿà', 'latin1') }, flags);
     const ordinary = withFrameFlags(makeFrames('COMM', { language: 'eng', text: 'Old comment' })[0], flags);
     const source = tag(Buffer.concat([cddb, ordinary]));
-    const output = await updateBuffer(source, { comment: 'New comment' });
+    const output = await updateBuffer(source, { comments: 'New comment' });
     const common = (await parseBuffer(output)).common;
     expect(common.itunesCddb1).toBe('ÿà');
-    expect(common.comment).toContainEqual({ descriptor: '', language: 'eng', text: 'New comment' });
+    expect(common.comments).toContainEqual({ descriptor: '', language: 'eng', text: 'New comment' });
     expect(Buffer.from(output).includes(Buffer.from(cddb))).toBe(true);
     const edited = (await parseBuffer(await updateBuffer(source, { itunesCddb1: 'Updated CDDB' }))).common;
     expect(edited.itunesCddb1).toBe('Updated CDDB');
-    expect(edited.comment).toContainEqual({ descriptor: 'iTunes_CDDB_1', language: 'eng', text: 'Updated CDDB' });
+    expect(edited.comments).toContainEqual({ descriptor: 'iTunes_CDDB_1', language: 'eng', text: 'Updated CDDB' });
   });
 }
 
@@ -109,13 +109,13 @@ for (const itunesCddb1 of [undefined, 'Explicit CDDB', null]) {
       ])
     );
     const output = await updateBuffer(source, {
-      comment: [{ descriptor, language: 'eng', text: 'New CDDB' }, { text: 'Ordinary comment' }],
+      comments: [{ descriptor, language: 'eng', text: 'New CDDB' }, { text: 'Ordinary comment' }],
       itunesCddb1
     });
     const expected = itunesCddb1 === undefined ? 'New CDDB' : (itunesCddb1 ?? undefined);
     const { common } = await parseBuffer(output);
     expect(common.itunesCddb1).toBe(expected);
-    expect(common.comment).toEqual([
+    expect(common.comments).toEqual([
       ...(expected === undefined ? [] : [{ descriptor, language: 'eng', text: expected }]),
       { descriptor: '', language: 'eng', text: 'Ordinary comment' }
     ]);
@@ -140,7 +140,7 @@ for (const frame of [
       const source = tag(
         Buffer.concat([unknown, ...makeFrames('COMM', [cddb, { text: 'Old comment' }]).map(encodeFrame)])
       );
-      const output = await updateBuffer(source, { comment });
+      const output = await updateBuffer(source, { comments: comment });
       expect(Buffer.from(output).includes(Buffer.from(unknown))).toBe(true);
       // Remove the intentionally undecodable frame before inspecting the common tags.
       const bytes = Buffer.from(output);
@@ -150,7 +150,7 @@ for (const frame of [
       );
       const { common } = await parseBuffer(readable);
       expect(common.itunesCddb1).toBe(cddb.text);
-      expect(common.comment).toEqual(
+      expect(common.comments).toEqual(
         comment === null ? [cddb] : [{ descriptor: '', language: 'eng', text: comment }, cddb]
       );
     });
@@ -262,14 +262,14 @@ describe('ID3v2.4 metadata transfer', () => {
   it('removes common fields and applies native fields last', async () => {
     const output = await updateBuffer(input, {
       picture: null,
-      comment: null,
+      comments: null,
       rating: null,
       title: 'Common',
       native: { TIT2: 'Native' }
     });
     const metadata = await parseBuffer(output, { mimeType: 'audio/mpeg' });
     expect(metadata.common.picture).toBeUndefined();
-    expect(metadata.common.comment).toBeUndefined();
+    expect(metadata.common.comments).toBeUndefined();
     expect(metadata.common.rating).toBeUndefined();
     expect(metadata.common.title).toBe('Native');
     expect(metadata.common.album).toBe("Don't Explain");
@@ -313,12 +313,13 @@ describe('ID3v2.4 metadata transfer', () => {
   });
 
   it('keeps track totals for a partial update and preserves other contributor roles', async () => {
-    const output = await updateBuffer(input, { track: { no: 2 }, engineer: ['New engineer'] });
+    const output = await updateBuffer(input, { trackNumber: 2, engineers: ['New engineer'] });
     const metadata = await parseBuffer(output, { mimeType: 'audio/mpeg' });
-    expect(metadata.common.track).toEqual({ no: 2, of: 10 });
-    expect(metadata.common.engineer).toEqual(['New engineer']);
-    expect(metadata.common.producer).toEqual(['Roy Weisman']);
-    expect(metadata.common.arranger).toEqual(['Jeff Bova']);
+    expect(metadata.common.trackNumber).toBe(2);
+    expect(metadata.common.trackTotal).toBe(10);
+    expect(metadata.common.engineers).toEqual(['New engineer']);
+    expect(metadata.common.producers).toEqual(['Roy Weisman']);
+    expect(metadata.common.arrangers).toEqual(['Jeff Bova']);
   });
 
   it('rejects malformed frames and invalid patches before modifying a file', async () => {
@@ -560,8 +561,8 @@ describe('makeFrames error handling', () => {
   });
 
   it('rejects TIPL/TMCL with non-array role values', () => {
-    expect(() => makeFrames('TIPL', { producer: 'John' })).toThrow('ID3 role values must be arrays');
-    expect(() => makeFrames('TMCL', { engineer: 'Jane' })).toThrow('ID3 role values must be arrays');
+    expect(() => makeFrames('TIPL', { producers: 'John' })).toThrow('ID3 role values must be arrays');
+    expect(() => makeFrames('TMCL', { engineers: 'Jane' })).toThrow('ID3 role values must be arrays');
   });
 
   it('rejects unknown non-W frames', () => {
@@ -738,14 +739,16 @@ describe('ADTS AAC ID3v2.4 writing', () => {
     title: 'AAC title — 音楽',
     artists: ['Artist A', 'Artist B'],
     album: 'AAC album',
-    albumartists: ['Album artist A', 'Album artist B'],
-    genre: ['Jazz', 'Fusion'],
-    track: { no: 2, of: 9 },
-    disk: { no: 1, of: 2 },
-    comment: 'AAC comment',
+    albumArtists: ['Album artist A', 'Album artist B'],
+    genres: ['Jazz', 'Fusion'],
+    trackNumber: 2,
+    trackTotal: 9,
+    discNumber: 1,
+    discTotal: 2,
+    comments: 'AAC comment',
     lyrics: 'AAC lyrics',
     rating: [{ rating: 0.8 }],
-    musicbrainz_recordingid: 'recording-id',
+    mbRecordingId: 'recording-id',
     picture,
     native: { 'TXXX:STYLE': 'Acoustic', 'TXXX:CUSTOM': ['One', 'Two'] }
   };
@@ -770,14 +773,16 @@ describe('ADTS AAC ID3v2.4 writing', () => {
         title: patch.title,
         artists: patch.artists,
         album: patch.album,
-        albumartists: patch.albumartists,
-        // The existing ID3 mapper also contributes TXXX:STYLE to genre.
-        genre: ['Jazz', 'Fusion', 'Acoustic'],
-        track: patch.track,
-        disk: patch.disk,
-        musicbrainz_recordingid: patch.musicbrainz_recordingid
+        albumArtists: patch.albumArtists,
+        // The existing ID3 mapper also contributes TXXX:STYLE to genres.
+        genres: ['Jazz', 'Fusion', 'Acoustic'],
+        trackNumber: patch.trackNumber,
+        trackTotal: patch.trackTotal,
+        discNumber: patch.discNumber,
+        discTotal: patch.discTotal,
+        mbRecordingId: patch.mbRecordingId
       });
-      expect(after.common.comment?.[0]?.text).toBe(patch.comment);
+      expect(after.common.comments?.[0]?.text).toBe(patch.comments);
       expect(after.common.lyrics?.[0]?.text).toBe(patch.lyrics);
       expect(after.common.rating?.[0]?.rating).toBeCloseTo(0.8, 2);
       expect(after.common.picture).toEqual(picture);
@@ -790,9 +795,10 @@ describe('ADTS AAC ID3v2.4 writing', () => {
       expect(Buffer.from(repeated.subarray(audioOffset(repeated)))).toEqual(source.subarray(audioOffset(source)));
       expect(await updateBuffer(output, { title: patch.title })).toEqual(output);
 
-      const changed = await updateBuffer(output, { track: { no: 4 }, title: null, picture: null, lyrics: null });
+      const changed = await updateBuffer(output, { trackNumber: 4, title: null, picture: null, lyrics: null });
       const tags = await parseBuffer(changed);
-      expect(tags.common.track).toEqual({ no: 4, of: 9 });
+      expect(tags.common.trackNumber).toBe(4);
+      expect(tags.common.trackTotal).toBe(9);
       expect(tags.common.title).toBeUndefined();
       expect(tags.common.picture).toBeUndefined();
       expect(tags.common.lyrics).toBeUndefined();
@@ -868,7 +874,7 @@ describe('ADTS AAC ID3v2.4 writing', () => {
       expect(after.common.title).toBe('New title');
       expect(after.common.artist).toBe(before.common.artist);
       expect(after.common.album).toBe(before.common.album);
-      expect(after.common.track).toEqual(before.common.track);
+      expect(after.common.trackNumber).toEqual(before.common.trackNumber);
     } finally {
       await rm(temporary, { recursive: true, force: true });
     }
@@ -1002,3 +1008,18 @@ describe('ADTS AAC ID3v2.4 writing', () => {
     }
   });
 });
+
+it.each([{ movementNumber: 2 }, { movementTotal: 5 }, { movementNumber: 2, movementTotal: 5 }])(
+  'preserves explicit movement components when deleting its name: %j',
+  async components => {
+    const source = await updateBuffer(payload, { movement: 'Old name', movementNumber: 1, movementTotal: 3 });
+    const output = await updateBuffer(source, { movement: null, ...components });
+    const { common } = await parseBuffer(output);
+    expect(common.movement).toBeUndefined();
+    expect(common.movementNumber).toBe(components.movementNumber ?? 1);
+    expect(common.movementTotal).toBe(components.movementTotal ?? 3);
+    const removed = await parseBuffer(await updateBuffer(source, { movement: null }));
+    expect(removed.common.movementNumber).toBeUndefined();
+    expect(removed.common.movementTotal).toBeUndefined();
+  }
+);

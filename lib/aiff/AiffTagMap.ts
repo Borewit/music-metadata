@@ -8,7 +8,7 @@ const tagMap: INativeTagMap = {
   NAME: 'title',
   AUTH: 'artist',
   '(c) ': 'copyright',
-  ANNO: 'comment'
+  ANNO: 'comments'
 };
 
 export class AiffTagMapper extends CommonTagMapper {

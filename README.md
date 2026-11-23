@@ -909,7 +909,8 @@ import { updateFile, updateBuffer } from 'music-metadata';
 await updateFile('track.flac', {
   title: 'New title',
   artists: ['Artist A'],
-  track: { no: 4, of: 12 }
+  trackNumber: 4,
+  trackTotal: 12
 }, { backup: true });
 
 const updated = await updateBuffer(originalBytes, { album: 'New album' });

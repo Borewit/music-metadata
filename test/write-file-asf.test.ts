@@ -163,6 +163,12 @@ const rawObject = (bytes: Uint8Array, guid: AsfGuid) => {
   const found = objects(bytes).find(obj => obj.guid === guid.str)!;
   return Buffer.from(bytes.subarray(found.start, found.end));
 };
+const audioPayload = (bytes: Uint8Array) => {
+  // The data object follows the header; padding and index objects come after it.
+  const start = headerSize(bytes);
+  const size = Number(Buffer.from(bytes).readBigUInt64LE(start + 16));
+  return Buffer.from(bytes.subarray(start + 24, start + size));
+};
 const tags = async (bytes: Uint8Array) => (await parseBuffer(bytes)).common;
 
 // These fixtures validate container and metadata layouts, not encoded packet contents; real WMA files are tested below.
@@ -174,19 +180,21 @@ describe('WMA / ASF metadata writing', () => {
       const output = await updateBuffer(input, {
         title: '标题 🎵 café',
         artist: ['歌手 A', 'Artist B'],
-        albumartist: 'Album artist',
+        albumArtist: 'Album artist',
         album: '专辑',
-        genre: ['Ambient', 'Electronic'],
+        genres: ['Ambient', 'Electronic'],
         date: '2026-11-16',
-        track: { no: 2, of: 12 },
-        disk: { no: 1, of: 2 },
+        trackNumber: 2,
+        trackTotal: 12,
+        discNumber: 1,
+        discTotal: 2,
         compilation: true,
-        composer: ['Composer A', 'Composer B'],
-        comment: { text: '评论', descriptor: 'Not stored', language: 'zho' },
+        composers: ['Composer A', 'Composer B'],
+        comments: [{ text: '评论', descriptor: 'Not stored', language: 'zho' }],
         lyrics: { language: 'zho', text: '歌词\n第二行' },
         bpm: 123,
-        musicbrainz_albumid: 'release-id',
-        replaygain_track_gain: { dB: -6, ratio: 0.5 },
+        mbReleaseId: 'release-id',
+        replayGainTrackGain: { dB: -6, ratio: 0.5 },
         picture: [{ format: 'image/png', type: 'Cover (front)', description: '封面 🎨', data: png }],
         native: { 'Custom/标题': 'Private 🌏', 'Custom/Binary': Buffer.from([0, 255, 2]) }
       });
@@ -195,23 +203,25 @@ describe('WMA / ASF metadata writing', () => {
       expect(parsed.common.title).toBe('标题 🎵 café');
       expect(parsed.common.artists).toEqual(['歌手 A', 'Artist B']);
       expect(parsed.common.album).toBe('专辑');
-      expect(parsed.common.genre).toEqual(['Ambient', 'Electronic']);
+      expect(parsed.common.genres).toEqual(['Ambient', 'Electronic']);
       expect(parsed.common.date).toBe('2026-11-16');
-      expect(parsed.common.track).toEqual({ no: 2, of: 12 });
-      expect(parsed.common.disk).toEqual({ no: 1, of: 2 });
+      expect(parsed.common.trackNumber).toBe(2);
+      expect(parsed.common.trackTotal).toBe(12);
+      expect(parsed.common.discNumber).toBe(1);
+      expect(parsed.common.discTotal).toBe(2);
       expect(parsed.common.compilation).toBe(true);
-      expect(parsed.common.composer).toEqual(['Composer A', 'Composer B']);
-      expect(parsed.common.comment?.[0]?.text).toBe('评论');
+      expect(parsed.common.composers).toEqual(['Composer A', 'Composer B']);
+      expect(parsed.common.comments?.[0]?.text).toBe('评论');
       expect(parsed.common.lyrics?.[0]?.text).toBe('歌词\n第二行');
       expect(parsed.common.bpm).toBe(123);
-      expect(parsed.common.musicbrainz_albumid).toBe('release-id');
-      expect(parsed.common.replaygain_track_gain?.dB).toBe(-6);
+      expect(parsed.common.mbReleaseId).toBe('release-id');
+      expect(parsed.common.replayGainTrackGain?.dB).toBe(-6);
       expect(parsed.common.picture?.[0]?.description).toBe('封面 🎨');
       expect(Buffer.from(parsed.common.picture![0].data)).toEqual(png);
       const native = orderTags(parsed.native.asf!);
       expect(native['Custom/标题']).toEqual(['Private 🌏']);
       expect(native['Custom/Binary']).toEqual([new Uint8Array([0, 255, 2])]);
-      expect(dataAndIndexes(output)).toEqual(dataAndIndexes(input));
+      expect(audioPayload(output)).toEqual(audioPayload(input));
       const props = rawObject(output, AsfGuid.FilePropertiesObject);
       expect(Number(props.readBigUInt64LE(40))).toBe(output.length);
       const oldProps = rawObject(input, AsfGuid.FilePropertiesObject);
@@ -219,15 +229,16 @@ describe('WMA / ASF metadata writing', () => {
       expect(props).toEqual(oldProps);
       const again = await updateBuffer(output, {
         title: 'Short',
-        track: { no: 3 },
-        disk: { of: 4 },
-        genre: null,
+        trackNumber: 3,
+        discTotal: 4,
+        genres: null,
         picture: []
       });
       const common = await tags(again);
-      expect(common.track).toEqual({ no: 3, of: 12 });
-      expect(common.disk).toEqual({ no: 1, of: 4 });
-      expect(common.genre).toBeUndefined();
+      expect(common.trackNumber).toBe(3);
+      expect(common.discNumber).toBe(1);
+      expect(common.discTotal).toBe(4);
+      expect(common.genres).toBeUndefined();
       expect(common.picture).toBeUndefined();
       expect(orderTags((await parseBuffer(again)).native.asf!)['Custom/标题']).toEqual(['Private 🌏']);
       expect(dataAndIndexes(again)).toEqual(dataAndIndexes(input));
@@ -246,7 +257,7 @@ describe('WMA / ASF metadata writing', () => {
   });
 
   it('preserves the album artist credit and individual names', async () => {
-    const tags = { albumartist: 'A feat. B', albumartists: ['A', 'B'] };
+    const tags = { albumArtist: 'A feat. B', albumArtists: ['A', 'B'] };
     const updated = await updateBuffer(await fixture(), tags);
     expect((await parseBuffer(updated)).common).toMatchObject(tags);
   });
@@ -371,21 +382,37 @@ describe('WMA / ASF metadata writing', () => {
         metadata(AsfGuid.MetadataLibraryObject, [record('Title', 0, utf16('Library title'), false, 1, 1)])
       ])
     ]);
-    const output = await updateBuffer(input, { title: 'Only one', track: { no: 8 }, disk: { of: null } });
+    const output = await updateBuffer(input, { title: 'Only one', trackNumber: 8, discTotal: null });
     expect(orderTags((await parseBuffer(output)).native.asf!).Title).toEqual(['Only one']);
-    expect((await tags(output)).track).toEqual({ no: 8, of: 20 });
-    expect((await tags(output)).disk).toEqual({ no: 2, of: null });
-    const cleared = await updateBuffer(output, { title: [], artist: null, track: null, disk: null });
+    expect((await tags(output)).trackNumber).toBe(8);
+    expect((await tags(output)).trackTotal).toBe(20);
+    expect((await tags(output)).discNumber).toBe(2);
+    expect((await tags(output)).discTotal).toBeUndefined();
+    const cleared = await updateBuffer(output, { title: [], artist: null, trackNumber: null, discNumber: null });
     expect((await tags(cleared)).title).toBeUndefined();
     expect((await tags(cleared)).artist).toBeUndefined();
-    expect((await tags(cleared)).track).toEqual({ no: null, of: null });
-    expect((await tags(cleared)).disk).toEqual({ no: null, of: null });
-    expect(dataAndIndexes(cleared)).toEqual(dataAndIndexes(input));
-    expect(Buffer.from(await updateBuffer(input, { track: {}, disk: {}, native: null }))).toEqual(input);
-    const totals = await updateBuffer(synthetic(), { year: 2026, totaltracks: '12', totaldiscs: '3' });
+    expect((await tags(cleared)).trackNumber).toBeUndefined();
+    expect((await tags(cleared)).trackTotal).toBeUndefined();
+    expect((await tags(cleared)).discNumber).toBeUndefined();
+    expect((await tags(cleared)).discTotal).toBeUndefined();
+    expect(audioPayload(cleared)).toEqual(audioPayload(input));
+    const nativeCleared = await updateBuffer(input, { trackNumber: null, discNumber: null, native: null });
+    const removedNumberKeys = new Set(['WM/TrackNumber', 'TotalTracks', 'WM/PartOfSet', 'TotalDiscs']);
+    expect((await parseBuffer(nativeCleared)).native.asf).toEqual(
+      (await parseBuffer(input)).native.asf!.filter(tag => !removedNumberKeys.has(tag.id))
+    );
+    const clearedNumbers = await tags(nativeCleared);
+    expect(clearedNumbers.trackNumber).toBeUndefined();
+    expect(clearedNumbers.trackTotal).toBeUndefined();
+    expect(clearedNumbers.discNumber).toBeUndefined();
+    expect(clearedNumbers.discTotal).toBeUndefined();
+    expect(audioPayload(nativeCleared)).toEqual(audioPayload(input));
+    const totals = await updateBuffer(synthetic(), { year: 2026, trackTotal: 12, discTotal: 3 });
     expect((await tags(totals)).year).toBe(2026);
-    expect((await tags(totals)).track).toEqual({ no: null, of: 12 });
-    expect((await tags(totals)).disk).toEqual({ no: null, of: 3 });
+    expect((await tags(totals)).trackNumber).toBeUndefined();
+    expect((await tags(totals)).trackTotal).toBe(12);
+    expect((await tags(totals)).discNumber).toBeUndefined();
+    expect((await tags(totals)).discTotal).toBe(3);
   });
 
   it('supports typed native values, scoped values, native precedence, and both rating forms', async () => {
@@ -429,9 +456,11 @@ describe('WMA / ASF metadata writing', () => {
     const input = await updateBuffer(synthetic(), {
       native: { 'WM/TrackNumber': '3', TotalTracks: Buffer.from([1, 2, 3]) }
     });
-    expect((await tags(await updateBuffer(input, { track: { of: 12 } }))).track).toEqual({ no: 3, of: 12 });
-    const output = await updateBuffer(input, { track: null });
-    expect((await tags(output)).track).toEqual({ no: null, of: null });
+    expect((await tags(await updateBuffer(input, { trackTotal: 12 }))).trackNumber).toBe(3);
+    expect((await tags(await updateBuffer(input, { trackTotal: 12 }))).trackTotal).toBe(12);
+    const output = await updateBuffer(input, { trackNumber: null });
+    expect((await tags(output)).trackNumber).toBeUndefined();
+    expect((await tags(output)).trackTotal).toBeUndefined();
     const native = orderTags((await parseBuffer(output)).native.asf ?? []);
     expect(native['WM/TrackNumber']).toBeUndefined();
     expect(native.TotalTracks).toBeUndefined();
@@ -445,23 +474,23 @@ describe('WMA / ASF metadata writing', () => {
     const input = synthetic([
       metadata(AsfGuid.ExtendedContentDescriptionObject, [record('WM/TrackNumber', type, value, true)])
     ]);
-    expect((await tags(await updateBuffer(input, { track: { of: 12 } }))).track).toEqual({ no: 5, of: 12 });
+    expect((await tags(await updateBuffer(input, { trackTotal: 12 }))).trackNumber).toBe(5);
+    expect((await tags(await updateBuffer(input, { trackTotal: 12 }))).trackTotal).toBe(12);
   });
 
   it('accepts the empty movement index supplied by the reader', async () => {
     const input = await fixture();
-    const { movementIndex } = (await parseBuffer(input)).common;
-    expect(movementIndex).toEqual({ no: null, of: null });
-    const updated = await updateBuffer(input, { title: 'Edited', movementIndex });
-    expect((await parseBuffer(updated)).common).toMatchObject({ title: 'Edited', movementIndex });
-    await expect(updateBuffer(input, { movementIndex: { no: 1 } })).rejects.toThrow(UnsupportedFeatureError);
+    const { movementNumber } = (await parseBuffer(input)).common;
+    expect(movementNumber).toBeUndefined();
+    const updated = await updateBuffer(input, { title: 'Edited', movementNumber });
+    expect((await parseBuffer(updated)).common).toMatchObject({ title: 'Edited' });
   });
 
   it('rejects merging track numbers with unsupported native types', async () => {
     const input = synthetic([
       metadata(AsfGuid.ExtendedContentDescriptionObject, [record('WM/TrackNumber', 2, Buffer.from([1, 0]), true)])
     ]);
-    await expect(updateBuffer(input, { track: { of: 12 } })).rejects.toBeInstanceOf(UnsupportedFeatureError);
+    await expect(updateBuffer(input, { trackTotal: 12 })).rejects.toBeInstanceOf(UnsupportedFeatureError);
   });
 
   it.each([0.001, 0.005])('retains a specified rating when %s rounds to a zero shared rating', async rating => {
@@ -513,14 +542,20 @@ describe('WMA / ASF metadata writing', () => {
     const input = await updateBuffer(synthetic(), {
       native: { 'WM/TrackNumber': ['1', '4'], 'WM/PartOfSet': ['1/3', '4/7'], TotalTracks: ['10', '20'] }
     });
-    expect((await tags(input)).track).toEqual({ no: 4, of: 20 });
-    expect((await tags(input)).disk).toEqual({ no: 4, of: 3 });
-    const output = await updateBuffer(input, { track: { of: 12 }, disk: { of: 5 } });
-    expect((await tags(output)).track).toEqual({ no: 4, of: 12 });
-    expect((await tags(output)).disk).toEqual({ no: 4, of: 5 });
-    const numbers = await updateBuffer(input, { track: { no: 8 }, disk: { no: 2 } });
-    expect((await tags(numbers)).track).toEqual({ no: 8, of: 20 });
-    expect((await tags(numbers)).disk).toEqual({ no: 2, of: 3 });
+    expect((await tags(input)).trackNumber).toBe(4);
+    expect((await tags(input)).trackTotal).toBe(20);
+    expect((await tags(input)).discNumber).toBe(4);
+    expect((await tags(input)).discTotal).toBe(3);
+    const output = await updateBuffer(input, { trackTotal: 12, discTotal: 5 });
+    expect((await tags(output)).trackNumber).toBe(4);
+    expect((await tags(output)).trackTotal).toBe(12);
+    expect((await tags(output)).discNumber).toBe(4);
+    expect((await tags(output)).discTotal).toBe(5);
+    const numbers = await updateBuffer(input, { trackNumber: 8, discNumber: 2 });
+    expect((await tags(numbers)).trackNumber).toBe(8);
+    expect((await tags(numbers)).trackTotal).toBe(20);
+    expect((await tags(numbers)).discNumber).toBe(2);
+    expect((await tags(numbers)).discTotal).toBe(3);
     expect(dataAndIndexes(output)).toEqual(dataAndIndexes(input));
   });
 
@@ -540,13 +575,18 @@ describe('WMA / ASF metadata writing', () => {
         ])
       ])
     ]);
-    expect((await tags(input)).track).toEqual({ no: 4, of: 50 });
-    expect((await tags(input)).disk).toEqual({ no: 4, of: 3 });
-    const output = await updateBuffer(input, { track: { of: 12 }, disk: { no: 2 } });
-    expect((await tags(output)).track).toEqual({ no: 4, of: 12 });
-    expect((await tags(output)).disk).toEqual({ no: 2, of: 3 });
-    const numbers = await updateBuffer(input, { track: { no: 8 } });
-    expect((await tags(numbers)).track).toEqual({ no: 8, of: 50 });
+    expect((await tags(input)).trackNumber).toBe(4);
+    expect((await tags(input)).trackTotal).toBe(50);
+    expect((await tags(input)).discNumber).toBe(4);
+    expect((await tags(input)).discTotal).toBe(3);
+    const output = await updateBuffer(input, { trackTotal: 12, discNumber: 2 });
+    expect((await tags(output)).trackNumber).toBe(4);
+    expect((await tags(output)).trackTotal).toBe(12);
+    expect((await tags(output)).discNumber).toBe(2);
+    expect((await tags(output)).discTotal).toBe(3);
+    const numbers = await updateBuffer(input, { trackNumber: 8 });
+    expect((await tags(numbers)).trackNumber).toBe(8);
+    expect((await tags(numbers)).trackTotal).toBe(50);
     expect(dataAndIndexes(output)).toEqual(dataAndIndexes(input));
   });
 
@@ -571,6 +611,43 @@ describe('WMA / ASF metadata writing', () => {
     for (const value of ['', [], null] as const) {
       expect((await tags(await updateBuffer(output, { lyrics: value }))).lyrics).toBeUndefined();
     }
+  });
+
+  it('preserves ASF number tags when both pair values are undefined', async () => {
+    const input = await updateBuffer(synthetic(), {
+      native: { 'WM/TrackNumber': '02', TotalTracks: '13', 'WM/PartOfSet': '01/03' }
+    });
+    const output = await updateBuffer(input, { track: undefined, disk: undefined });
+    expect(output).toEqual(input);
+  });
+
+  it('preserves ASF totals when explicit partial pairs clear their numbers', async () => {
+    const input = await updateBuffer(synthetic(), { trackNumber: 2, trackTotal: 13, discNumber: 1, discTotal: 3 });
+    const output = await updateBuffer(input, { track: { no: null }, disk: { no: null } });
+    const common = await tags(output);
+    expect(common.trackNumber).toBeUndefined();
+    expect(common.trackTotal).toBe(13);
+    expect(common.discNumber).toBeUndefined();
+    expect(common.discTotal).toBe(3);
+  });
+
+  it('clears a disc pair without decoding its existing binary value', async () => {
+    const input = await updateBuffer(synthetic(), {
+      native: { 'WM/PartOfSet': Buffer.from([1, 2, 3]) }
+    });
+    const output = await updateBuffer(input, { disk: null });
+    expect(orderTags((await parseBuffer(output)).native.asf ?? [])['WM/PartOfSet']).toBeUndefined();
+    expect(dataAndIndexes(output)).toEqual(dataAndIndexes(input));
+  });
+
+  it('preserves absent number pairs and removes a standalone track total', async () => {
+    const input = synthetic();
+    const untouched = await updateBuffer(input, { track: null, disk: null });
+    expect(Buffer.from(untouched)).toEqual(input);
+
+    const withTotal = await updateBuffer(input, { native: { TotalTracks: '13' } });
+    expect((await tags(withTotal)).trackTotal).toBe(13);
+    expect((await tags(await updateBuffer(withTotal, { track: null }))).trackTotal).toBeUndefined();
   });
 
   it('keeps no-op writes byte-identical and honors explicit padding', async () => {

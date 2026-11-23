@@ -56,7 +56,7 @@ describe('ID3v2Parser', () => {
     ];
 
     assert.deepEqual(id3v22.COM, expectedComment, "['ID3v2.2']['COM']");
-    assert.deepEqual(metadata.common.comment, expectedComment, 'common.comment');
+    assert.deepEqual(metadata.common.comments, expectedComment, 'common.comment');
   });
 
   it("should decode file 'id3v2.2.mp3'", async () => {
@@ -68,14 +68,14 @@ describe('ID3v2Parser', () => {
     assert.strictEqual(metadata.common.artist, 'Shiny Toy Guns', 'artist');
     assert.strictEqual(metadata.common.album, 'We Are Pilots', 'album');
     assert.strictEqual(metadata.common.year, 2006, 'year');
-    assert.strictEqual(metadata.common.track.no, 1, 'track no');
-    assert.strictEqual(metadata.common.track.of, 11, 'track of');
-    assert.deepEqual(metadata.common.genre, ['Alternative'], 'genre');
+    assert.strictEqual(metadata.common.trackNumber, 1, 'track no');
+    assert.strictEqual(metadata.common.trackTotal, 11, 'track of');
+    assert.deepEqual(metadata.common.genres, ['Alternative'], 'genres');
     assert.strictEqual(metadata.common.picture[0].format, 'image/jpeg', 'picture format');
     assert.strictEqual(metadata.common.picture[0].data.length, 99738, 'picture length (verified with Mp3Tag)');
     assert.strictEqual(metadata.common.gapless, false, 'common.gapless');
     assert.deepEqual(
-      metadata.common.comment,
+      metadata.common.comments,
       [
         {
           descriptor: 'iTunPGAP',
@@ -131,7 +131,7 @@ describe('ID3v2Parser', () => {
     const filePath = path.join(samplePath, 'mp3', 'issue-2724-id3v2.2.mp3');
     const { common } = await mm.parseFile(filePath);
 
-    assert.deepEqual(common.genre, ['Duo Cello/Piano'], 'common.genre must not be split on "/"');
+    assert.deepEqual(common.genres, ['Duo Cello/Piano'], 'common.genre must not be split on "/"');
   });
 
   it('05 I Believe You.mp3', async () => {

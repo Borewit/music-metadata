@@ -484,3 +484,59 @@ describe('MimeType', () => {
     assert.equal(mime.suffix, 'xml');
   });
 });
+
+describe('Renamed common normalization', () => {
+  it.each([
+    ['TRCK', 'trackNumber', 'trackTotal'],
+    ['TPOS', 'discNumber', 'discTotal'],
+    ['MVIN', 'movementNumber', 'movementTotal']
+  ] as const)('normalizes ID3 %s number and total', async (id, number, total) => {
+    const collector = new MetadataCollector();
+    await collector.addTag('ID3v2.4', id, '3/12');
+    assert.strictEqual(collector.common[number], 3);
+    assert.strictEqual(collector.common[total], 12);
+  });
+
+  for (const [number, total] of [
+    ['trackNumber', 'trackTotal'],
+    ['discNumber', 'discTotal'],
+    ['movementNumber', 'movementTotal']
+  ] as const) {
+    it.each([false, true])(`preserves ${number}/${total} source priority (reversed: %s)`, async reversed => {
+      const collector = new MetadataCollector();
+      const tags = [
+        { type: 'ID3v2.4' as const, value: '3/12' },
+        { type: 'exif' as const, value: '5/7' }
+      ];
+      for (const tag of reversed ? tags.reverse() : tags) {
+        await collector.postMap(tag.type, { id: number, value: tag.value });
+      }
+      assert.strictEqual(collector.common[number], 3);
+      assert.strictEqual(collector.common[total], 12);
+    });
+
+    it(`omits absent ${number}/${total} values`, async () => {
+      const collector = new MetadataCollector();
+      await collector.postMap('ID3v2.4', { id: number, value: '0/0' });
+      assert.notProperty(collector.common, number);
+      assert.notProperty(collector.common, total);
+    });
+  }
+
+  it('normalizes ID3v1 string and ID3v2 structured comments', async () => {
+    const v1 = new MetadataCollector();
+    await v1.addTag('ID3v1', 'comment', 'note');
+    assert.deepEqual(v1.common.comments, [{ text: 'note' }]);
+    const v2 = new MetadataCollector();
+    const comment = { text: 'note', language: 'eng', descriptor: 'description' };
+    await v2.addTag('ID3v2.4', 'COMM', comment);
+    assert.deepEqual(v2.common.comments, [comment]);
+  });
+
+  it('types the singular CAF native information identifiers', () => {
+    for (const id of ['composer', 'lyricist', 'genre'] as const) {
+      const tag: mm.INativeTag<mm.ICafNativeTagMap> = { id, value: 'First,Second' };
+      assert.strictEqual(tag.value, 'First,Second');
+    }
+  });
+});

@@ -2,7 +2,8 @@ import * as Token from 'token-types';
 import type { WriteChunk } from '../core/chunks.js';
 import { InvalidFileError, UnsupportedFeatureError } from '../core/errors.js';
 import type { ByteSource } from '../core/source.shared.js';
-import type { TagPatch, WriteOptions } from '../core/types.js';
+import type { WriteOptions } from '../core/types.js';
+import type { InternalPatch } from '../mapping/common.js';
 import { type AtomBudget, atom, type Box, boxes, copyBox, fourcc, header, limit, maxAtoms, zeros } from './atoms.js';
 import { chapterUpdate } from './chapters.js';
 import { editItems } from './tags.js';
@@ -14,7 +15,7 @@ import { editItems } from './tags.js';
  */
 export async function buildMp4Update(
   source: ByteSource,
-  patch: TagPatch,
+  patch: InternalPatch,
   options: WriteOptions
 ): Promise<{ chunks: WriteChunk[]; paddingBytes: number }> {
   if (options.padding !== undefined) {

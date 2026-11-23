@@ -205,19 +205,19 @@ describe('Test Replay-Gain', () => {
       const d = 1 / 1000;
 
       if (sample.track) {
-        assert.approximately(common.replaygain_track_gain.dB, sample.track.gain, d, 'replay-gain: track gain');
-        assert.approximately(common.replaygain_track_peak.dB, sample.track.peak, d, 'replay-gain: track peak');
+        assert.approximately(common.replayGainTrackGain.dB, sample.track.gain, d, 'replay-gain: track gain');
+        assert.approximately(common.replayGainTrackPeak.dB, sample.track.peak, d, 'replay-gain: track peak');
       } else {
-        assert.isUndefined(common.replaygain_track_gain, 'replay-gain: track gain');
-        assert.isUndefined(common.replaygain_track_peak, 'replay-gain: track peak');
+        assert.isUndefined(common.replayGainTrackGain, 'replay-gain: track gain');
+        assert.isUndefined(common.replayGainTrackPeak, 'replay-gain: track peak');
       }
 
       if (sample.album) {
-        assert.approximately(common.replaygain_album_gain.dB, sample.album.gain, d, 'replay-gain: album gain');
-        assert.approximately(common.replaygain_album_peak.dB, sample.album.peak, d, 'replay-gain: album peak');
+        assert.approximately(common.replayGainAlbumGain.dB, sample.album.gain, d, 'replay-gain: album gain');
+        assert.approximately(common.replayGainAlbumPeak.dB, sample.album.peak, d, 'replay-gain: album peak');
       } else {
-        assert.isUndefined(common.replaygain_album_gain, 'replay-gain: album gain');
-        assert.isUndefined(common.replaygain_album_peak, 'replay-gain: album peak');
+        assert.isUndefined(common.replayGainAlbumGain, 'replay-gain: album gain');
+        assert.isUndefined(common.replayGainAlbumPeak, 'replay-gain: album peak');
       }
     });
   });

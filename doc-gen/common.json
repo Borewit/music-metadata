@@ -2,11 +2,11 @@
   "year": {
     "description": "Year"
   },
-  "track": {
-    "description": "Track number on the media, e.g. `{no: 1, of: 2}`"
+  "trackNumber": {
+    "description": "Track number on the media"
   },
-  "disk": {
-    "description": "Disk or media number, e.g. `{no: 1, of: 2}`"
+  "discNumber": {
+    "description": "Disc or media number"
   },
   "title": {
     "description": "Track title"
@@ -17,11 +17,11 @@
   "artists": {
     "description": "Track artists e.g.: `[\"Beth Hart\", \"Joe Bonamassa\"]`. If not directly specified in one or more tag, this is automatically filled with `common.artist`"
   },
-  "albumartist": {
+  "albumArtist": {
     "description": "Literal written album artist e.g.: `\"Beth Hart & Joe Bonamassa\"`"
   },
-  "albumartists": {
-    "description": "Album artists e.g.: `[\"Beth Hart\", \"Joe Bonamassa\"]`. If not directly specified in one or more tags, this is automatically filled with `common.albumartist`"
+  "albumArtists": {
+    "description": "Album artists e.g.: `[\"Beth Hart\", \"Joe Bonamassa\"]`. If not directly specified in one or more tags, this is automatically filled with `common.albumArtist`"
   },
   "album": {
     "description": "Album title"
@@ -47,125 +47,125 @@
   "podcast": {
     "description": "_ToDo, see [issues #13](https://github.com/Borewit/music-metadata/issues/13)_"
   },
-  "podcasturl": {
+  "podcastUrl": {
     "description": "_ToDo, see [issues #13](https://github.com/Borewit/music-metadata/issues/13)_"
   },
   "date": {
     "description": "Date, such as YYYY-MM-DD or a partial date like YYYY"
   },
-  "originaldate": {
+  "originalDate": {
     "description": "Original (initial) release date, formatted like: YYYY-MM-DD"
   },
-  "originalyear": {
+  "originalYear": {
     "description": "Original (initial) release year"
   },
-  "releasedate": {
+  "releaseDate": {
     "description": "Release date, formatted like: YYYY-MM-DD"
   },
-  "comment": {
+  "comments": {
     "description": "Comments"
   },
-  "discogs_artist_id": {
+  "discogsArtistId": {
     "description": "Discogs artist ID"
   },
-  "discogs_label_id": {
+  "discogsLabelId": {
     "description": "Discogs label ID"
   },
-  "discogs_master_release_id": {
+  "discogsMasterReleaseId": {
     "description": "Discogs master release ID"
   },
-  "discogs_votes": {
+  "discogsVotes": {
     "description": "Discogs votes"
   },
-  "discogs_rating": {
+  "discogsRating": {
     "description": "Discogs rating"
   },
-  "replaygain_track_gain_ratio": {
+  "replayGainTrackGainRatio": {
     "description": "ReplayGain track gain ratio [0..1]"
   },
-  "replaygain_track_peak_ratio": {
+  "replayGainTrackPeakRatio": {
     "description": "ReplayGain track peak ratio [0..1]"
   },
-  "genre": {
+  "genres": {
     "description": "Genres"
   },
   "picture": {
     "description": "Embedded cover art"
   },
-  "composer": {
+  "composers": {
     "description": "Composer"
   },
   "lyrics": {
     "description": "Lyrics"
   },
-  "albumsort": {
+  "albumSort": {
     "description": "Album title, formatted for alphabetic ordering"
   },
-  "titlesort": {
+  "titleSort": {
     "description": "Track title, formatted for alphabetic ordering"
   },
   "work": {
     "description": "The canonical title of the [work](https://musicbrainz.org/doc/Work)"
   },
-  "artistsort": {
+  "artistSort": {
     "description": "Track artist, formatted for alphabetic ordering"
   },
-  "albumartistsort": {
+  "albumArtistSort": {
     "description": "Album artist, formatted for alphabetic ordering"
   },
-  "composersort": {
+  "composerSort": {
     "description": "Composer, formatted for alphabetic ordering"
   },
-  "lyricist": {
+  "lyricists": {
     "description": "Lyricist"
   },
-  "writer": {
+  "writers": {
     "description": "Writer"
   },
-  "conductor": {
+  "conductors": {
     "description": "Conductor"
   },
-  "remixer": {
+  "remixers": {
     "description": "Remixer(s)"
   },
-  "arranger": {
+  "arrangers": {
     "description": "Arranger(s)"
   },
-  "engineer": {
+  "engineers": {
     "description": "Engineer(s)"
   },
-  "producer": {
+  "producers": {
     "description": "Producer(s)"
   },
-  "publisher": {
+  "publishers": {
     "description": "Publisher"
   },
-  "djmixer": {
+  "djMixers": {
     "description": "Mix-DJ(s)"
   },
-  "mixer": {
+  "mixers": {
     "description": "Mixed by"
   },
-  "label": {
+  "labels": {
     "description": "Release label name(s)"
   },
   "grouping": {
     "description": "Content group description. Used to group track titles in sections."
   },
-  "subtitle": {
+  "subtitles": {
     "description": "Contains the subtitle of the content"
   },
-  "discsubtitle": {
+  "discSubtitle": {
     "description": "The Media Title given to a specific disc"
   },
-  "totaltracks": {
-    "description": "The total number of tracks"
+  "trackTotal": {
+    "description": "Total number of tracks on the media"
   },
-  "totaldiscs": {
-    "description": "The total number of discs"
+  "discTotal": {
+    "description": "Total number of discs or media"
   },
   "movementTotal": {
-    "description": "The total number of movements"
+    "description": "Total number of movements"
   },
   "compilation": {
     "description": "Is part of compilation (unofficial iTunes Compilation Flag)"
@@ -182,25 +182,25 @@
   "media": {
     "description": "Release format"
   },
-  "catalognumber": {
+  "catalogNumber": {
     "description": "[Release catalog number(s)](https://musicbrainz.org/doc/Release/Catalog_Number)"
   },
   "barcode": {
     "description": "[Release barcode](https://musicbrainz.org/doc/Barcode)."
   },
-  "isrc": {
+  "isrcs": {
     "description": "[ISRC](https://musicbrainz.org/doc/ISRC)"
   },
   "asin": {
     "description": "[Amazon Standard Identification Number (ASIN)](https://musicbrainz.org/doc/ASIN)"
   },
-  "releasestatus": {
+  "releaseStatus": {
     "description": "See [releases status](https://wiki.musicbrainz.org/History:Release_Status)"
   },
-  "releasetype": {
+  "releaseType": {
     "description": "[Release type](https://musicbrainz.org/doc/Release_Group/Type), e,g,: Album"
   },
-  "releasecountry": {
+  "releaseCountry": {
     "description": "[Release country](https://wiki.musicbrainz.org/Release_Country) describes the country in which an album was released."
   },
   "script": {
@@ -215,10 +215,10 @@
   "license": {
     "description": "License Relationship Type (releases, recordings)"
   },
-  "encodedby": {
+  "encodedBy": {
     "description": "Encoded by (person/organisation)"
   },
-  "encodersettings": {
+  "encoderSettings": {
     "description": "Encoder Settings"
   },
   "gapless": {
@@ -251,43 +251,43 @@
   "replayGainReferenceLoudness": {
     "description": "ReplayGain reference loudness, in dB SPL."
   },
-  "musicbrainz_recordingid": {
+  "mbRecordingId": {
     "description": "Release [recording](https://musicbrainz.org/doc/Recording) [MBID](https://musicbrainz.org/doc/MusicBrainz_Identifier)"
   },
-  "musicbrainz_trackid": {
+  "mbReleaseTrackId": {
     "description": "Release track [MBID](https://musicbrainz.org/doc/MusicBrainz_Identifier)"
   },
-  "musicbrainz_albumid": {
+  "mbReleaseId": {
     "description": "[Album (release)](https://musicbrainz.org/doc/Release) [MBID](https://musicbrainz.org/doc/MusicBrainz_Identifier)"
   },
-  "musicbrainz_artistid": {
+  "mbArtistId": {
     "description": "Track [artists](https://musicbrainz.org/doc/Artist) [MBID](https://musicbrainz.org/doc/MusicBrainz_Identifier)"
   },
-  "musicbrainz_albumartistid": {
+  "mbAlbumArtistId": {
     "description": "Album artists [artists](https://musicbrainz.org/doc/Artist) [MBID](https://musicbrainz.org/doc/MusicBrainz_Identifier)"
   },
-  "musicbrainz_releasegroupid": {
+  "mbReleaseGroupId": {
     "description": "[Release group](https://musicbrainz.org/doc/Release_Group) [MBID](https://musicbrainz.org/doc/MusicBrainz_Identifier)"
   },
-  "musicbrainz_workid": {
+  "mbWorkId": {
     "description": "[Work](https://musicbrainz.org/doc/Work) [MBID](https://musicbrainz.org/doc/MusicBrainz_Identifier)"
   },
-  "musicbrainz_trmid": {
+  "mbTrmId": {
     "description": "[TRM (TRM Recognizes Music)]((https://musicbrainz.org/doc/Fingerprinting#TRM)) IDs were MusicBrainz\u2019 first audio fingerprinting system."
   },
-  "musicbrainz_discid": {
+  "mbDiscId": {
     "description": "[Disc ID](https://musicbrainz.org/doc/Disc_ID) is the code number which MusicBrainz uses to link a physical CD"
   },
-  "acoustid_id": {
+  "acoustId": {
     "description": "(AcoustID)[https://en.wikipedia.org/wiki/Acoustic_fingerprint] is MusicBrainz\u2019 third and most recent audio fingerprinting system."
   },
-  "acoustid_fingerprint": {
+  "acoustIdFingerprint": {
     "description": "[AcoustID Fingerprint](https://picard.musicbrainz.org/docs/mappings/). _ToDo: Same as acoustid_id._"
   },
-  "musicip_puid": {
+  "musicIpPuid": {
     "description": "[PUIDs](https://musicbrainz.org/doc/Fingerprinting#PUID) were MusicBrainz\u2019 second audio fingerprinting system."
   },
-  "musicip_fingerprint": {
+  "musicIpFingerprint": {
     "description": "MusicIP Fingerprint), not sure which algorithm."
   },
   "website": {
@@ -311,40 +311,40 @@
   "key": {
     "description": "The 'Initial key' frame contains the musical key in which the sound starts."
   },
-  "originalalbum": {
+  "originalAlbum": {
     "description": "Original release title of the earliest release in the release group intended for the title of the original recording."
   },
-  "originalartist": {
+  "originalArtist": {
     "description": "Original track artist of the earliest release in the release group intended for the performer(s) of the original recording."
   },
-  "discogs_release_id": {
+  "discogsReleaseId": {
     "description": "Discogs release identifier"
   },
-  "replaygain_track_peak": {
+  "replayGainTrackPeak": {
     "description": "ReplayGain track peak: {ratio: number, dB: number}"
   },
-  "replaygain_track_gain": {
+  "replayGainTrackGain": {
     "description": "ReplayGain track gain: {ratio: number, dB: number}"
   },
-  "replaygain_album_peak": {
+  "replayGainAlbumPeak": {
     "description": "ReplayGain album peak: {ratio: number, dB: number}"
   },
-  "replaygain_album_gain": {
+  "replayGainAlbumGain": {
     "description": "ReplayGain album gain: {ratio: number, dB: number}"
   },
-  "replaygain_track_minmax": {
+  "replayGainTrackMinMax": {
     "description": "Minimum & maximum global gain values for this file."
   },
-  "replaygain_album_minmax": {
+  "replayGainAlbumMinMax": {
     "description": "Minimum & maximum global gain values across a set of files scanned as an album. "
   },
-  "replaygain_undo": {
+  "replayGainUndo": {
     "description": "The global gain adjustment to restore the original values in the left and right channels, respectively, followed by an indicator of whether to wrap"
   },
-  "technician": {
+  "technicians": {
     "description": "Technician who digitized subject"
   },
-  "category": {
+  "categories": {
     "description": "Podcast Category"
   },
   "hdVideo": {
@@ -356,8 +356,8 @@
   "movement": {
     "description": "Movement"
   },
-  "movementIndex": {
-    "description": "Movement Index/Total, e.g. `{no: 1, of: 4}`. Vorbis: numeric MOVEMENT (also standalone), or MOVEMENTNUMBER; legacy MOVEMENT remains a name where applicable."
+  "movementNumber": {
+    "description": "Movement number; total is exposed as movementTotal. Vorbis: numeric MOVEMENT (also standalone), or MOVEMENTNUMBER; legacy MOVEMENT remains a name where applicable."
   },
   "podcastId": {
     "description": "Podcast Identifier"

@@ -58,55 +58,57 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
     if (inputTagType === 'asf') {
       assert.deepEqual(common.artists, ['Joe Bonamassa', 'Beth Hart'], `${inputTagType} => common.artists`);
       assert.deepEqual(
-        common.musicbrainz_artistid,
+        common.mbArtistId,
         ['984f8239-8fe1-4683-9c54-10ffb14439e9', '3fe817fc-966e-4ece-b00a-76be43e7e73c'],
         `${inputTagType} => common.musicbrainz_artistid`
       );
     } else {
       assert.deepEqual(common.artists, ['Beth Hart', 'Joe Bonamassa'], `${inputTagType} => common.artists`);
       assert.deepEqual(
-        common.musicbrainz_artistid,
+        common.mbArtistId,
         ['3fe817fc-966e-4ece-b00a-76be43e7e73c', '984f8239-8fe1-4683-9c54-10ffb14439e9'],
         `${inputTagType} => common.musicbrainz_artistid`
       );
     }
 
-    assert.strictEqual(common.albumartist, 'Beth Hart & Joe Bonamassa', 'common.albumartist');
+    assert.strictEqual(common.albumArtist, 'Beth Hart & Joe Bonamassa', 'common.albumArtist');
     // Sort names contain punctuation that must not be interpreted as list separators.
     // https://picard-docs.musicbrainz.org/en/v2.13/appendices/tag_mapping.html#artist-sort-order
-    assert.strictEqual(common.artistsort, 'Hart, Beth & Bonamassa, Joe', `${inputTagType} => common.artistsort`);
+    assert.strictEqual(common.artistSort, 'Hart, Beth & Bonamassa, Joe', `${inputTagType} => common.artistsort`);
     assert.deepEqual(
-      common.albumartistsort,
+      common.albumArtistSort,
       'Hart, Beth & Bonamassa, Joe',
-      `${inputTagType} =>  common.albumartistsort`
+      `${inputTagType} =>  common.albumArtistsort`
     );
     assert.strictEqual(common.album, "Don't Explain", `${inputTagType} => common.album = Don't Explain`);
-    if (inputTagType === 'asf') {
-      assert.deepEqual(common.track, { no: 1, of: null }, `${inputTagType} => common.track`);
-    } else {
-      assert.deepEqual(common.track, { no: 1, of: 10 }, `${inputTagType} => common.track`);
-    }
-    assert.deepEqual(common.disk, { no: 1, of: 1 }, `${inputTagType} => common.disk`);
+    assert.strictEqual(common.trackNumber, 1, `${inputTagType} => common.trackNumber`);
+    assert.deepEqual(common.discNumber, 1, `${inputTagType} => common.disk`);
+    assert.strictEqual(
+      common.trackTotal,
+      inputTagType === 'asf' ? undefined : 10,
+      `${inputTagType} => common.trackTotal`
+    );
+    assert.strictEqual(common.discTotal, 1, `${inputTagType} => common.discTotal`);
     if (hasOriginalData(inputTagType)) {
-      assert.strictEqual(common.originaldate, '2011-09-26', `${inputTagType} => common.originaldate = 2011-09-26`);
+      assert.strictEqual(common.originalDate, '2011-09-26', `${inputTagType} => common.originaldate = 2011-09-26`);
     }
     if (hasReleaseData(inputTagType)) {
       assert.strictEqual(common.date, '2011-09-27', `${inputTagType} => common.date`);
     }
     assert.strictEqual(common.year, 2011, `${inputTagType} => common.year`);
-    assert.strictEqual(common.originalyear, 2011, `${inputTagType} => common.year`);
+    assert.strictEqual(common.originalYear, 2011, `${inputTagType} => common.year`);
     assert.strictEqual(common.media, 'CD', `${inputTagType} => common.media = CD`);
     // https://picard-docs.musicbrainz.org/en/v2.13/appendices/tag_mapping.html#release-country
-    assert.strictEqual(common.releasecountry, 'US', `${inputTagType} => common.releasecountry`);
+    assert.strictEqual(common.releaseCountry, 'US', `${inputTagType} => common.releasecountry`);
     assert.strictEqual(common.barcode, '804879313915', `${inputTagType} => common.barcode`);
-    assert.deepEqual(common.producer, ['Roy Weisman'], `${inputTagType} => common.producer`);
-    assert.deepEqual(common.label, ['J&R Adventures'], `${inputTagType} => common.label = 'J&R Adventures'`);
-    assert.deepEqual(common.catalognumber, ['PRAR931391'], `${inputTagType} => common.catalognumber = PRAR931391`);
-    assert.strictEqual(common.originalyear, 2011, `${inputTagType} => common.originalyear = 2011`);
-    assert.strictEqual(common.releasestatus, 'official', `${inputTagType} => common.releasestatus = official`);
-    assert.deepEqual(common.releasetype, ['album'], `${inputTagType} => common.releasetype`);
+    assert.deepEqual(common.producers, ['Roy Weisman'], `${inputTagType} => common.producer`);
+    assert.deepEqual(common.labels, ['J&R Adventures'], `${inputTagType} => common.label = 'J&R Adventures'`);
+    assert.deepEqual(common.catalogNumber, ['PRAR931391'], `${inputTagType} => common.catalognumber = PRAR931391`);
+    assert.strictEqual(common.originalYear, 2011, `${inputTagType} => common.originalyear = 2011`);
+    assert.strictEqual(common.releaseStatus, 'official', `${inputTagType} => common.releasestatus = official`);
+    assert.deepEqual(common.releaseType, ['album'], `${inputTagType} => common.releasetype`);
     assert.strictEqual(
-      common.musicbrainz_albumid,
+      common.mbReleaseId,
       'e7050302-74e6-42e4-aba0-09efd5d431d8',
       `${inputTagType} => common.musicbrainz_albumid`
     );
@@ -114,38 +116,38 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
     // https://picard-docs.musicbrainz.org/en/v2.13/appendices/tag_mapping.html#musicbrainz-recording-id
     // https://picard-docs.musicbrainz.org/en/v2.13/appendices/tag_mapping.html#musicbrainz-track-id
     assert.strictEqual(
-      common.musicbrainz_recordingid,
+      common.mbRecordingId,
       'f151cb94-c909-46a8-ad99-fb77391abfb8',
       `${inputTagType} => common.musicbrainz_recordingid`
     );
 
     if (inputTagType === 'asf') {
       assert.deepEqual(
-        common.musicbrainz_albumartistid,
+        common.mbAlbumArtistId,
         ['984f8239-8fe1-4683-9c54-10ffb14439e9', '3fe817fc-966e-4ece-b00a-76be43e7e73c'],
-        `${inputTagType} => common.musicbrainz_albumartistid`
+        `${inputTagType} => common.musicbrainz_albumArtistid`
       );
     } else {
       assert.deepEqual(
-        common.musicbrainz_albumartistid,
+        common.mbAlbumArtistId,
         ['3fe817fc-966e-4ece-b00a-76be43e7e73c', '984f8239-8fe1-4683-9c54-10ffb14439e9'],
-        `${inputTagType} => common.musicbrainz_albumartistid`
+        `${inputTagType} => common.musicbrainz_albumArtistid`
       );
     }
 
     assert.strictEqual(
-      common.musicbrainz_releasegroupid,
+      common.mbReleaseGroupId,
       'e00305af-1c72-469b-9a7c-6dc665ca9adc',
       `${inputTagType} => common.musicbrainz_releasegroupid`
     );
     assert.strictEqual(
-      common.musicbrainz_trackid,
+      common.mbReleaseTrackId,
       'd062f484-253c-374b-85f7-89aab45551c7',
       `${inputTagType} => common.musicbrainz_trackid`
     );
     assert.strictEqual(common.asin, 'B005NPEUB2', `${inputTagType} => common.asin`);
     assert.strictEqual(
-      common.acoustid_id,
+      common.acoustId,
       '09c06fac-679a-45b1-8ea0-6ce532318363',
       `${inputTagType} => common.acoustid_id`
     );
@@ -166,7 +168,7 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
 
     // ISRC
     assert.deepEqual(
-      common.isrc,
+      common.isrcs,
       inputTagType === 'asf' ? ['USMH51100098', 'NLB931100460'] : ['NLB931100460', 'USMH51100098'],
       `${inputTagType} => common.isrc`
     );
@@ -188,22 +190,24 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
       const isAsf = tagType === 'asf';
       assert.deepEqual(common.title, 'Home', 'common.title');
       assert.deepEqual(common.artist, 'Explosions in the Sky', 'common.artist');
-      assert.deepEqual(common.albumartist, 'Explosions in the Sky', 'common.albumartist');
+      assert.deepEqual(common.albumArtist, 'Explosions in the Sky', 'common.albumArtist');
       assert.deepEqual(common.album, 'Friday Night Lights: Original Motion Picture Soundtrack', 'common.album');
       assert.deepEqual(common.year, 2004, 'common.year');
       assert.deepEqual(common.date, '2004-10-12', 'common.date');
       // The Picard WMA fixture contains neither a track total nor an arranger tag.
-      assert.deepEqual(common.track, { no: 5, of: isAsf ? null : 14 }, 'common.track');
-      assert.deepEqual(common.disk, { no: 1, of: 1 }, 'common.disk');
+      assert.strictEqual(common.trackNumber, 5);
+      assert.strictEqual(common.trackTotal, isAsf ? undefined : 14);
+      assert.strictEqual(common.discNumber, 1);
+      assert.strictEqual(common.discTotal, 1);
       assert.deepEqual(common.artists, ['Explosions in the Sky'], 'common.artists');
-      assert.deepEqual(common.albumartists, ['Explosions in the Sky'], 'common.albumartists');
-      assert.strictEqual(common.artistsort, 'Explosions in the Sky', 'common.artistsort');
-      assert.strictEqual(common.albumartistsort, 'Explosions in the Sky', 'common.albumartistsort');
-      assert.strictEqual(common.originaldate, '2004-10-12', 'common.originaldate');
-      assert.strictEqual(common.originalyear, 2004, 'common.originalyear');
-      assert.deepEqual(common.conductor, ['David Campbell'], 'common.conductor');
+      assert.deepEqual(common.albumArtists, ['Explosions in the Sky'], 'common.albumArtists');
+      assert.strictEqual(common.artistSort, 'Explosions in the Sky', 'common.artistsort');
+      assert.strictEqual(common.albumArtistSort, 'Explosions in the Sky', 'common.albumArtistsort');
+      assert.strictEqual(common.originalDate, '2004-10-12', 'common.originaldate');
+      assert.strictEqual(common.originalYear, 2004, 'common.originalyear');
+      assert.deepEqual(common.conductors, ['David Campbell'], 'common.conductor');
       assert.deepEqual(
-        common.producer,
+        common.producers,
         isAsf
           ? ['Brian Grazer', 'Brian Reitzell', 'Justin Stanley', 'Peter Berg']
           : ['Peter Berg', 'Brian Grazer', 'Brian Reitzell', 'Justin Stanley'],
@@ -211,19 +215,19 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
       );
       // ASF stores repeated values across separate header objects, affecting their read order.
       assert.deepEqual(
-        common.engineer,
+        common.engineers,
         isAsf ? ['Justin Stanley', 'Richard Jory'] : ['Richard Jory', 'Justin Stanley'],
         'common.engineer'
       );
-      assert.deepEqual(common.arranger, isAsf ? undefined : ['David Campbell'], 'common.arranger');
+      assert.deepEqual(common.arrangers, isAsf ? undefined : ['David Campbell'], 'common.arranger');
       assert.deepEqual(
-        common.mixer,
+        common.mixers,
         isAsf ? ['Justin Stanley', 'Andy Brohard'] : ['Andy Brohard', 'Justin Stanley'],
         'common.mixer'
       );
-      assert.strictEqual(common.releasestatus, 'official', 'common.releasestatus');
+      assert.strictEqual(common.releaseStatus, 'official', 'common.releasestatus');
       assert.deepEqual(
-        common.releasetype,
+        common.releaseType,
         isAsf ? ['soundtrack', 'album'] : ['album', 'soundtrack'],
         'common.releasetype'
       );
@@ -231,33 +235,25 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
       assert.strictEqual(common.asin, 'B000649YAM', 'common.asin');
 
       assert.deepEqual(common.barcode, '602498644102', 'common.barcode');
-      assert.deepEqual(common.isrc, ['USUG10400421'], 'common.isrc');
+      assert.deepEqual(common.isrcs, ['USUG10400421'], 'common.isrc');
       assert.deepEqual(
-        common.label,
+        common.labels,
         isAsf ? ['UMG Soundtracks', 'Hip‐O Records'] : ['Hip‐O Records', 'UMG Soundtracks'],
         'common.label'
       );
-      assert.deepEqual(common.catalognumber, ['B0003663-02'], 'common.catalognumber');
-      assert.deepEqual(common.releasecountry, 'US', 'common.releasecountry');
+      assert.deepEqual(common.catalogNumber, ['B0003663-02'], 'common.catalognumber');
+      assert.deepEqual(common.releaseCountry, 'US', 'common.releasecountry');
       assert.deepEqual(common.media, 'CD', 'common.media');
-      assert.deepEqual(common.musicbrainz_artistid, ['4236acde-2ce2-441c-a3d4-38d55f1b5474'], 'MusicBrainz Artist Id');
+      assert.deepEqual(common.mbArtistId, ['4236acde-2ce2-441c-a3d4-38d55f1b5474'], 'MusicBrainz Artist Id');
+      assert.deepEqual(common.mbRecordingId, '84851150-a196-48fa-ada5-1a012b1cd9ed', 'MusicBrainz Recording Id');
       assert.deepEqual(
-        common.musicbrainz_recordingid,
-        '84851150-a196-48fa-ada5-1a012b1cd9ed',
-        'MusicBrainz Recording Id'
-      );
-      assert.deepEqual(
-        common.musicbrainz_albumartistid,
+        common.mbAlbumArtistId,
         ['4236acde-2ce2-441c-a3d4-38d55f1b5474'],
         'MusicBrainz Release Artist Id'
       );
-      assert.deepEqual(
-        common.musicbrainz_releasegroupid,
-        'afe7c5d8-f8bc-32cf-b77d-8fb8561989a7',
-        'MusicBrainz Release Group Id'
-      );
-      assert.deepEqual(common.musicbrainz_albumid, '2644f258-0619-4beb-a150-0c0069ca6699', 'MusicBrainz Release Id');
-      assert.deepEqual(common.musicbrainz_trackid, 'd87d56d0-9bd3-3199-8ff3-d03dff3abb13', 'MusicBrainz Track Id');
+      assert.deepEqual(common.mbReleaseGroupId, 'afe7c5d8-f8bc-32cf-b77d-8fb8561989a7', 'MusicBrainz Release Group Id');
+      assert.deepEqual(common.mbReleaseId, '2644f258-0619-4beb-a150-0c0069ca6699', 'MusicBrainz Release Id');
+      assert.deepEqual(common.mbReleaseTrackId, 'd87d56d0-9bd3-3199-8ff3-d03dff3abb13', 'MusicBrainz Track Id');
     }
 
     it('should expose all common tags from home_id3v2.4.mp3', async () => {
@@ -274,8 +270,8 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
       checkHomeCommonMapping(common);
       // The current Picard save does not contain the extra tags from the old fixture.
       for (const field of [
-        'genre',
-        'composer',
+        'genres',
+        'composers',
         'performer:instrument',
         'averageLevel',
         'peakLevel',
@@ -571,11 +567,11 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
       // TXXX:Artists: https://picard-docs.musicbrainz.org/en/v2.13/appendices/tag_mapping.html#artists
       ['artists', ['Beth Hart', 'Joe Bonamassa']],
       // https://picard-docs.musicbrainz.org/en/v2.13/appendices/tag_mapping.html#musicbrainz-artist-id
-      ['musicbrainz_artistid', ['3fe817fc-966e-4ece-b00a-76be43e7e73c', '984f8239-8fe1-4683-9c54-10ffb14439e9']],
+      ['mbArtistId', ['3fe817fc-966e-4ece-b00a-76be43e7e73c', '984f8239-8fe1-4683-9c54-10ffb14439e9']],
       // https://picard-docs.musicbrainz.org/en/v2.13/appendices/tag_mapping.html#musicbrainz-release-artist-id
-      ['musicbrainz_albumartistid', ['3fe817fc-966e-4ece-b00a-76be43e7e73c', '984f8239-8fe1-4683-9c54-10ffb14439e9']],
+      ['mbAlbumArtistId', ['3fe817fc-966e-4ece-b00a-76be43e7e73c', '984f8239-8fe1-4683-9c54-10ffb14439e9']],
       // TSRC: https://picard-docs.musicbrainz.org/en/v2.13/appendices/tag_mapping.html#isrc
-      ['isrc', ['NLB931100460', 'USMH51100098']]
+      ['isrcs', ['NLB931100460', 'USMH51100098']]
     ];
 
     for (const version of ['2.3', '2.4']) {
@@ -605,12 +601,12 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
   describe('Contributor mappings to common metadata', () => {
     // Picard stores each contributor role independently. Check common output to catch lost role mappings.
     const credits: [keyof ICommonTagsResult, string[]][] = [
-      // https://picard-docs.musicbrainz.org/en/v2.13/appendices/tag_mapping.html#producer
-      ['producer', ['Roy Weisman']],
+      // https://picard-docs.musicbrainz.org/en/v2.13/appendices/tag_mapping.html#producers
+      ['producers', ['Roy Weisman']],
       // https://picard-docs.musicbrainz.org/en/v2.13/appendices/tag_mapping.html#engineer
-      ['engineer', ['James McCullagh', 'Jared Kvitka']],
+      ['engineers', ['James McCullagh', 'Jared Kvitka']],
       // https://picard-docs.musicbrainz.org/en/v2.13/appendices/tag_mapping.html#arranger
-      ['arranger', ['Jeff Bova']],
+      ['arrangers', ['Jeff Bova']],
       [
         'performer:instrument',
         [
@@ -692,10 +688,6 @@ describe('Writing common metadata from Picard fixtures', () => {
       const input = await readFile(path.join(samplePath, 'picard', filename));
       const { common: expected } = await parseBuffer(input);
       const patch: TagPatch = { ...expected };
-      // The collector always includes this empty pair, even on formats such as
-      // ASF that do not support movements. It is not metadata from Picard.
-      assert.deepEqual(patch.movementIndex, { no: null, of: null });
-      delete patch.movementIndex;
 
       // Change every stored value first: simply writing identical tags could
       // pass even if a writer ignored the patch and retained the old tags.
@@ -708,7 +700,7 @@ describe('Writing common metadata from Picard fixtures', () => {
               ? { no: 99, of: 99 }
               : typeof value === 'number'
                 ? 2001
-                : key.includes('date')
+                : key.toLowerCase().includes('date')
                   ? '2001-02-03'
                   : 'Regression replacement'
         ])
@@ -897,7 +889,7 @@ describe('Additional Picard metadata through common', () => {
         await metadata.addTag(tagType, 'TIPL', { producer: ['Producer'], unknown: ['Not an instrument'] });
         await metadata.addTag(tagType, 'TMCL', { guitar: ['Player', 'Player'], performer: ['Guest'], '': ['Soloist'] });
       }
-      assert.deepEqual(metadata.common.producer, ['Producer']);
+      assert.deepEqual(metadata.common.producers, ['Producer']);
       assert.deepEqual(metadata.common['performer:instrument'], ['Player (guitar)', 'Guest', 'Soloist']);
     });
   }
@@ -920,7 +912,8 @@ describe('Additional Picard metadata through common', () => {
         }
         await metadata.addTag(tagType, 'SHOWMOVEMENT', '1');
         assert.strictEqual(metadata.common.movement, 'Allegro');
-        assert.deepEqual(metadata.common.movementIndex, { no: 2, of: 4 });
+        assert.strictEqual(metadata.common.movementNumber, 2);
+        assert.strictEqual(metadata.common.movementTotal, 4);
         assert.isTrue(metadata.common.showMovement);
       });
     }
@@ -938,7 +931,8 @@ describe('Additional Picard metadata through common', () => {
         await metadata.addTag('vorbis', 'MOVEMENTNAME', '123');
       }
       assert.strictEqual(metadata.common.movement, '123');
-      assert.deepEqual(metadata.common.movementIndex, { no: 2, of: 4 });
+      assert.strictEqual(metadata.common.movementNumber, 2);
+      assert.strictEqual(metadata.common.movementTotal, 4);
     }
   });
 
@@ -968,7 +962,8 @@ describe('Additional Picard metadata through common', () => {
             await metadata.addTag('vorbis', key, value);
           }
           assert.strictEqual(metadata.common.movement, 'Allegro');
-          assert.deepEqual(metadata.common.movementIndex, { no: 2, of: totalPosition >= 0 ? 8 : 4 });
+          assert.strictEqual(metadata.common.movementNumber, 2);
+          assert.strictEqual(metadata.common.movementTotal, totalPosition >= 0 ? 8 : 4);
         }
       });
     }
@@ -988,7 +983,8 @@ describe('Additional Picard metadata through common', () => {
           await metadata.addTag('vorbis', key, value);
         }
         assert.strictEqual(metadata.common.movement, 'Allegro');
-        assert.deepEqual(metadata.common.movementIndex, { no: 2, of: 4 });
+        assert.strictEqual(metadata.common.movementNumber, 2);
+        assert.strictEqual(metadata.common.movementTotal, 4);
         return;
       }
       for (let i = 0; i < remaining.length; i++) {
@@ -1007,7 +1003,8 @@ describe('Additional Picard metadata through common', () => {
       await metadata.addTag('vorbis', 'MOVEMENTNUMBER', String(index));
     }
     assert.isUndefined(metadata.common.movement);
-    assert.deepEqual(metadata.common.movementIndex, { no: 50000, of: null });
+    assert.strictEqual(metadata.common.movementNumber, 50000);
+    assert.strictEqual(metadata.common.movementTotal, undefined);
   }, 10000);
 
   it('reads and edits a standalone numeric Picard movement as an index, not a name', async () => {
@@ -1015,10 +1012,12 @@ describe('Additional Picard metadata through common', () => {
     const tagged = await updateBuffer(input, { native: { MOVEMENT: '2' } });
     const before = (await parseBuffer(tagged)).common;
     assert.isUndefined(before.movement);
-    assert.deepEqual(before.movementIndex, { no: 2, of: null });
-    const after = (await parseBuffer(await updateBuffer(tagged, { movementIndex: { no: 3 } }))).common;
+    assert.strictEqual(before.movementNumber, 2);
+    assert.strictEqual(before.movementTotal, undefined);
+    const after = (await parseBuffer(await updateBuffer(tagged, { movementNumber: 3 }))).common;
     assert.isUndefined(after.movement);
-    assert.deepEqual(after.movementIndex, { no: 3, of: null });
+    assert.strictEqual(after.movementNumber, 3);
+    assert.strictEqual(after.movementTotal, undefined);
   });
 
   for (const name of ['1984', '1/4']) {
@@ -1033,7 +1032,8 @@ describe('Additional Picard metadata through common', () => {
           await metadata.addTag('vorbis', key, value);
         }
         assert.strictEqual(metadata.common.movement, name);
-        assert.deepEqual(metadata.common.movementIndex, { no: 2, of: null });
+        assert.strictEqual(metadata.common.movementNumber, 2);
+        assert.strictEqual(metadata.common.movementTotal, undefined);
       });
     }
   }
@@ -1054,11 +1054,13 @@ describe('Additional Picard metadata through common', () => {
           }
           const tagged = await updateBuffer(input, { native });
           const before = (await parseBuffer(tagged)).common;
-          assert.deepEqual(before.movementIndex, { no: 2, of: total === undefined ? 4 : 8 });
+          assert.strictEqual(before.movementNumber, 2);
+          assert.strictEqual(before.movementTotal, total === undefined ? 4 : 8);
           const edited = await updateBuffer(tagged, { movement: 'Andante' });
           const { common } = await parseBuffer(edited);
           assert.strictEqual(common.movement, 'Andante');
-          assert.deepEqual(common.movementIndex, before.movementIndex);
+          assert.strictEqual(common.movementNumber, before.movementNumber);
+          assert.strictEqual(common.movementTotal, before.movementTotal);
         });
       }
     }
@@ -1078,13 +1080,16 @@ describe('Additional Picard metadata through common', () => {
             const index = name === undefined && legacy !== undefined ? { no: 3, of: 6 } : { no: 2, of: 4 };
             const before = (await parseBuffer(tagged)).common;
             assert.strictEqual(before.movement, name ?? 'Legacy title');
-            assert.deepEqual(before.movementIndex, index);
+            assert.strictEqual(before.movementNumber, index.no);
+            assert.strictEqual(before.movementTotal, index.of);
             const renamed = (await parseBuffer(await updateBuffer(tagged, { movement: 'Andante' }))).common;
             assert.strictEqual(renamed.movement, 'Andante');
-            assert.deepEqual(renamed.movementIndex, index);
-            const changedTotal = (await parseBuffer(await updateBuffer(tagged, { movementIndex: { of: 8 } }))).common;
+            assert.strictEqual(renamed.movementNumber, index.no);
+            assert.strictEqual(renamed.movementTotal, index.of);
+            const changedTotal = (await parseBuffer(await updateBuffer(tagged, { movementTotal: 8 }))).common;
             assert.strictEqual(changedTotal.movement, before.movement);
-            assert.deepEqual(changedTotal.movementIndex, { no: index.no, of: 8 });
+            assert.strictEqual(changedTotal.movementNumber, index.no);
+            assert.strictEqual(changedTotal.movementTotal, 8);
           });
         }
       }
@@ -1093,41 +1098,42 @@ describe('Additional Picard metadata through common', () => {
     it(`keeps the album display credit separate from its artist list in ${filename}`, async () => {
       const input = await readFile(path.join(samplePath, 'picard', filename));
       const tagged = await updateBuffer(input, {
-        albumartist: 'First & Second',
-        albumartists: ['First', 'Second']
+        albumArtist: 'First & Second',
+        albumArtists: ['First', 'Second']
       });
       const before = (await parseBuffer(tagged)).common;
-      assert.strictEqual(before.albumartist, 'First & Second');
-      assert.deepEqual(before.albumartists, ['First', 'Second']);
+      assert.strictEqual(before.albumArtist, 'First & Second');
+      assert.deepEqual(before.albumArtists, ['First', 'Second']);
       const cleared = (
         await parseBuffer(
           await updateBuffer(tagged, {
-            albumartist: 'New display',
-            albumartists: null
+            albumArtist: 'New display',
+            albumArtists: null
           })
         )
       ).common;
-      assert.strictEqual(cleared.albumartist, 'New display');
+      assert.strictEqual(cleared.albumArtist, 'New display');
       // Without a plural field, the reader falls back to the display credit.
-      assert.deepEqual(cleared.albumartists, ['New display']);
+      assert.deepEqual(cleared.albumArtists, ['New display']);
       const pluralOnly = (
         await parseBuffer(
           await updateBuffer(tagged, {
-            albumartists: ['Third', 'Fourth']
+            albumArtists: ['Third', 'Fourth']
           })
         )
       ).common;
-      assert.strictEqual(pluralOnly.albumartist, 'Third');
-      assert.deepEqual(pluralOnly.albumartists, ['Third', 'Fourth']);
+      assert.strictEqual(pluralOnly.albumArtist, 'Third');
+      assert.deepEqual(pluralOnly.albumArtists, ['Third', 'Fourth']);
     });
 
     it(`preserves numeric legacy movement names on index edits in ${filename}`, async () => {
       const input = await readFile(path.join(samplePath, 'picard', filename));
       const tagged = await updateBuffer(input, { native: { MOVEMENT: '1984', MOVEMENTNUMBER: '2/4' } });
-      const edited = await updateBuffer(tagged, { movementIndex: { no: 3 } });
+      const edited = await updateBuffer(tagged, { movementNumber: 3 });
       const { common } = await parseBuffer(edited);
       assert.strictEqual(common.movement, '1984');
-      assert.deepEqual(common.movementIndex, { no: 3, of: 4 });
+      assert.strictEqual(common.movementNumber, 3);
+      assert.strictEqual(common.movementTotal, 4);
     });
   }
 
@@ -1136,11 +1142,11 @@ describe('Additional Picard metadata through common', () => {
       const input = await readFile(path.join(samplePath, 'picard/home.mp3'));
       const cddb = { descriptor: 'iTunes_CDDB_1', language: 'eng', text: 'CDDB data' };
       const tagged = await updateBuffer(input, { native: { COMM: [cddb, { text: 'Old comment' }] } });
-      const { common } = await parseBuffer(await updateBuffer(tagged, { comment }));
+      const { common } = await parseBuffer(await updateBuffer(tagged, { comments: comment }));
       assert.strictEqual(common.itunesCddb1, 'CDDB data');
-      assert.includeDeepMembers(common.comment, [cddb]);
-      assert.isFalse(common.comment?.some(value => value.text === 'Old comment'));
-      assert.strictEqual(common.comment?.length, comment === null ? 1 : 2);
+      assert.includeDeepMembers(common.comments, [cddb]);
+      assert.isFalse(common.comments?.some(value => value.text === 'Old comment'));
+      assert.strictEqual(common.comments?.length, comment === null ? 1 : 2);
     });
   }
 
@@ -1149,7 +1155,7 @@ describe('Additional Picard metadata through common', () => {
     await ape.addTag('APEv2', 'Key', 'C#m');
     await ape.addTag('APEv2', 'Original Artist', 'Original Artist');
     assert.strictEqual(ape.common.key, 'C#m');
-    assert.strictEqual(ape.common.originalartist, 'Original Artist');
+    assert.strictEqual(ape.common.originalArtist, 'Original Artist');
     const id3 = new MetadataCollector();
     await id3.addTag('ID3v2.4', 'TXXX:LICENSE', 'CC BY 4.0');
     assert.strictEqual(id3.common.license, 'CC BY 4.0');
@@ -1167,8 +1173,8 @@ describe('Additional Picard metadata through common', () => {
     });
     const { common } = await parseBuffer(output);
     assert.strictEqual(common.itunesCddb1, 'CDDB data');
-    assert.includeDeepMembers(common.comment, [{ descriptor: '', language: 'eng', text: 'A comment' }]);
-    const rewritten = await updateBuffer(output, { itunesCddb1: common.itunesCddb1, comment: common.comment });
+    assert.includeDeepMembers(common.comments, [{ descriptor: '', language: 'eng', text: 'A comment' }]);
+    const rewritten = await updateBuffer(output, { itunesCddb1: common.itunesCddb1, comments: common.comments });
     assert.deepEqual((await parseBuffer(rewritten)).common, common);
   });
 
@@ -1179,14 +1185,14 @@ describe('Additional Picard metadata through common', () => {
     it(`removes the MusicMagic wrapper from ${tagType} fingerprints`, async () => {
       const metadata = new MetadataCollector();
       await metadata.addTag(tagType, key, 'MusicMagic Fingerprintabc123');
-      assert.strictEqual(metadata.common.musicip_fingerprint, 'abc123');
+      assert.strictEqual(metadata.common.musicIpFingerprint, 'abc123');
     });
   }
 
   it('does not mistake another Vorbis fingerprint scheme for MusicIP', async () => {
     const metadata = new MetadataCollector();
     await metadata.addTag('vorbis', 'FINGERPRINT', 'Other fingerprint');
-    assert.isUndefined(metadata.common.musicip_fingerprint);
+    assert.isUndefined(metadata.common.musicIpFingerprint);
   });
 
   it('exposes ASF synchronized lyric text through common lyrics', async () => {
@@ -1226,13 +1232,17 @@ describe('Additional Picard metadata through common', () => {
       const tagged = await updateBuffer(input, {
         native: { MOVEMENTNAME: 'Allegro', MOVEMENT: '2', MOVEMENTTOTAL: '4' }
       });
-      const edited = await updateBuffer(tagged, { movement: 'Andante', movementIndex: { no: 3 } });
+      const edited = await updateBuffer(tagged, { movement: 'Andante', movementNumber: 3 });
       const common = (await parseBuffer(edited)).common;
       assert.strictEqual(common.movement, 'Andante');
-      assert.deepEqual(common.movementIndex, { no: 3, of: 4 });
-      const cleared = (await parseBuffer(await updateBuffer(edited, { movement: null, movementIndex: null }))).common;
+      assert.strictEqual(common.movementNumber, 3);
+      assert.strictEqual(common.movementTotal, 4);
+      const cleared = (
+        await parseBuffer(await updateBuffer(edited, { movement: null, movementNumber: null, movementTotal: null }))
+      ).common;
       assert.isUndefined(cleared.movement);
-      assert.deepEqual(cleared.movementIndex, { no: null, of: null });
+      assert.strictEqual(cleared.movementNumber, undefined);
+      assert.strictEqual(cleared.movementTotal, undefined);
     });
   }
 
@@ -1246,7 +1256,7 @@ describe('Additional Picard metadata through common', () => {
     assert.strictEqual((await parseBuffer(edited)).common.itunesCddb1, 'New CDDB');
     const cleared = (await parseBuffer(await updateBuffer(edited, { itunesCddb1: null }))).common;
     assert.isUndefined(cleared.itunesCddb1);
-    assert.deepEqual(cleared.comment, [ordinary]);
+    assert.deepEqual(cleared.comments, [ordinary]);
   });
 
   it('decodes slash-separated composer and original artist MBIDs in ID3v2.3', async () => {

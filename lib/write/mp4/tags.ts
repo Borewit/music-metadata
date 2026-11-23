@@ -14,9 +14,9 @@ const u32 = (n: number) => {
   return b;
 };
 const textAtoms: Record<string, string> = {
-  category: 'catg',
+  categories: 'catg',
   podcastId: 'egid',
-  podcasturl: 'purl',
+  podcastUrl: 'purl',
   tvShow: 'tvsh',
   tvShowSort: 'sosn',
   tvEpisodeId: 'tven',
@@ -25,27 +25,27 @@ const textAtoms: Record<string, string> = {
   title: '©nam',
   artist: '©ART',
   artists: '©ART',
-  albumartist: 'aART',
-  albumartists: 'aART',
+  albumArtist: 'aART',
+  albumArtists: 'aART',
   album: '©alb',
   date: '©day',
   year: '©day',
-  genre: '©gen',
-  composer: '©wrt',
-  comment: '©cmt',
+  genres: '©gen',
+  composers: '©wrt',
+  comments: '©cmt',
   copyright: 'cprt',
   description: 'desc',
   longDescription: 'ldes',
   work: '©wrk',
   movement: '©mvn',
   directors: '©dir',
-  encodedby: '©too',
+  encodedBy: '©too',
   grouping: '©grp',
-  albumsort: 'soal',
-  titlesort: 'sonm',
-  artistsort: 'soar',
-  albumartistsort: 'soaa',
-  composersort: 'soco'
+  albumSort: 'soal',
+  titleSort: 'sonm',
+  artistSort: 'soar',
+  albumArtistSort: 'soaa',
+  composerSort: 'soco'
 };
 const freeform: Record<string, string> = {
   mbComposerId: 'MusicBrainz Composer Id',
@@ -55,55 +55,55 @@ const freeform: Record<string, string> = {
   replayGainAlbumRange: 'REPLAYGAIN_ALBUM_RANGE',
   replayGainTrackRange: 'REPLAYGAIN_TRACK_RANGE',
   replayGainReferenceLoudness: 'REPLAYGAIN_REFERENCE_LOUDNESS',
-  arranger: 'ARRANGER',
+  arrangers: 'ARRANGER',
   'performer:instrument': 'PERFORMER',
-  lyricist: 'LYRICIST',
-  conductor: 'CONDUCTOR',
-  remixer: 'REMIXER',
-  djmixer: 'DJMIXER',
-  engineer: 'ENGINEER',
-  producer: 'PRODUCER',
-  originaldate: 'ORIGINALDATE',
-  originalyear: 'ORIGINALYEAR',
-  releasedate: 'RELEASEDATE',
-  releasestatus: 'MusicBrainz Album Status',
-  releasetype: 'MusicBrainz Album Type',
-  releasecountry: 'MusicBrainz Album Release Country',
+  lyricists: 'LYRICIST',
+  conductors: 'CONDUCTOR',
+  remixers: 'REMIXER',
+  djMixers: 'DJMIXER',
+  engineers: 'ENGINEER',
+  producers: 'PRODUCER',
+  originalDate: 'ORIGINALDATE',
+  originalYear: 'ORIGINALYEAR',
+  releaseDate: 'RELEASEDATE',
+  releaseStatus: 'MusicBrainz Album Status',
+  releaseType: 'MusicBrainz Album Type',
+  releaseCountry: 'MusicBrainz Album Release Country',
   mood: 'MOOD',
   media: 'MEDIA',
-  subtitle: 'SUBTITLE',
-  discsubtitle: 'DISCSUBTITLE',
+  subtitles: 'SUBTITLE',
+  discSubtitle: 'DISCSUBTITLE',
   script: 'SCRIPT',
   asin: 'ASIN',
-  mixer: 'MIXER',
-  label: 'LABEL',
+  mixers: 'MIXER',
+  labels: 'LABEL',
   language: 'LANGUAGE',
   key: 'initialkey',
-  isrc: 'ISRC',
-  catalognumber: 'CATALOGNUMBER',
+  isrcs: 'ISRC',
+  catalogNumber: 'CATALOGNUMBER',
   barcode: 'BARCODE',
   license: 'LICENSE',
   performer: 'PERFORMER',
-  musicbrainz_recordingid: 'MusicBrainz Track Id',
-  musicbrainz_trackid: 'MusicBrainz Release Track Id',
-  musicbrainz_albumid: 'MusicBrainz Album Id',
-  musicbrainz_artistid: 'MusicBrainz Artist Id',
-  musicbrainz_albumartistid: 'MusicBrainz Album Artist Id',
-  musicbrainz_releasegroupid: 'MusicBrainz Release Group Id',
-  musicbrainz_workid: 'MusicBrainz Work Id',
-  musicbrainz_discid: 'MusicBrainz Disc Id',
-  musicbrainz_trmid: 'MusicBrainz TRM Id',
-  acoustid_id: 'Acoustid Id',
-  acoustid_fingerprint: 'Acoustid Fingerprint',
-  musicip_puid: 'MusicIP PUID',
-  musicip_fingerprint: 'fingerprint',
-  replaygain_track_gain: 'replaygain_track_gain',
-  replaygain_track_peak: 'replaygain_track_peak',
-  replaygain_album_gain: 'replaygain_album_gain',
-  replaygain_album_peak: 'replaygain_album_peak',
-  replaygain_track_minmax: 'replaygain_track_minmax',
-  replaygain_album_minmax: 'replaygain_album_minmax',
-  replaygain_undo: 'replaygain_undo'
+  mbRecordingId: 'MusicBrainz Track Id',
+  mbReleaseTrackId: 'MusicBrainz Release Track Id',
+  mbReleaseId: 'MusicBrainz Album Id',
+  mbArtistId: 'MusicBrainz Artist Id',
+  mbAlbumArtistId: 'MusicBrainz Album Artist Id',
+  mbReleaseGroupId: 'MusicBrainz Release Group Id',
+  mbWorkId: 'MusicBrainz Work Id',
+  mbDiscId: 'MusicBrainz Disc Id',
+  mbTrmId: 'MusicBrainz TRM Id',
+  acoustId: 'Acoustid Id',
+  acoustIdFingerprint: 'Acoustid Fingerprint',
+  musicIpPuid: 'MusicIP PUID',
+  musicIpFingerprint: 'fingerprint',
+  replayGainTrackGain: 'replaygain_track_gain',
+  replayGainTrackPeak: 'replaygain_track_peak',
+  replayGainAlbumGain: 'replaygain_album_gain',
+  replayGainAlbumPeak: 'replaygain_album_peak',
+  replayGainTrackMinMax: 'replaygain_track_minmax',
+  replayGainAlbumMinMax: 'replaygain_album_minmax',
+  replayGainUndo: 'replaygain_undo'
 };
 const data = (type: number, value: Uint8Array) => atom('data', u32(type), zeros, value);
 function values(value: unknown): string[] {
@@ -185,11 +185,11 @@ export function editItems(
   const replace = (key: string, value: Uint8Array | null) => replacements.set(canonical(key), value);
   const entries: Record<string, unknown> = { ...patch, ...structuredText(patch) };
   const aliases = new Set([
-    'totaltracks',
-    'totaldiscs',
+    'trackTotal',
+    'discTotal',
     'movementTotal',
-    'replaygain_track_gain_ratio',
-    'replaygain_track_peak_ratio'
+    'replayGainTrackGainRatio',
+    'replayGainTrackPeakRatio'
   ]);
   for (const [field, value] of Object.entries(entries)) {
     if (
@@ -220,11 +220,11 @@ export function editItems(
     }
     if (
       (field === 'artist' && entries.artists !== undefined) ||
-      (field === 'albumartist' && entries.albumartists !== undefined)
+      (field === 'albumArtist' && entries.albumArtists !== undefined)
     ) {
       continue;
     }
-    if (field === 'artists' || field === 'albumartists') {
+    if (field === 'artists' || field === 'albumArtists') {
       // Picard can store an explicit list alongside the display atom. Do not
       // let that stale list override a common plural edit.
       replace(`----:com.apple.iTunes:${field.toUpperCase()}`, null);
@@ -412,10 +412,10 @@ export function editItems(
     );
   }
   // Remove legacy aliases when replacing their canonical common field.
-  if (patch.genre !== undefined) {
+  if (patch.genres !== undefined) {
     replace('gnre', null);
   }
-  if (patch.comment !== undefined) {
+  if (patch.comments !== undefined) {
     replace('©com', null);
   }
   if (patch.copyright !== undefined) {

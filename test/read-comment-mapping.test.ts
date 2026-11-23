@@ -6,7 +6,7 @@ import { samplePath } from './helpers/util.js';
 const t = assert;
 
 /**
- * Ensure the mapping of native comment field to the common comment field is done correctly
+ * Ensure the mapping of native comments field to the common comments field is done correctly
  * Ref: https://github.com/Borewit/music-metadata/issues/50
  */
 describe('Mapping of common comment tag', () => {
@@ -16,7 +16,7 @@ describe('Mapping of common comment tag', () => {
 
       // Parse flac/Vorbis file
       const metadata = await mm.parseFile(filePath);
-      t.deepEqual(metadata.common.comment, [{ text: 'Test 123' }]);
+      t.deepEqual(metadata.common.comments, [{ text: 'Test 123' }]);
     });
 
     it('should map ogg/Vorbis', async () => {
@@ -24,7 +24,7 @@ describe('Mapping of common comment tag', () => {
 
       // Parse ogg/Vorbis file
       const metadata = await mm.parseFile(filePath);
-      t.deepEqual(metadata.common.comment, [{ text: 'Test 123' }]);
+      t.deepEqual(metadata.common.comments, [{ text: 'Test 123' }]);
     });
   });
 
@@ -34,7 +34,7 @@ describe('Mapping of common comment tag', () => {
 
       // Run with default options
       const metadata = await mm.parseFile(filePath);
-      t.deepEqual(metadata.common.comment, [{ text: 'Test 123' }]);
+      t.deepEqual(metadata.common.comments, [{ text: 'Test 123' }]);
     });
 
     it('WavPack / APEv2', async () => {
@@ -42,7 +42,7 @@ describe('Mapping of common comment tag', () => {
 
       // Run with default options
       const metadata = await mm.parseFile(filePath);
-      t.deepEqual(metadata.common.comment, [{ text: 'Test 123' }]);
+      t.deepEqual(metadata.common.comments, [{ text: 'Test 123' }]);
     });
   });
 
@@ -52,7 +52,7 @@ describe('Mapping of common comment tag', () => {
 
       // Run with default options
       const metadata = await mm.parseFile(filePath);
-      t.deepEqual(metadata.common.comment, [
+      t.deepEqual(metadata.common.comments, [
         {
           descriptor: '',
           language: 'eng',
@@ -65,7 +65,7 @@ describe('Mapping of common comment tag', () => {
       const filePath = path.join(samplePath, "wav/MusicBrainz - Beth Hart - Sinner's Prayer [id3v2.3].wav");
 
       const metadata = await mm.parseFile(filePath);
-      t.deepEqual(metadata.common.comment, [
+      t.deepEqual(metadata.common.comments, [
         {
           descriptor: '',
           language: 'eng',
@@ -82,7 +82,7 @@ describe('Mapping of common comment tag', () => {
 
       // Run with default options
       const metadata = await mm.parseFile(filePath);
-      t.deepEqual(metadata.common.comment, [
+      t.deepEqual(metadata.common.comments, [
         {
           descriptor: '',
           language: 'eng',
@@ -96,7 +96,7 @@ describe('Mapping of common comment tag', () => {
 
       // Run with default options
       const metadata = await mm.parseFile(filePath);
-      t.deepEqual(metadata.common.comment, [
+      t.deepEqual(metadata.common.comments, [
         {
           descriptor: '',
           language: 'eng',
@@ -112,7 +112,7 @@ describe('Mapping of common comment tag', () => {
     // Run with default options
     const metadata = await mm.parseFile(filePath);
     // Aggregation of '----:com.apple.iTunes:NOTES' & '©cmt'
-    t.deepEqual(metadata.common.comment, [{ text: 'Medieval CUE Splitter (www.medieval.it)' }, { text: 'Test 123' }]);
+    t.deepEqual(metadata.common.comments, [{ text: 'Medieval CUE Splitter (www.medieval.it)' }, { text: 'Test 123' }]);
   });
 
   it('should map WMA/ASF header', async () => {
@@ -121,6 +121,6 @@ describe('Mapping of common comment tag', () => {
 
     // Parse wma/asf file
     const metadata = await mm.parseFile(filePath);
-    t.deepEqual(metadata.common.comment, [{ text: 'Test 123' }]);
+    t.deepEqual(metadata.common.comments, [{ text: 'Test 123' }]);
   });
 });

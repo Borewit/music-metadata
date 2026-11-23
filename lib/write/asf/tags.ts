@@ -7,8 +7,7 @@ import { concatBytes } from '../core/bytes.js';
 import { InvalidPatchError, UnsupportedFeatureError } from '../core/errors.js';
 import { lyricsText, normalizeLyrics } from '../core/lyrics.js';
 import { normalizeComments, normalizeNumberPair, textValues, validatePictures } from '../core/patch.js';
-import type { TagPatch } from '../core/types.js';
-import { commonText } from '../mapping/common.js';
+import { canonicalNumberClears, commonText, type InternalPatch } from '../mapping/common.js';
 import {
   type AsfObject,
   type Attribute,
@@ -26,16 +25,24 @@ for (const [key, field] of Object.entries(asfTagMap)) {
     aliases.set(field, [...(aliases.get(field) ?? []), key]);
   }
 }
+aliases.set('track', ['WM/TrackNumber']);
+aliases.set('disk', ['WM/PartOfSet']);
+
 const normalizedAliases = new Set([
   'year',
-  'totaltracks',
-  'totaldiscs',
-  'replaygain_track_gain_ratio',
-  'replaygain_track_peak_ratio'
+  'trackTotal',
+  'discTotal',
+  'replayGainTrackGainRatio',
+  'replayGainTrackPeakRatio'
 ]);
 
 /** Common/native replacement removes all occurrences of the edited name, including language/stream variants. */
-export function applyPatch(objects: AsfObject[], patch: TagPatch, streams: Set<number>, languages: number): boolean {
+export function applyPatch(
+  objects: AsfObject[],
+  patch: InternalPatch,
+  streams: Set<number>,
+  languages: number
+): boolean {
   const all = (): AsfObject[] => objects.flatMap(object => [object, ...(object.children ?? [])]);
   const byGuid = new Map<string, AsfObject>();
   for (const object of all()) {
@@ -164,11 +171,10 @@ export function applyPatch(objects: AsfObject[], patch: TagPatch, streams: Set<n
     return pair;
   };
   for (const [field, value] of Object.entries(patch)) {
-    if (value === undefined || field === 'native' || normalizedAliases.has(field)) {
+    if (field === 'native' || normalizedAliases.has(field)) {
       continue;
     }
-    // The reader supplies this empty pair even when the format has no movement tag.
-    if (field === 'movementIndex' && patch.movementIndex?.no === null && patch.movementIndex.of === null) {
+    if (value === undefined) {
       continue;
     }
     const keys = aliases.get(field);
@@ -177,19 +183,27 @@ export function applyPatch(objects: AsfObject[], patch: TagPatch, streams: Set<n
         `ASF does not support common field: ${field}; use native for unmapped attributes`
       );
     }
-    const key = keys[0];
-    if (field === 'track' || field === 'disk') {
-      const pair = normalizeNumberPair(patch[field], field);
+    const key = field === 'discNumber' ? 'WM/PartOfSet' : keys[0];
+    if (field === 'track' || field === 'disk' || field === 'trackNumber' || field === 'discNumber') {
+      const value = patch[field];
+      const requested =
+        typeof value === 'number'
+          ? { no: value }
+          : normalizeNumberPair(value as { no?: number | null; of?: number | null }, field);
+      const pair = patch[canonicalNumberClears]?.has(field) ? null : requested;
       if (pair && pair.no === undefined && pair.of === undefined) {
         continue;
       }
       const existing =
         pair && (pair.no === undefined || pair.of === undefined)
-          ? previous(keys, field === 'track' && pair.of === undefined ? 'TotalTracks' : undefined)
+          ? previous(
+              keys,
+              field !== 'disk' && field !== 'discNumber' && pair.of === undefined ? 'TotalTracks' : undefined
+            )
           : { no: null, of: null };
       const no = pair?.no !== undefined ? pair.no : existing.no;
       const of = pair?.of !== undefined ? pair.of : existing.of;
-      if (field === 'track') {
+      if (field !== 'disk' && field !== 'discNumber') {
         replace(keys, stringAttributes(key, pair === null || no === null ? null : [String(no)]));
         replace(['TotalTracks'], stringAttributes('TotalTracks', pair === null || of === null ? null : [String(of)]));
       } else {
@@ -259,8 +273,8 @@ export function applyPatch(objects: AsfObject[], patch: TagPatch, streams: Set<n
       replace(keys, ratings);
     } else {
       const values =
-        field === 'comment'
-          ? (normalizeComments(patch.comment)?.map(comment => comment.text ?? '') ?? null)
+        field === 'comments'
+          ? (normalizeComments(patch.comments)?.map(comment => comment.text ?? '') ?? null)
           : field === 'lyrics'
             ? (normalizeLyrics(patch.lyrics)?.map(lyricsText) ?? null)
             : commonText(value, field);

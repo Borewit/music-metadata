@@ -39,10 +39,10 @@ describe('Discogs mappings', () => {
           it(`${tagType} ${layout} (${parser.description})`, async context => {
             const { common, native, format } = await parser.parse(() => context.skip(), filePath, mimeType);
             assert.strictEqual(
-              common.albumartist,
+              common.albumArtist,
               layout === 'alias-only' ? 'Last, First & Second' : 'Primary Album Credit'
             );
-            assert.deepEqual(common.albumartists, ['Last, First', 'Second']);
+            assert.deepEqual(common.albumArtists, ['Last, First', 'Second']);
             assert.strictEqual(common.artist, 'Track Artist');
             assert.deepEqual(common.artists, ['Track Artist']);
             assert.isAbove(format.duration ?? 0, 0);
@@ -66,7 +66,7 @@ describe('Discogs mappings', () => {
         };
         try {
           const { common } = await mm.parseFromTokenizer(tokenizer);
-          assert.deepEqual(common.albumartists, ['Last, First', 'Second']);
+          assert.deepEqual(common.albumArtists, ['Last, First', 'Second']);
           assert.isFalse(closed);
           assert.isAbove(tokenizer.position, 0);
         } finally {
@@ -81,8 +81,8 @@ describe('Discogs mappings', () => {
       for (const parser of Parsers) {
         it(`does not mix combined and individual names in ${name} (${parser.description})`, async context => {
           const { common } = await parser.parse(() => context.skip(), path.join(samplePath, name), mimeType);
-          assert.strictEqual(common.albumartist, 'Beth Hart, Joe Bonamassa');
-          assert.deepEqual(common.albumartists, ['Beth Hart', 'Joe Bonamassa']);
+          assert.strictEqual(common.albumArtist, 'Beth Hart, Joe Bonamassa');
+          assert.deepEqual(common.albumArtists, ['Beth Hart', 'Joe Bonamassa']);
           assert.deepEqual(common.artists, ['Beth Hart', 'Joe Bonamassa']);
         });
       }
@@ -124,18 +124,18 @@ describe('Discogs mappings', () => {
       // Check discogs, DISCOGS_RELEASE_ID
       tagName = getTagName('DISCOGS_RELEASE_ID');
       assert.deepEqual(native[tagName], ['4204665'], `${tagType}/${tagName}`);
-      assert.strictEqual(common.discogs_release_id, 4204665, `${+tagType}/${tagName} => common.discogs_release_id`);
+      assert.strictEqual(common.discogsReleaseId, 4204665, `${+tagType}/${tagName} => common.discogs_release_id`);
 
       // Check Discogs-tag: DISCOGS_ARTIST_ID
       tagName = getTagName('DISCOGS_ARTIST_ID');
       assert.deepEqual(native[tagName], ['389157', '900313'], `${tagType}/${tagName}`);
-      assert.deepEqual(common.discogs_artist_id, [389157, 900313], `${tagType}/${tagName} => common.discogs_artist_id`);
+      assert.deepEqual(common.discogsArtistId, [389157, 900313], `${tagType}/${tagName} => common.discogs_artist_id`);
 
       // Check Discogs-tag: DISCOGS_ALBUM_ARTISTS
       tagName = getTagName('DISCOGS_ALBUM_ARTISTS');
       assert.deepEqual(native[tagName], ['Beth Hart', 'Joe Bonamassa'], `${tagType}/${tagName}`);
       assert.deepEqual(
-        common.albumartists,
+        common.albumArtists,
         ['Beth Hart', 'Joe Bonamassa'],
         `${tagType}/${tagName} => common.albumartists`
       );
@@ -143,7 +143,7 @@ describe('Discogs mappings', () => {
       // Check Discogs-tag: DISCOGS_VOTES
       tagName = getTagName('DISCOGS_VOTES');
       assert.deepEqual(native[tagName], ['9'], `${tagType}/${tagName}`);
-      assert.deepEqual(common.discogs_votes, 9, `${tagType}/${tagName} => common.discogs_votes`);
+      assert.deepEqual(common.discogsVotes, 9, `${tagType}/${tagName} => common.discogs_votes`);
 
       // Check Discogs-tag: STYLE
       tagName = getTagName('STYLE');
@@ -151,12 +151,12 @@ describe('Discogs mappings', () => {
 
       switch (tagType) {
         case 'id3v23':
-          assert.deepEqual(common.genre, ['Rock;Blues', 'Blues Rock'], `${tagType}/${tagName} => common.genre`);
+          assert.deepEqual(common.genres, ['Rock;Blues', 'Blues Rock'], `${tagType}/${tagName} => common.genre`);
           assert.deepEqual(native.TCON, ['Rock;Blues'], `${tagType}/TCON`); // ToDo: why different in Vorbis
           break;
 
         case 'vorbis':
-          assert.deepEqual(common.genre, ['Rock', 'Blues', 'Blues Rock'], `${tagType}/${tagName} => common.genre`);
+          assert.deepEqual(common.genres, ['Rock', 'Blues', 'Blues Rock'], `${tagType}/${tagName} => common.genre`);
           assert.deepEqual(native.GENRE, ['Rock', 'Blues'], `${tagType}/GENRE`);
           assert.deepEqual(native.STYLE, ['Blues Rock'], `${tagType}/STYLE`);
           break;
@@ -189,19 +189,19 @@ describe('Discogs mappings', () => {
       // Check discogs, DISCOGS_RELEASE_ID
       assert.deepEqual(id3v23['TXXX:DISCOGS_RELEASE_ID'], ['4204665'], 'id3v23/TXXX:DISCOGS_RELEASE_ID');
       assert.strictEqual(
-        common.discogs_release_id,
+        common.discogsReleaseId,
         4204665,
         'id3v23/TXXX:DISCOGS_RELEASE_ID: => common.discogs_release_id'
       );
 
       // Check discogs, CATALOGID mapping
       assert.deepEqual(id3v23['TXXX:CATALOGID'], ['PRAR931391'], 'id3v23/TXXX:CATALOGID: PRAR931391');
-      assert.deepEqual(common.catalognumber, ['PRAR931391'], 'id3v23/TXXX:CATALOGID => common.catalognumber');
+      assert.deepEqual(common.catalogNumber, ['PRAR931391'], 'id3v23/TXXX:CATALOGID => common.catalognumber');
 
       // Check discogs, CATALOGID mapping
       assert.deepEqual(id3v23.TCON, ['Rock;Blues'], 'id3v23/TCON');
       assert.deepEqual(id3v23['TXXX:STYLE'], ['Blues Rock'], 'id3v23/TXXX:STYLE');
-      assert.deepEqual(common.genre, ['Rock;Blues', 'Blues Rock'], 'id3v23/TXXX:STYLE => common.genre');
+      assert.deepEqual(common.genres, ['Rock;Blues', 'Blues Rock'], 'id3v23/TXXX:STYLE => common.genre');
     });
 
     it('Vorbis/FLAC', async () => {
@@ -251,13 +251,13 @@ describe('Discogs mappings', () => {
       // Check Discogs-tag: DISCOGS_RELEASE_ID
       tagName = getTagName('DISCOGS_RELEASE_ID');
       assert.deepEqual(native[tagName], ['3520814'], `${tagType}/${tagName}`);
-      assert.deepEqual(common.discogs_release_id, 3520814, `${tagType}/${tagName} => common.discogs_release_id`);
+      assert.deepEqual(common.discogsReleaseId, 3520814, `${tagType}/${tagName} => common.discogs_release_id`);
 
       // Check Discogs-tag: DISCOGS_MASTER_RELEASE_ID
       tagName = getTagName('DISCOGS_MASTER_RELEASE_ID');
       assert.deepEqual(native[tagName], ['461710'], `${tagType}/${tagName}`);
       assert.deepEqual(
-        common.discogs_master_release_id,
+        common.discogsMasterReleaseId,
         461710,
         `${tagType}/${tagName} => common.discogs_master_release_id`
       );
@@ -265,7 +265,7 @@ describe('Discogs mappings', () => {
       // Check Discogs-tag: DISCOGS_ARTIST_ID
       tagName = getTagName('DISCOGS_ARTIST_ID');
       assert.deepEqual(native[tagName], ['467650'], `${tagType}/${tagName}`);
-      assert.deepEqual(common.discogs_artist_id, [467650], `${tagType}/${tagName} => common.discogs_artist_id`);
+      assert.deepEqual(common.discogsArtistId, [467650], `${tagType}/${tagName} => common.discogs_artist_id`);
 
       // tagName = getTagName("DISCOGS_ALBUM_ARTISTS");
       // t.deepEqual(native[tagName], ["Yasmin Levy"], tagType + "/" + tagName);
@@ -277,11 +277,11 @@ describe('Discogs mappings', () => {
       // Check Discogs-tag: DISCOGS_DATE
       tagName = getTagName('DISCOGS_DATE');
       assert.deepEqual(native[tagName], ['2009'], `${tagType}/${tagName}`);
-      // ToDo? t.deepEqual(common.originaldate, "2009", "Vorbis/DISCOGS_DATE: => common.originaldate");
+      // ToDo? t.deepEqual(common.originalDate, "2009", "Vorbis/DISCOGS_DATE: => common.originaldate");
       // Check Discogs: DISCOGS_CATALOG
       tagName = getTagName('DISCOGS_CATALOG');
       assert.deepEqual(native[tagName], ['450010'], `${tagType}/${tagName}`);
-      assert.deepEqual(common.catalognumber, ['450010'], `${tagType}/${tagName} => common.catalognumber`);
+      assert.deepEqual(common.catalogNumber, ['450010'], `${tagType}/${tagName} => common.catalognumber`);
     }
 
     it('Vorbis/FLAC tags', async () => {

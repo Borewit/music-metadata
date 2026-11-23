@@ -99,10 +99,10 @@ describe('Observer updates during asynchronous parsing', () => {
     await collector.addTag('vorbis', 'GENRE', 'Rock');
     await collector.addTag('vorbis', 'GENRE', 'Pop');
 
-    assert.deepEqual(collector.common.genre, ['Rock', 'Pop']);
+    assert.deepEqual(collector.common.genres, ['Rock', 'Pop']);
     assert.deepEqual(events, [
-      { type: 'common', id: 'genre', value: 'Rock' },
-      { type: 'common', id: 'genre', value: 'Pop' }
+      { type: 'common', id: 'genres', value: 'Rock' },
+      { type: 'common', id: 'genres', value: 'Pop' }
     ]);
   });
 
@@ -113,37 +113,43 @@ describe('Observer updates during asynchronous parsing', () => {
         events.push(event.tag);
       }
     });
-    const comment = { text: 'Repeated comment' };
+    const comments = { text: 'Repeated comment' };
 
-    await collector.addTag('vorbis', 'COMMENT', comment);
-    await collector.addTag('vorbis', 'COMMENT', comment);
+    await collector.addTag('vorbis', 'COMMENT', comments);
+    await collector.addTag('vorbis', 'COMMENT', comments);
 
-    assert.deepEqual(collector.common.comment, [comment, comment]);
+    assert.deepEqual(collector.common.comments, [comments, comments]);
     assert.deepEqual(events, [
-      { type: 'common', id: 'comment', value: comment },
-      { type: 'common', id: 'comment', value: comment }
+      { type: 'common', id: 'comments', value: comments },
+      { type: 'common', id: 'comments', value: comments }
     ]);
   });
 
   describe('track, disc and movement updates (GH-378)', () => {
     for (const [id, totalId] of [
-      ['track', 'totaltracks'],
-      ['disk', 'totaldiscs'],
-      ['movementIndex', 'movementTotal']
+      ['trackNumber', 'trackTotal'],
+      ['discNumber', 'discTotal'],
+      ['movementNumber', 'movementTotal']
     ] as const) {
       for (const value of ['3', '3/12']) {
         it(`should announce normalized ${id} ${value}`, async () => {
           const events: IMetadataEventTag[] = [];
           const collector = new MetadataCollector({
             observer(event) {
-              assert.deepEqual(event.tag.value, event.metadata.common[id]);
+              assert.deepEqual(event.tag.value, event.metadata.common[event.tag.id]);
               events.push(event.tag);
             }
           });
 
           await collector.postMap('vorbis', { id, value });
 
-          assert.deepEqual(events, [{ type: 'common', id, value: { no: 3, of: value === '3' ? null : 12 } }]);
+          const total = value === '3' ? undefined : 12;
+          const expected: IMetadataEventTag[] = [{ type: 'common', id, value: 3 }];
+          if (total !== undefined) {
+            expected.push({ type: 'common', id: totalId, value: total });
+          }
+          assert.deepEqual(events, expected);
+          assert.equal(collector.common[totalId], total);
         });
       }
 
@@ -152,7 +158,7 @@ describe('Observer updates during asynchronous parsing', () => {
           const events: IMetadataEventTag[] = [];
           const collector = new MetadataCollector({
             observer(event) {
-              assert.deepEqual(event.tag.value, event.metadata.common[id]);
+              assert.deepEqual(event.tag.value, event.metadata.common[event.tag.id]);
               events.push(event.tag);
             }
           });
@@ -167,11 +173,19 @@ describe('Observer updates during asynchronous parsing', () => {
             await collector.postMap('vorbis', tag);
           }
 
-          assert.deepEqual(events, [
-            { type: 'common', id, value: totalFirst ? { no: null, of: 12 } : { no: 3, of: 10 } },
-            { type: 'common', id, value: { no: 3, of: 12 } }
-          ]);
-          assert.deepEqual(collector.common[id], { no: 3, of: 12 });
+          const expected: IMetadataEventTag[] = totalFirst
+            ? [
+                { type: 'common', id: totalId, value: 12 },
+                { type: 'common', id, value: 3 }
+              ]
+            : [
+                { type: 'common', id, value: 3 },
+                { type: 'common', id: totalId, value: 10 },
+                { type: 'common', id: totalId, value: 12 }
+              ];
+          assert.deepEqual(events, expected);
+          assert.equal(collector.common[id], 3);
+          assert.equal(collector.common[totalId], 12);
         });
       }
 
@@ -179,7 +193,7 @@ describe('Observer updates during asynchronous parsing', () => {
         const events: IMetadataEventTag[] = [];
         const collector = new MetadataCollector({
           observer(event) {
-            assert.deepEqual(event.tag.value, event.metadata.common[id]);
+            assert.deepEqual(event.tag.value, event.metadata.common[event.tag.id]);
             events.push(event.tag);
           }
         });
@@ -190,12 +204,13 @@ describe('Observer updates during asynchronous parsing', () => {
         await collector.postMap('vorbis', { id: totalId, value: '14' });
 
         assert.deepEqual(events, [
-          { type: 'common', id, value: { no: null, of: 10 } },
-          { type: 'common', id, value: { no: null, of: 12 } },
-          { type: 'common', id, value: { no: 3, of: 12 } },
-          { type: 'common', id, value: { no: 3, of: 14 } }
+          { type: 'common', id: totalId, value: 10 },
+          { type: 'common', id: totalId, value: 12 },
+          { type: 'common', id, value: 3 },
+          { type: 'common', id: totalId, value: 14 }
         ]);
-        assert.deepEqual(collector.common[id], { no: 3, of: 14 });
+        assert.equal(collector.common[id], 3);
+        assert.equal(collector.common[totalId], 14);
       });
     }
   });
@@ -360,12 +375,12 @@ describe('Observer updates during asynchronous parsing', () => {
         value: 'MGMT'
       },
       {
-        id: 'comment',
+        id: 'comments',
         type: 'common',
         value: { text: 'EAC-Secure Mode=should ignore equal sign' }
       },
       {
-        id: 'genre',
+        id: 'genres',
         type: 'common',
         value: 'Alt. Rock'
       },
@@ -380,9 +395,9 @@ describe('Observer updates during asynchronous parsing', () => {
         value: '2010'
       },
       {
-        id: 'track',
+        id: 'trackNumber',
         type: 'common',
-        value: { no: 7, of: null }
+        value: 7
       },
       {
         id: 'picture',

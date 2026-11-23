@@ -31,7 +31,7 @@ function getNativeSourceTags(nativeType: string, commonTag: string): string[] {
     }
   });
   // MOVEMENT is contextual: canonical indexes and legacy names share the key.
-  if (nativeType === 'vorbis' && commonTag === 'movementIndex') {
+  if (nativeType === 'vorbis' && commonTag === 'movementNumber') {
     result.unshift('MOVEMENT');
   }
   return result;

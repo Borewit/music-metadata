@@ -163,10 +163,10 @@ describe('Parse ADTS/AAC', () => {
         assert.strictEqual(common.title, 'ADTS ID3v1 title');
         assert.strictEqual(common.artist, 'ADTS ID3v1 artist');
         assert.strictEqual(common.album, 'ADTS ID3v1 album');
-        assert.deepEqual(common.comment, [{ text: 'ID3v1 comment' }]);
+        assert.deepEqual(common.comments, [{ text: 'ID3v1 comment' }]);
         assert.strictEqual(common.year, 2026);
-        assert.strictEqual(common.track.no, 5);
-        assert.isUndefined(common.genre, 'an unknown ID3v1 genre must stay undefined');
+        assert.strictEqual(common.trackNumber, 5);
+        assert.isUndefined(common.genres, 'an unknown ID3v1 genre must stay undefined');
         assert.isDefined(native.ID3v1);
       });
 
@@ -176,8 +176,8 @@ describe('Parse ADTS/AAC', () => {
         });
         assert.deepEqual(format.tagTypes, ['ID3v2.3', 'ID3v1']);
         assert.strictEqual(common.title, 'Legacy AAC title');
-        assert.deepEqual(common.comment, [{ text: 'Legacy side tag' }]);
-        assert.deepEqual(common.track, { no: 3, of: 8 });
+        assert.deepEqual(common.comments, [{ text: 'Legacy side tag' }]);
+        assert.deepEqual(common.trackNumber, 3);
         assert.deepEqual(native.ID3v1, [
           { id: 'title', value: 'Legacy AAC title' },
           { id: 'artist', value: 'AAC writer fixture' },

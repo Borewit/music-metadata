@@ -44,18 +44,18 @@ describe('Parse Ogg', () => {
   function check_Nirvana_In_Bloom_commonTags(common: mm.ICommonTagsResult) {
     assert.strictEqual(common.title, 'In Bloom', 'common.title');
     assert.strictEqual(common.artist, 'Nirvana', 'common.artist');
-    assert.strictEqual(common.albumartist, 'Nirvana', 'common.albumartist');
+    assert.strictEqual(common.albumArtist, 'Nirvana', 'common.albumartist');
     assert.strictEqual(common.album, 'Nevermind', 'common.album');
     assert.strictEqual(common.year, 1991, 'common.year');
-    assert.deepEqual(common.track, { no: 2, of: 12 }, 'common.track');
-    assert.deepEqual(common.disk, { no: 1, of: 1 }, 'common.disk');
-    assert.deepEqual(common.genre, ['Grunge', 'Alternative'], 'genre');
+    assert.deepEqual(common.trackNumber, 2, 'common.track');
+    assert.deepEqual(common.discNumber, 1, 'common.disk');
+    assert.deepEqual(common.genres, ['Grunge', 'Alternative'], 'genres');
     assert.strictEqual(common.picture![0].format, 'image/jpeg', 'picture format');
     assert.strictEqual(common.picture![0].data.length, 30966, 'picture length');
     assert.strictEqual(common.barcode, '0720642442524', 'common.barcode (including leading zero)');
     assert.strictEqual(common.asin, 'B000003TA4', 'common.asin');
-    assert.deepEqual(common.catalognumber, ['GED24425'], 'common.asin');
-    assert.deepEqual(common.isrc, ['USGF19942502'], 'common.isrc');
+    assert.deepEqual(common.catalogNumber, ['GED24425'], 'common.asin');
+    assert.deepEqual(common.isrcs, ['USGF19942502'], 'common.isrc');
   }
 
   function check_Nirvana_In_Bloom_VorbisTags(vorbis: mm.INativeTagDict) {
@@ -220,7 +220,7 @@ describe('Parse Ogg', () => {
       assert.deepEqual(vorbis.ARTIST, ['Biosphere']);
       assert.deepEqual(vorbis['ALBUM ARTIST'], ['Biosphere']);
       assert.deepEqual(vorbis.ORGANIZATION, ['Touch UK']);
-      assert.deepEqual(common.label, ['Touch UK'], 'ORGANIZATION maps to common.label');
+      assert.deepEqual(common.labels, ['Touch UK'], 'ORGANIZATION maps to common.label');
       assert.deepEqual(vorbis.DATE, ['2006']);
       assert.deepEqual(vorbis.RATING, ['-1']);
       assert.deepEqual(vorbis.REPLAYGAIN_TRACK_PEAK, ['0.999969']);
@@ -240,14 +240,14 @@ describe('Parse Ogg', () => {
 
       assert.strictEqual(common.title, 'Modestep - To The Stars (Break the Noize & The Autobots Remix)', 'title');
       assert.strictEqual(common.artist, 'Break The Noize & The Autobots', 'artist');
-      assert.strictEqual(common.albumartist, 'Modestep', 'albumartist');
+      assert.strictEqual(common.albumArtist, 'Modestep', 'albumArtist');
       assert.strictEqual(common.album, 'To The Stars', 'album');
       assert.strictEqual(common.date, '2011-01-01', 'year');
-      assert.strictEqual(common.track.no, 2, 'track no');
-      assert.strictEqual(common.track.of, 5, 'track of');
-      assert.strictEqual(common.disk.no, 1, 'disk no');
-      assert.strictEqual(common.disk.of, 1, 'disk of');
-      assert.strictEqual(common.genre![0], 'Dubstep', 'genre');
+      assert.strictEqual(common.trackNumber, 2, 'track no');
+      assert.strictEqual(common.trackTotal, 5, 'track of');
+      assert.strictEqual(common.discNumber, 1, 'disk no');
+      assert.strictEqual(common.discTotal, 1, 'disk of');
+      assert.strictEqual(common.genres![0], 'Dubstep', 'genres');
       assert.strictEqual(common.picture![0].format, 'image/jpeg', 'picture format');
       assert.strictEqual(common.picture![0].data.length, 207439, 'picture length');
     });
@@ -374,7 +374,7 @@ describe('Parse Ogg', () => {
         return Buffer.concat([header, body]);
       }
 
-      function comment(title: string, last = true): Buffer {
+      function comments(title: string, last = true): Buffer {
         const text = Buffer.from(`TITLE=${title}`);
         return block(4, Buffer.concat([uint32(0, true), uint32(1, true), uint32(text.length, true), text]), last);
       }
@@ -430,8 +430,8 @@ describe('Parse Ogg', () => {
         }
       });
 
-      // This playable sample has a comment spanning 16 pages. Its final metadata
-      // page finishes that comment, then holds padding (including a 255-byte
+      // This playable sample has a comments spanning 16 pages. Its final metadata
+      // page finishes that comments, then holds padding (including a 255-byte
       // packet with a zero lacing terminator), application, seektable, cuesheet
       // and picture packets. Audio follows the metadata.
       const metadataFixture = path.join(oggSamplePath, 'flac-metadata-packets.ogg');
@@ -590,11 +590,11 @@ describe('Parse Ogg', () => {
       });
 
       it('rejects a stream ending before the metadata-end marker', async () => {
-        await rejects(parseMetadataPacket(comment('Not final', false)), UnexpectedFileContentError);
+        await rejects(parseMetadataPacket(comments('Not final', false)), UnexpectedFileContentError);
       });
 
       it('reports unknown metadata blocks while preserving following metadata', async () => {
-        const packets = [block(99, Buffer.alloc(3)), comment('After unknown block')];
+        const packets = [block(99, Buffer.alloc(3)), comments('After unknown block')];
         const data = fixture(page(Buffer.concat(packets), packets.flatMap(lace), 1, 4));
         const metadata = await mm.parseBuffer(data, 'audio/ogg');
         assert.equal(metadata.common.title, 'After unknown block');
@@ -697,8 +697,8 @@ describe('Parse Ogg', () => {
         assert.deepEqual(vorbis.DESCRIPTION, ['A remark about this file'], 'vorbis.DESCRIPTION');
         assert.deepEqual(vorbis.PUBLISHER, ['Test Label'], 'vorbis.PUBLISHER');
         assert.strictEqual(common.title, 'Vorbis Comment Test', 'common.title');
-        assert.deepEqual(common.comment, [{ text: 'A remark about this file' }], 'common.comment');
-        assert.deepEqual(common.label, ['Test Label'], 'common.label');
+        assert.deepEqual(common.comments, [{ text: 'A remark about this file' }], 'common.comment');
+        assert.deepEqual(common.labels, ['Test Label'], 'common.label');
       });
     });
   });
@@ -807,7 +807,7 @@ describe('Parse Ogg', () => {
   // https://github.com/Borewit/music-metadata/issues/2638
   // Derived from UNDO UNDO.ogg on issues/2638, retaining the headers and first two
   // audio pages. The final page has an updated end-of-stream flag and CRC.
-  // The picture comment continues beyond page 13, where early exit truncated Base64.
+  // The picture comments continues beyond page 13, where early exit truncated Base64.
 
   describe('Ogg comments spanning many pages', () => {
     it('keeps metadata incomplete until all comment continuation pages have been assembled', async () => {
@@ -816,8 +816,8 @@ describe('Parse Ogg', () => {
       const stream = new VorbisStream(metadata, {});
       let offset = 0;
 
-      // Pages 1 through 81 contain one comment packet. Page 82 starts the next packet,
-      // causing the accumulated comment pages to be parsed together.
+      // Pages 1 through 81 contain one comments packet. Page 82 starts the next packet,
+      // causing the accumulated comments pages to be parsed together.
       for (let page = 0; page <= 82; ++page) {
         const header = PageHeader.get(data, offset);
         assert.strictEqual(header.pageSequenceNo, page);

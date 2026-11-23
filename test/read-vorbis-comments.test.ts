@@ -197,8 +197,8 @@ describe('Shared Vorbis comment decoding', () => {
         it(`maps the AcoustID fingerprint field ${key}`, async () => {
           const { metadata, parse } = setup();
           await parse(commentList('Vendor', [`${key}=AQAAAA`, 'ACOUSTID_ID=keep-id']));
-          assert.strictEqual(metadata.common.acoustid_fingerprint, 'AQAAAA');
-          assert.strictEqual(metadata.common.acoustid_id, 'keep-id');
+          assert.strictEqual(metadata.common.acoustIdFingerprint, 'AQAAAA');
+          assert.strictEqual(metadata.common.acoustId, 'keep-id');
         });
       }
 
@@ -433,13 +433,13 @@ describe('Public structural Vorbis decoder', () => {
     });
     const decoder = new StructuralVorbisDecoder(data);
     assert.deepEqual(
-      Array.from(decoder.parseCommentList().comments).map(comment => comment.key),
+      Array.from(decoder.parseCommentList().comments).map(comments => comments.key),
       ['artist', 'artist', 'ARTIST', 'empty', 'Text']
     );
     assert.equal(decoder.remaining, 0);
     const reader = new VorbisDecoder(data);
     assert.deepEqual(
-      Array.from(reader.parseCommentList().comments).map(comment => comment.key),
+      Array.from(reader.parseCommentList().comments).map(comments => comments.key),
       ['ARTIST', 'ARTIST', 'ARTIST', 'EMPTY', 'TEXT']
     );
     assert.throws(() => parseVorbisComment(data, { maxComments: 3 }), /entry limit/);

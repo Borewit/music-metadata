@@ -174,7 +174,7 @@ describe('FLAC metadata read-ahead', () => {
     ]);
     const { result, tokenizer } = await metadata(data);
     assert.strictEqual(result.common.title, 'After large blocks');
-    assert.deepEqual(result.common.comment, [{ text: 'x'.repeat(70000) }]);
+    assert.deepEqual(result.common.comments, [{ text: 'x'.repeat(70000) }]);
     assert.deepEqual(
       result.common.picture?.map(value => value.data),
       [Buffer.alloc(256, 0xaa), Buffer.alloc(5000, 0xbb)]

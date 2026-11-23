@@ -83,8 +83,8 @@ describe('ID3v2', () => {
           assert.equal(metadata.format.sampleRate, 44100);
           assert.equal(metadata.format.numberOfChannels, 2);
           assert.equal(metadata.common.title, 'TagLib parity tone');
-          assert.equal(metadata.common.replaygain_track_gain?.dB, -6);
-          assert.approximately(metadata.common.replaygain_track_gain!.ratio, 10 ** (-6 / 10), 1e-12);
+          assert.equal(metadata.common.replayGainTrackGain?.dB, -6);
+          assert.approximately(metadata.common.replayGainTrackGain!.ratio, 10 ** (-6 / 10), 1e-12);
           assert.deepEqual(metadata.native[`ID3v2.${major}`].find(tag => tag.id === 'GEOB')?.value, {
             type: 'application/octet-stream',
             filename: 'object.bin',
@@ -111,11 +111,11 @@ describe('ID3v2', () => {
             : await mm.parseFile(filename);
           assert.include(metadata.format.tagTypes, `ID3v2.${major}`);
           assert.equal(metadata.format.codec, 'MPEG 1 Layer 3');
-          assert.deepEqual(metadata.common.producer, ['First', 'Second', 'Third', 'Fourth']);
-          assert.deepEqual(metadata.common.engineer, ['Engineer']);
-          assert.deepEqual(metadata.common.arranger, ['Arranger']);
-          assert.deepEqual(metadata.common.djmixer, ['DJ']);
-          assert.deepEqual(metadata.common.mixer, ['Mixer']);
+          assert.deepEqual(metadata.common.producers, ['First', 'Second', 'Third', 'Fourth']);
+          assert.deepEqual(metadata.common.engineers, ['Engineer']);
+          assert.deepEqual(metadata.common.arrangers, ['Arranger']);
+          assert.deepEqual(metadata.common.djMixers, ['DJ']);
+          assert.deepEqual(metadata.common.mixers, ['Mixer']);
           assert.isUndefined(metadata.common.artist);
           assert.isEmpty(metadata.quality.warnings);
           const native = metadata.native[`ID3v2.${major}`];
@@ -159,29 +159,29 @@ describe('ID3v2', () => {
     ] as const) {
       for (const role of ['constructor', 'toString', '__proto__']) {
         it(`preserves the ${id} role ${role} and accumulates repeated credits`, async () => {
-          const data = fixture(major, id, [role, 'First,Second', role, 'Third', 'producer', 'Producer']);
+          const data = fixture(major, id, [role, 'First,Second', role, 'Third', 'producers', 'Producer']);
           const metadata = await mm.parseBuffer(data, 'audio/mpeg');
           const credits = metadata.native[`ID3v2.${major}`].find(tag => tag.id === id)?.value;
           if (credits === null || typeof credits !== 'object') {
             assert.fail(`Expected ${id} native credit object`);
           }
-          assert.deepEqual(credits, { [role]: ['First', 'Second', 'Third'], producer: ['Producer'] });
+          assert.deepEqual(credits, { [role]: ['First', 'Second', 'Third'], producers: ['Producer'] });
           assert.isTrue(Object.getOwnPropertyDescriptor(credits, role)?.enumerable);
           assert.strictEqual(Object.getPrototypeOf(credits), Object.prototype);
         });
       }
 
       it(`preserves empty ${id} people without shifting subsequent roles`, async () => {
-        const metadata = await mm.parseBuffer(fixture(major, id, ['producer', '', 'engineer', 'Bob']), 'audio/mpeg');
+        const metadata = await mm.parseBuffer(fixture(major, id, ['producers', '', 'engineers', 'Bob']), 'audio/mpeg');
         const credits = metadata.native[`ID3v2.${major}`].find(tag => tag.id === id)?.value;
-        assert.deepEqual(credits, { producer: [''], engineer: ['Bob'] });
+        assert.deepEqual(credits, { producers: [''], engineers: ['Bob'] });
       });
 
       it(`ignores an incomplete ${id} pair while preserving normal repeated roles`, async () => {
-        const data = fixture(major, id, ['producer', 'First,Second', 'producer', 'Third', 'unpaired']);
+        const data = fixture(major, id, ['producers', 'First,Second', 'producers', 'Third', 'unpaired']);
         const metadata = await mm.parseBuffer(data, 'audio/mpeg');
         const credits = metadata.native[`ID3v2.${major}`].find(tag => tag.id === id)?.value;
-        assert.deepEqual(credits, { producer: ['First', 'Second', 'Third'] });
+        assert.deepEqual(credits, { producers: ['First', 'Second', 'Third'] });
       });
     }
 
@@ -245,16 +245,19 @@ describe('ID3v2', () => {
           assert.deepEqual(tags['TXXX:LICENSE'], ['https://creativecommons.org/licenses/by/4.0/']);
           assert.deepEqual(tags['TXXX:CATALOGNUMBER'], ['ABC/123']);
           assert.deepEqual(tags['TXXX:Custom JSON'], ['{"path":"books/one","url":"https://example.org/a/b"}']);
-          assert.deepEqual(common.catalognumber, ['ABC/123']);
+          assert.deepEqual(common.catalogNumber, ['ABC/123']);
           assert.deepEqual(common.artists, major === 3 ? ['First', 'Second'] : ['First/Second']);
-          assert.deepEqual(common.releasetype, major === 3 ? ['album', 'live'] : ['album/live']);
+          assert.deepEqual(common.releaseType, major === 3 ? ['album', 'live'] : ['album/live']);
           assert.deepEqual(
-            common.musicbrainz_artistid,
+            common.mbArtistId,
             major === 3
               ? ['11111111-1111-4111-8111-111111111111', '22222222-2222-4222-8222-222222222222']
               : ['11111111-1111-4111-8111-111111111111/22222222-2222-4222-8222-222222222222']
           );
-          assert.deepEqual(common.isrc, major === 3 ? ['USABC2400001', 'USABC2400002'] : ['USABC2400001/USABC2400002']);
+          assert.deepEqual(
+            common.isrcs,
+            major === 3 ? ['USABC2400001', 'USABC2400002'] : ['USABC2400001/USABC2400002']
+          );
           assert.equal(format.codec, 'MPEG 1 Layer 3');
           assert.isAbove(format.duration ?? 0, 1);
           assert.isEmpty(quality.warnings);
@@ -414,8 +417,8 @@ describe('ID3v2', () => {
         assert.strictEqual(metadata.format.duration, 10944 / metadata.format.sampleRate, 'format.duration');
 
         assert.strictEqual(metadata.common.title, 'title', 'common.title');
-        assert.deepEqual(metadata.common.track, { no: null, of: null }, 'common.track');
-        assert.deepEqual(metadata.common.disk, { no: null, of: null }, 'common.disk');
+        assert.deepEqual(metadata.common.trackNumber, undefined, 'common.track');
+        assert.deepEqual(metadata.common.discNumber, undefined, 'common.disk');
       });
     });
 
@@ -491,8 +494,8 @@ describe('ID3v2', () => {
         assert.strictEqual(common.artist, 'Coheed And Cambria', 'common.artist');
         assert.strictEqual(common.album, 'Year Of The Black Rainbow', 'common.album');
         assert.strictEqual(common.year, 2010, 'common.year');
-        assert.deepEqual(common.track, { no: 1, of: null }, 'common.track');
-        assert.deepEqual(common.genre, ['Progressive Rock'], 'common.genre');
+        assert.deepEqual(common.trackNumber, 1, 'common.track');
+        assert.deepEqual(common.genres, ['Progressive Rock'], 'common.genre');
       }
 
       return mm.parseFile(filePath, { duration: true }).then(metadata => {
@@ -891,7 +894,7 @@ describe('ID3v2', () => {
     // Issue: https://github.com/Borewit/music-metadata/issues/2736
     // This fixture contains a single ID3v2.4 tag followed by 44.1 kHz stereo MP3
     // silence. The comments cover $01 with/without BOM and $02, including both
-    // empty and non-empty descriptions and terminated/unterminated comment text.
+    // empty and non-empty descriptions and terminated/unterminated comments text.
     it('decodes id3v2 UTF-16 text and COMM frames from a single MP3 fixture', async () => {
       const filePath = path.join(samplePath, 'mp3/issue-2736-utf16.mp3');
       const { native, common, format } = await mm.parseFile(filePath, { duration: true });
@@ -919,7 +922,7 @@ describe('ID3v2', () => {
       );
       assert.strictEqual(common.title, 'Tëst');
       assert.strictEqual(common.artist, 'Example Artist');
-      assert.deepEqual(common.comment, comments);
+      assert.deepEqual(common.comments, comments);
       assert.strictEqual(format.codec, 'MPEG 1 Layer 3');
       assert.strictEqual(format.sampleRate, 44100);
       assert.strictEqual(format.numberOfChannels, 2);
@@ -934,11 +937,11 @@ describe('ID3v2', () => {
         assert.equal(result.common.title, "It's All Over You Know", 'title');
         assert.equal(result.common.artist, 'The Apers', 'artist');
         assert.deepEqual(result.common.artists, ['The Apers'], 'artist');
-        assert.equal(result.common.albumartist, 'The Apers', 'albumartist');
+        assert.equal(result.common.albumArtist, 'The Apers', 'albumArtist');
         assert.equal(result.common.album, 'Reanimate My Heart', 'album');
         assert.equal(result.common.year, 2007, 'year');
-        assert.deepEqual(result.common.track, { no: 1, of: null }, 'track');
-        assert.deepEqual(result.common.genre, ['Punk Rock'], 'genre');
+        assert.deepEqual(result.common.trackNumber, 1, 'track');
+        assert.deepEqual(result.common.genres, ['Punk Rock'], 'genres');
       });
     });
 
@@ -949,12 +952,12 @@ describe('ID3v2', () => {
       return mm.parseFile(filePath).then(result => {
         assert.strictEqual(result.common.title, '808', 'title');
         assert.strictEqual(result.common.artist, 'Benga', 'artist');
-        assert.strictEqual(result.common.albumartist, 'Benga', 'albumartist');
+        assert.strictEqual(result.common.albumArtist, 'Benga', 'albumArtist');
         assert.strictEqual(result.common.album, 'Phaze One', 'album');
         assert.strictEqual(result.common.year, 2010, 'year');
-        assert.strictEqual(result.common.track.no, 4, 'track no');
-        assert.strictEqual(result.common.track.of, 8, 'track of');
-        assert.strictEqual(result.common.genre[0], 'Dubstep', 'genre');
+        assert.strictEqual(result.common.trackNumber, 4, 'track no');
+        assert.strictEqual(result.common.trackTotal, 8, 'track of');
+        assert.strictEqual(result.common.genres[0], 'Dubstep', 'genres');
         assert.strictEqual(result.common.picture[0].format, 'image/jpeg', 'picture format');
         assert.strictEqual(result.common.picture[0].data.length, 6761, 'picture length');
       });

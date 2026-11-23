@@ -48,13 +48,13 @@ function identification(): Buffer {
 }
 
 function comments(title?: string): Buffer {
-  const comment = title ? Buffer.from(`TITLE=${title}`) : undefined;
-  const data = Buffer.alloc(16 + (comment ? 4 + comment.length : 0));
+  const comments = title ? Buffer.from(`TITLE=${title}`) : undefined;
+  const data = Buffer.alloc(16 + (comments ? 4 + comments.length : 0));
   data.write('OpusTags');
-  if (comment) {
+  if (comments) {
     data.writeUInt32LE(1, 12);
-    data.writeUInt32LE(comment.length, 16);
-    data.set(comment, 20);
+    data.writeUInt32LE(comments.length, 16);
+    data.set(comments, 20);
   }
   return data;
 }
@@ -589,10 +589,10 @@ describe('Opus duration tail lookup', () => {
 
   it('retains comments spanning more than thirteen pages before looking for duration', async () => {
     const title = 'Long Opus title '.repeat(5000);
-    const comment = comments(title);
+    const commentPages = comments(title);
     const pages = [page(1, 0, 2, 0, identification())];
-    for (let offset = 0; offset < comment.length; offset += 4080) {
-      pages.push(page(1, pages.length, offset > 0 ? 1 : 0, 0, comment.subarray(offset, offset + 4080)));
+    for (let offset = 0; offset < commentPages.length; offset += 4080) {
+      pages.push(page(1, pages.length, offset > 0 ? 1 : 0, 0, commentPages.subarray(offset, offset + 4080)));
     }
     const firstAudioSequence = pages.length;
     for (let sequence = firstAudioSequence; sequence < firstAudioSequence + 50; ++sequence) {

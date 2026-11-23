@@ -202,7 +202,7 @@ describe('Parse AIFF (Audio Interchange File Format)', () => {
 
     assert.strictEqual(common.album, 'Hdtracks 2020 Hi-Res Sampler', 'common.album');
     assert.deepStrictEqual(common.artists, ['Chris Jones'], 'common.artists');
-    assert.strictEqual(common.encodersettings, 'Lavf58.29.100', 'common.encodersettings');
+    assert.strictEqual(common.encoderSettings, 'Lavf58.29.100', 'common.encodersettings');
     assert.strictEqual(common.year, 2020, 'common.year');
   });
 
@@ -215,7 +215,7 @@ describe('Parse AIFF (Audio Interchange File Format)', () => {
     assert.strictEqual(format.codec, 'Alaw 2:1', 'format.codec');
 
     assert.deepStrictEqual(
-      common.comment,
+      common.comments,
       [{ text: 'AFspdate: 2003-01-30 03:28:34 UTC' }, { text: 'user: kabal@CAPELLA' }, { text: 'program: CopyAudio' }],
       'common.comment'
     );

@@ -37,7 +37,7 @@ const ReplayGainOriginator = {
   /**
    * Replay Gain pre-set by artist/producer/mastering engineer
    */
-  engineer: 1,
+  engineers: 1,
   /**
    * Replay Gain set by user
    */

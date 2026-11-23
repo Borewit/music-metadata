@@ -34,8 +34,8 @@ describe('Parse Philips DSDIFF', () => {
     assert.strictEqual(common.artist, 'CANTUS (Tove Ramlo-Ystad) & Frode Fjellheim', 'common.artist');
     assert.strictEqual(common.title, 'Kyrie', 'common.title');
     assert.strictEqual(common.album, 'SPES', 'common.album');
-    assert.deepEqual(common.genre, ['Choral'], 'common.genre');
-    assert.deepEqual(common.track, { no: 4, of: 12 }, 'common.track');
+    assert.deepEqual(common.genres, ['Choral'], 'common.genre');
+    assert.deepEqual(common.trackNumber, 4, 'common.track');
   });
 
   describe('DSDIFF chunk lengths (GHSA-5pwx-m48f-hw27)', () => {

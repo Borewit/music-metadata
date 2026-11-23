@@ -132,11 +132,11 @@ describe('Parse RIFF/WAVE audio format', () => {
     assert.deepEqual(common.album, 'La clemenzo di Tito');
     assert.deepEqual(common.date, '2018-04-26T13:26:19-05:00');
     assert.deepEqual(common.year, 2018);
-    assert.deepEqual(common.encodedby, 'Adobe Audition CC 2018.1 (Macintosh)');
-    assert.deepEqual(common.comment, [{ text: 'Comments here!' }]);
-    assert.deepEqual(common.genre, ['Blues']);
-    assert.deepEqual(common.engineer, ['Engineer']);
-    assert.deepEqual(common.technician, ['Technician']);
+    assert.deepEqual(common.encodedBy, 'Adobe Audition CC 2018.1 (Macintosh)');
+    assert.deepEqual(common.comments, [{ text: 'Comments here!' }]);
+    assert.deepEqual(common.genres, ['Blues']);
+    assert.deepEqual(common.engineers, ['Engineer']);
+    assert.deepEqual(common.technicians, ['Technician']);
     assert.deepEqual(common.media, 'CD');
   });
 
@@ -188,9 +188,9 @@ describe('Parse RIFF/WAVE audio format', () => {
             const id3 = mm.orderTags(native['ID3v2.3']);
             assert.deepEqual(id3.TCOP, ['© 2026 ID3']);
             assert.deepEqual(id3.TSRC, ['USABC2600001']);
-            assert.deepEqual(common.isrc, ['USABC2600001']);
+            assert.deepEqual(common.isrcs, ['USABC2600001']);
           } else {
-            assert.isUndefined(common.isrc, 'RIFF source/supplier is not a recording identifier');
+            assert.isUndefined(common.isrcs, 'RIFF source/supplier is not a recording identifier');
           }
         });
       }
@@ -204,7 +204,7 @@ describe('Parse RIFF/WAVE audio format', () => {
           const { common, native } = await parser.parse(() => context.skip(), path.join(samplePath, name), 'audio/wav');
           assert.strictEqual(common.copyright, copyright);
           assert.deepEqual(mm.orderTags(native.exif).ICOP, [copyright]);
-          assert.isUndefined(common.isrc);
+          assert.isUndefined(common.isrcs);
         });
       }
     }
@@ -216,7 +216,7 @@ describe('Parse RIFF/WAVE audio format', () => {
           'audio/wav'
         );
         assert.isUndefined(common.copyright);
-        assert.isUndefined(common.isrc);
+        assert.isUndefined(common.isrcs);
         assert.isUndefined(native.exif);
         assert.strictEqual(format.numberOfSamples, 800);
         assert.includeDeepMembers(quality.warnings, [
@@ -614,7 +614,7 @@ describe('Parse RIFF/WAVE audio format', () => {
 
     assert.strictEqual(common.artist, 'Some Composer', 'common.artists');
     assert.strictEqual(common.title, 'Title Redacted', 'common.title');
-    assert.deepStrictEqual(common.track, { no: 1, of: 12 }, 'common.track');
+    assert.deepStrictEqual(common.trackNumber, 1, 'common.track');
 
     const exif = mm.orderTags(native.exif);
     assert.deepStrictEqual(exif['bext.originator'], ['Pro Tools'], 'BWF: exif.bext.originator');
@@ -625,8 +625,8 @@ describe('Parse RIFF/WAVE audio format', () => {
     const filePath = path.join(wavSamples, 'riff-iprt-tag.wav');
     const { common } = await mm.parseFile(filePath);
 
-    assert.strictEqual(common.track.no, 1, 'common.track.no');
-    assert.strictEqual(common.track.of, 2, 'common.track.no');
+    assert.strictEqual(common.trackNumber, 1, 'common.trackNumber');
+    assert.strictEqual(common.trackTotal, 2, 'common.trackTotal');
   });
 
   describe('Chunk boundaries and padding', () => {

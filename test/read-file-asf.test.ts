@@ -910,19 +910,19 @@ describe('Parse ASF', () => {
     function checkCommon(common: mm.ICommonTagsResult) {
       assert.strictEqual(common.title, "Don't Bring Me Down", 'common.title');
       assert.deepEqual(common.artist, 'Electric Light Orchestra', 'common.artist');
-      assert.deepEqual(common.albumartist, 'Electric Light Orchestra', 'common.albumartist');
+      assert.deepEqual(common.albumArtist, 'Electric Light Orchestra', 'common.albumartist');
       assert.strictEqual(common.album, 'Discovery', 'common.album');
       assert.strictEqual(common.year, 2001, 'common.year');
-      assert.deepEqual(common.track, { no: 9, of: null }, 'common.track 9/0');
-      assert.deepEqual(common.disk, { no: null, of: null }, 'common.disk 0/0');
-      assert.equal(common.replaygain_track_gain.dB, -4.7);
-      assert.approximately(common.replaygain_track_gain.ratio, 10 ** (-4.7 / 10), 1e-12);
-      assert.equal(common.replaygain_album_gain.dB, -6);
-      assert.approximately(common.replaygain_album_gain.ratio, 10 ** (-6 / 10), 1e-12);
-      assert.equal(common.replaygain_track_peak.ratio, 0.9613);
-      assert.approximately(common.replaygain_track_peak.dB, 10 * Math.log10(0.9613), 1e-12);
-      assert.deepEqual(common.replaygain_album_peak, { ratio: 1, dB: 0 });
-      assert.deepEqual(common.genre, ['Rock'], 'common.genre');
+      assert.deepEqual(common.trackNumber, 9, 'common.track 9/0');
+      assert.isUndefined(common.discNumber, 'common.disk 0/0');
+      assert.equal(common.replayGainTrackGain.dB, -4.7);
+      assert.approximately(common.replayGainTrackGain.ratio, 10 ** (-4.7 / 10), 1e-12);
+      assert.equal(common.replayGainAlbumGain.dB, -6);
+      assert.approximately(common.replayGainAlbumGain.ratio, 10 ** (-6 / 10), 1e-12);
+      assert.equal(common.replayGainTrackPeak.ratio, 0.9613);
+      assert.approximately(common.replayGainTrackPeak.dB, 10 * Math.log10(0.9613), 1e-12);
+      assert.deepEqual(common.replayGainAlbumPeak, { ratio: 1, dB: 0 });
+      assert.deepEqual(common.genres, ['Rock'], 'common.genre');
     }
 
     function checkNative(native: mm.INativeTagDict) {
@@ -954,10 +954,10 @@ describe('Parse ASF', () => {
           const filePath = path.join(asfFilePath, 'issue_57.wma');
           const { native, common } = await parser.parse(() => context.skip(), filePath, 'audio/x-ms-wma');
           const asf = mm.orderTags(native.asf);
-          assert.equal(common.replaygain_track_gain.dB, -12.31);
-          assert.approximately(common.replaygain_track_gain.ratio, 10 ** (-12.31 / 10), 1e-12);
-          assert.deepEqual(common.replaygain_track_peak, { ratio: 1, dB: 0 });
-          assert.deepEqual(common.track, { no: 14, of: null });
+          assert.equal(common.replayGainTrackGain.dB, -12.31);
+          assert.approximately(common.replayGainTrackGain.ratio, 10 ** (-12.31 / 10), 1e-12);
+          assert.deepEqual(common.replayGainTrackPeak, { ratio: 1, dB: 0 });
+          assert.deepEqual(common.trackNumber, 14);
           assert.deepEqual(asf['WM/TrackNumber'], ['14']);
           assert.deepEqual(asf['WM/Track'], ['13']);
           assert.exists(asf['WM/Picture'][0], 'ASF WM/Picture should be set');
@@ -1029,7 +1029,8 @@ describe('Parse ASF', () => {
           path.join(asfFilePath, 'issue-2729.wma'),
           'audio/x-ms-wma'
         );
-        assert.deepEqual(metadata.common.track, { no: 1, of: 13 });
+        assert.deepEqual(metadata.common.trackNumber, 1);
+        assert.strictEqual(metadata.common.trackTotal, 13);
         assert.deepEqual(mm.orderTags(metadata.native.asf).TotalTracks, ['13']);
       });
 
@@ -1040,15 +1041,15 @@ describe('Parse ASF', () => {
           'audio/x-ms-wma'
         );
         assert.equal(metadata.format.codec, 'Windows Media Audio V8');
-        assert.equal(metadata.common.replaygain_track_gain.dB, -3);
-        assert.approximately(metadata.common.replaygain_track_gain.ratio, 10 ** (-3 / 10), 1e-12);
-        assert.equal(metadata.common.replaygain_album_gain.dB, -2);
-        assert.approximately(metadata.common.replaygain_album_gain.ratio, 10 ** (-2 / 10), 1e-12);
-        assert.deepEqual(metadata.common.replaygain_track_peak, { ratio: 0, dB: Number.NEGATIVE_INFINITY });
-        assert.equal(metadata.common.replaygain_album_peak.ratio, 1.25);
-        assert.approximately(metadata.common.replaygain_album_peak.dB, 10 * Math.log10(1.25), 1e-12);
-        assert.deepEqual(metadata.common.track, { no: 4, of: 13 });
-        assert.deepEqual(metadata.common.disk, { no: 2, of: 3 });
+        assert.equal(metadata.common.replayGainTrackGain.dB, -3);
+        assert.approximately(metadata.common.replayGainTrackGain.ratio, 10 ** (-3 / 10), 1e-12);
+        assert.equal(metadata.common.replayGainAlbumGain.dB, -2);
+        assert.approximately(metadata.common.replayGainAlbumGain.ratio, 10 ** (-2 / 10), 1e-12);
+        assert.deepEqual(metadata.common.replayGainTrackPeak, { ratio: 0, dB: Number.NEGATIVE_INFINITY });
+        assert.equal(metadata.common.replayGainAlbumPeak.ratio, 1.25);
+        assert.approximately(metadata.common.replayGainAlbumPeak.dB, 10 * Math.log10(1.25), 1e-12);
+        assert.deepEqual(metadata.common.trackNumber, 4);
+        assert.deepEqual(metadata.common.discNumber, 2);
         const native = mm.orderTags(metadata.native.asf);
         assert.deepEqual(native.replaygain_track_gain, ['-3dB']);
         assert.deepEqual(native.replaygain_track_peak, ['0']);

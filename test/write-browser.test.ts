@@ -172,7 +172,7 @@ describe('Node/browser writer parity', () => {
   ])('shares patch and deletion behavior for %s', async fixture => {
     const input = new Uint8Array(await readFile(fixture));
     const snapshot = input.slice();
-    const patch = { title: 'Shared writer', artist: 'Parity artist', track: { no: 2, of: 7 } };
+    const patch = { title: 'Shared writer', artist: 'Parity artist', trackNumber: 2, trackTotal: 7 };
     const options = {};
     const expected = await updateNodeBuffer(input, patch, options);
     expect(await updateBuffer(input, patch, options)).toEqual(expected);
@@ -180,7 +180,7 @@ describe('Node/browser writer parity', () => {
     const tags = await parseBuffer(expected);
     expect(tags.common.title).toBe(patch.title);
     expect(tags.common.artist).toBe(patch.artist);
-    expect(tags.common.track).toEqual(patch.track);
+    expect(tags.common.trackNumber).toEqual(patch.trackNumber);
     const cleared = await updateNodeBuffer(expected, { title: null }, options);
     expect(await updateBuffer(toBlob(expected), { title: null }, options)).toEqual(cleared);
     expect((await parseBuffer(cleared)).common.title).toBeUndefined();

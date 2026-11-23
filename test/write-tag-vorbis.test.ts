@@ -82,7 +82,7 @@ describe('Vorbis Comment codec', () => {
   });
 
   it('parseVorbisCommentWithSuffix rejects comment count exceeding remaining data', () => {
-    // vendor=0 (4 bytes), comment count=1000 (little-endian: 232,3,0,0) but no entry data
+    // vendor=0 (4 bytes), comments count=1000 (little-endian: 232,3,0,0) but no entry data
     const data = new Uint8Array([0, 0, 0, 0, 232, 3, 0, 0]);
     expect(() => parseVorbisCommentWithSuffix(data)).toThrow(
       'Vorbis comment comment count length 1000 exceeds remaining data'
@@ -123,7 +123,7 @@ describe('Vorbis tag mapping', () => {
     const updated = applyVorbisPatch(fields, {
       title: 'New',
       artists: ['A', 'B'],
-      genre: ['Rock'],
+      genres: ['Rock'],
       track: { no: 2, of: 10 },
       native: { CUSTOM: ['one', 'two'] }
     });
@@ -247,7 +247,7 @@ describe('Vorbis tag mapping', () => {
 // ada28b2cc92c515f3f26640a6feef6516d195872:
 // tests/test__vorbis.py (Tistag, TVComment, TVCommentDict) and
 // tests/test_flac.py (test_ooming_vc_header, test_force_grow/shrink).
-// FLAC comment blocks have no Ogg framing byte; malformed input is strict here.
+// FLAC comments blocks have no Ogg framing byte; malformed input is strict here.
 describe('Mutagen-inspired Vorbis regressions', () => {
   it('accepts an empty vendor and comment list without an Ogg framing byte', () => {
     expect(parseVorbisComment(new Uint8Array(8))).toEqual({ vendor: '', comments: [] });
@@ -332,20 +332,22 @@ describe('Mutagen-inspired Vorbis regressions', () => {
       await updateFile(target, { title: '保留的标题', native: { LARGE: values } }, { padding: 0 });
       const grownSize = (await readFile(target)).length;
       const grown = await readFields();
-      expect(grown.comments.filter(comment => comment.key === 'LARGE').map(comment => comment.value)).toEqual(values);
+      expect(grown.comments.filter(comments => comments.key === 'LARGE').map(comments => comments.value)).toEqual(
+        values
+      );
       expect((await parseFile(target)).common.title).toBe('保留的标题');
 
       await updateFile(target, { native: { large: 'small' } }, { padding: 0 });
       expect((await readFile(target)).length).toBeLessThan(grownSize);
       const shrunk = await readFields();
       expect(shrunk.vendor).toBe(grown.vendor);
-      expect(shrunk.comments.filter(comment => comment.key.toUpperCase() === 'LARGE')).toEqual([
+      expect(shrunk.comments.filter(comments => comments.key.toUpperCase() === 'LARGE')).toEqual([
         { key: 'large', value: 'small' }
       ]);
       expect((await parseFile(target)).common.title).toBe('保留的标题');
 
       await updateFile(target, { native: { LARGE: null } }, { padding: 0 });
-      expect((await readFields()).comments.some(comment => comment.key.toUpperCase() === 'LARGE')).toBe(false);
+      expect((await readFields()).comments.some(comments => comments.key.toUpperCase() === 'LARGE')).toBe(false);
       expect((await parseFile(target)).common.title).toBe('保留的标题');
     });
   });

@@ -9,9 +9,9 @@ const id3v1TagMap: INativeTagMap = {
   artist: 'artist',
   album: 'album',
   year: 'year',
-  comment: 'comment',
-  track: 'track',
-  genre: 'genre'
+  comment: 'comments',
+  track: 'trackNumber',
+  genre: 'genres'
 };
 
 export class ID3v1TagMapper extends CommonTagMapper {

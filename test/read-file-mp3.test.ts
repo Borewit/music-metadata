@@ -32,6 +32,12 @@ describe('Parse MP3 files', () => {
       'replaygain_track_peak',
       'replaygain_album_peak'
     ] as const;
+    const commonIds = [
+      'replayGainTrackGain',
+      'replayGainAlbumGain',
+      'replayGainTrackPeak',
+      'replayGainAlbumPeak'
+    ] as const;
     const id3Values = ['-6.00 dB', '-3.00 dB', '0.75', '0.5'];
     const validApeValues = ['-3.00 dB', '0 dB', '0', '1.25'];
     const invalidApeValues = ['', 'not-a-number', 'Infinity', '-1'];
@@ -76,7 +82,7 @@ describe('Parse MP3 files', () => {
           for (const [index, id] of ids.entries()) {
             const expected =
               kind === 'invalid-only' ? undefined : kind === 'valid' && readsApe ? apeRatios[index] : id3Ratios[index];
-            assert.deepEqual(metadata.common[id], expected, id);
+            assert.deepEqual(metadata.common[commonIds[index]], expected, id);
             const id3 = metadata.native['ID3v2.4'].find(tag => tag.id === `TXXX:${id.toUpperCase()}`);
             if (kind === 'invalid-only') {
               assert.isUndefined(id3);
@@ -97,7 +103,9 @@ describe('Parse MP3 files', () => {
           }
           assert.deepEqual(
             metadata.quality.warnings,
-            readsApe && kind !== 'valid' ? ids.map(id => ({ message: `Invalid ReplayGain value for APEv2.${id}` })) : []
+            readsApe && kind !== 'valid'
+              ? ids.map((_id, index) => ({ message: `Invalid ReplayGain value for APEv2.${commonIds[index]}` }))
+              : []
           );
         });
       }
@@ -255,8 +263,8 @@ describe('Parse MP3 files', () => {
 
       assert.strictEqual(common.title, 'Sleep Away');
       assert.strictEqual(common.artist, 'Bob Acri');
-      assert.deepEqual(common.composer, ['Robert R. Acri']);
-      assert.deepEqual(common.genre, ['Jazz']);
+      assert.deepEqual(common.composers, ['Robert R. Acri']);
+      assert.deepEqual(common.genres, ['Jazz']);
 
       assert.strictEqual(common.picture!.length, 1, 'should contain the cover');
       const picture = common.picture![0];
@@ -286,7 +294,7 @@ describe('Parse MP3 files', () => {
     assert.strictEqual(common.title, 'Frankie And Johnny', 'common.title');
     assert.strictEqual(common.artist, 'Sam Cooke', 'common.artist');
     assert.strictEqual(common.album, 'Greatest Hits', 'common.album,');
-    assert.deepEqual(common.track, { no: 21, of: null }, 'common.track,');
+    assert.deepEqual(common.trackNumber, 21, 'common.track,');
     assert.deepEqual(common.year, 1998, 'common.year,');
     assert.isUndefined(common.picture, 'common.picturh');
     assert.includeDeepMembers(
@@ -491,10 +499,10 @@ describe('Parse MP3 files', () => {
           assert.strictEqual(common.album, 'Piano Classics', 'common.title');
           assert.strictEqual(common.year, 0, 'common.year');
           assert.deepEqual(common.artist, 'Aubrey Hilliard', 'common.artist');
-          assert.deepEqual(common.composer, ['Mozart'], 'common.composer');
-          assert.deepEqual(common.track, { no: 1, of: null }, 'common.track');
-          assert.deepEqual(common.genre, ['Classical'], 'common.genre');
-          assert.deepEqual(common.disk, { no: null, of: null }, 'common.disk');
+          assert.deepEqual(common.composers, ['Mozart'], 'common.composer');
+          assert.deepEqual(common.trackNumber, 1, 'common.track');
+          assert.deepEqual(common.genres, ['Classical'], 'common.genre');
+          assert.isUndefined(common.discNumber, 'common.disk');
           assert.deepEqual(common.picture, undefined, 'common.picture');
         }
 
@@ -513,7 +521,7 @@ describe('Parse MP3 files', () => {
         const metadata = await mm.parseFromTokenizer(tokenizer);
         assert.include(metadata.format.tagTypes, 'APEv2');
         assert.deepEqual(mm.orderTags(metadata.native.APEv2).REPLAYGAIN_TRACK_GAIN, ['+0.540000 dB']);
-        assert.closeTo(metadata.common.replaygain_track_gain!.dB, 0.54, 0.000001);
+        assert.closeTo(metadata.common.replayGainTrackGain!.dB, 0.54, 0.000001);
       } finally {
         await tokenizer.close();
       }
@@ -542,15 +550,15 @@ describe('Parse MP3 files', () => {
       assert.strictEqual(common.album, "Now That's What I Call Xmas", 'common.album');
       assert.strictEqual(common.year, 2006, 'common.year');
       assert.deepEqual(
-        common.comment,
+        common.comments,
         [
           { text: 'TunNORM' },
           { text: ' 0000080E 00000AA9 00002328 000034F4 0002BF65 0002BF4E 000060AC 0000668F 0002BF4E 00033467' }
         ],
         'common.comment'
       );
-      assert.deepEqual(common.genre, ['General Holiday'], 'common.genre');
-      assert.deepEqual(common.track.no, 2, 'common.track.no');
+      assert.deepEqual(common.genres, ['General Holiday'], 'common.genre');
+      assert.deepEqual(common.trackNumber, 2, 'common.track.no');
     });
 
     it('should be able to parse APEv2 header followed by a Lyrics3v2 header', async () => {

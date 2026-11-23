@@ -12,12 +12,20 @@ import { samplePath } from './helpers/util.js';
 
 describe('APEv2 tags', () => {
   describe('ReplayGain source priority', () => {
-    for (const id of [
-      'replaygain_track_gain',
-      'replaygain_album_gain',
-      'replaygain_track_peak',
-      'replaygain_album_peak'
-    ] as const) {
+    const nativeIds = [
+      'REPLAYGAIN_TRACK_GAIN',
+      'REPLAYGAIN_ALBUM_GAIN',
+      'REPLAYGAIN_TRACK_PEAK',
+      'REPLAYGAIN_ALBUM_PEAK'
+    ] as const;
+    const commonIds = [
+      'replayGainTrackGain',
+      'replayGainAlbumGain',
+      'replayGainTrackPeak',
+      'replayGainAlbumPeak'
+    ] as const;
+    for (const [index, id] of commonIds.entries()) {
+      const nativeId = nativeIds[index];
       for (const invalidFirst of [false, true]) {
         it(`ignores invalid ${id} without claiming priority (invalid first=${invalidFirst})`, async () => {
           const events: unknown[] = [];
@@ -30,9 +38,9 @@ describe('APEv2 tags', () => {
           });
           // Invalid APE values must not claim priority over valid ID3 values.
           const invalidType = 'APEv2';
-          const invalidId = invalidType === 'APEv2' ? id.toUpperCase() : `TXXX:${id.toUpperCase()}`;
+          const invalidId = invalidType === 'APEv2' ? nativeId : `TXXX:${nativeId}`;
           const invalid = () => collector.addTag(invalidType, invalidId, 'not-a-number');
-          const valid = () => collector.addTag('ID3v2.3', `TXXX:${id.toUpperCase()}`, '0 dB');
+          const valid = () => collector.addTag('ID3v2.3', `TXXX:${nativeId}`, '0 dB');
           await (invalidFirst ? invalid() : valid());
           await (invalidFirst ? valid() : invalid());
           assert.deepEqual(collector.common[id], { dB: 0, ratio: 1 });

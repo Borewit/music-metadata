@@ -24,12 +24,11 @@ describe('Parsing MPEG / ID3v1', () => {
       assert.strictEqual(common.title, 'Blood Sugar', 'common.title');
       assert.strictEqual(common.artist, 'Pendulum', 'common.artist');
       assert.strictEqual(common.album, 'Blood Sugar (Single)', 'common.album');
-      assert.isUndefined(common.albumartist, 'common.albumartist');
+      assert.isUndefined(common.albumArtist, 'common.albumartist');
       assert.strictEqual(common.year, 2007, 'common.year');
-      assert.strictEqual(common.track.no, 1, 'common.track.no = 1 (ID3v1 tag)');
-      assert.strictEqual(common.track.of, null, 'common.track.of = null');
-      assert.deepEqual(common.genre, ['Electronic'], 'common.genre');
-      assert.deepEqual(common.comment, [{ text: 'abcdefg' }], 'common.comment');
+      assert.strictEqual(common.trackNumber, 1, 'common.track.no = 1 (ID3v1 tag)');
+      assert.deepEqual(common.genres, ['Electronic'], 'common.genre');
+      assert.deepEqual(common.comments, [{ text: 'abcdefg' }], 'common.comment');
     }
 
     /**
@@ -97,12 +96,11 @@ describe('Parsing MPEG / ID3v1', () => {
       assert.strictEqual(common.title, 'Luomo - Tessio (Spektre Remix)', 'common.title');
       assert.isUndefined(common.artist, 'common.artist');
       assert.isUndefined(common.album, 'common.album');
-      assert.strictEqual(common.albumartist, undefined, 'common.albumartist');
+      assert.strictEqual(common.albumArtist, undefined, 'common.albumartist');
       assert.isUndefined(common.year, 'common.year');
-      assert.strictEqual(common.track.no, null, 'common.track.no = null');
-      assert.strictEqual(common.track.of, null, 'common.track.of = null');
-      assert.isUndefined(common.genre, 'common.genre');
-      assert.isUndefined(common.comment, 'common.comment');
+      assert.isUndefined(common.trackNumber, 'common.track.no = null');
+      assert.isUndefined(common.genres, 'common.genre');
+      assert.isUndefined(common.comments, 'common.comment');
     }
 
     Parsers.forEach(parser => {
@@ -134,16 +132,16 @@ describe('Parsing MPEG / ID3v1', () => {
 
   // Regression for https://github.com/Borewit/music-metadata/issues/2717
   it('should not interpret the last byte of a full ID3v1.0 comment as a track number', async () => {
-    // Untagged silence sample with an ID3v1.0 tag appended: comment
-    // "abcdefghijklmnopqrstuvwxyzABrs", genre Rock. The trailing 's' is not track 115.
+    // Untagged silence sample with an ID3v1.0 tag appended: comments
+    // "abcdefghijklmnopqrstuvwxyzABrs", genres Rock. The trailing 's' is not track 115.
     const filePath = path.join(samplePath, 'mp3/issue-2717-id3v1-full-comment.mp3');
     const { format, common, native } = await mm.parseFile(filePath);
 
     assert.deepEqual(format.tagTypes, ['ID3v1']);
-    assert.strictEqual(common.track.no, null);
-    assert.strictEqual(common.track.of, null);
+    assert.isUndefined(common.trackNumber);
+    assert.isUndefined(common.trackNumber);
     assert.isFalse(native.ID3v1.some(tag => tag.id === 'track'));
-    assert.deepEqual(common.genre, ['Rock']);
-    assert.deepEqual(common.comment, [{ text: 'abcdefghijklmnopqrstuvwxyzABrs' }]);
+    assert.deepEqual(common.genres, ['Rock']);
+    assert.deepEqual(common.comments, [{ text: 'abcdefghijklmnopqrstuvwxyzABrs' }]);
   });
 });

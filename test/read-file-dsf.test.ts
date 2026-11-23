@@ -28,6 +28,6 @@ describe('Parse Sony DSF (DSD Stream File)', () => {
     // ID3v2 chunk information
     assert.strictEqual(common.title, 'Kyrie');
     assert.strictEqual(common.artist, 'CANTUS (Tove Ramlo-Ystad) & Frode Fjellheim');
-    assert.deepStrictEqual(common.track, { no: 4, of: 12 });
+    assert.deepStrictEqual(common.trackNumber, 4);
   });
 });
