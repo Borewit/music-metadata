@@ -5,6 +5,7 @@ import { InvalidFileError, InvalidPatchError, UnsupportedFeatureError } from '..
 import { lyricsText, normalizeLyrics } from '../core/lyrics.js';
 import { normalizeNumberPair } from '../core/patch.js';
 import type { TagPatch } from '../core/types.js';
+import { structuredText } from '../mapping/common.js';
 import { type AtomBudget, atom, type Box, boxes, copyBox, header, maxAtoms, zeros } from './atoms.js';
 
 const u32 = (n: number) => {
@@ -15,6 +16,11 @@ const u32 = (n: number) => {
 const textAtoms: Record<string, string> = {
   category: 'catg',
   podcastId: 'egid',
+  podcasturl: 'purl',
+  tvShow: 'tvsh',
+  tvShowSort: 'sosn',
+  tvEpisodeId: 'tven',
+  tvNetwork: 'tvnn',
   keywords: 'keyw',
   title: '©nam',
   artist: '©ART',
@@ -44,6 +50,7 @@ const freeform: Record<string, string> = {
   lyricist: 'LYRICIST',
   conductor: 'CONDUCTOR',
   remixer: 'REMIXER',
+  djmixer: 'DJMIXER',
   engineer: 'ENGINEER',
   producer: 'PRODUCER',
   originaldate: 'ORIGINALDATE',
@@ -75,10 +82,18 @@ const freeform: Record<string, string> = {
   musicbrainz_releasegroupid: 'MusicBrainz Release Group Id',
   musicbrainz_workid: 'MusicBrainz Work Id',
   musicbrainz_discid: 'MusicBrainz Disc Id',
+  musicbrainz_trmid: 'MusicBrainz TRM Id',
+  acoustid_id: 'Acoustid Id',
+  acoustid_fingerprint: 'Acoustid Fingerprint',
+  musicip_puid: 'MusicIP PUID',
+  musicip_fingerprint: 'fingerprint',
   replaygain_track_gain: 'replaygain_track_gain',
   replaygain_track_peak: 'replaygain_track_peak',
   replaygain_album_gain: 'replaygain_album_gain',
-  replaygain_album_peak: 'replaygain_album_peak'
+  replaygain_album_peak: 'replaygain_album_peak',
+  replaygain_track_minmax: 'replaygain_track_minmax',
+  replaygain_album_minmax: 'replaygain_album_minmax',
+  replaygain_undo: 'replaygain_undo'
 };
 const data = (type: number, value: Uint8Array) => atom('data', u32(type), zeros, value);
 function values(value: unknown): string[] {
@@ -158,7 +173,7 @@ export function editItems(
   const replacements = new Map<string, Uint8Array | null>();
   const canonical = (key: string) => (key.startsWith('----:') ? key.toLowerCase() : key);
   const replace = (key: string, value: Uint8Array | null) => replacements.set(canonical(key), value);
-  const entries = patch as Record<string, unknown>;
+  const entries: Record<string, unknown> = { ...patch, ...structuredText(patch) };
   const aliases = new Set([
     'totaltracks',
     'totaldiscs',
@@ -180,6 +195,9 @@ export function editItems(
       field === 'bpm' ||
       field === 'stik' ||
       field === 'hdVideo' ||
+      field === 'tvSeason' ||
+      field === 'tvEpisode' ||
+      field === 'podcast' ||
       field === 'showMovement' ||
       field === 'compilation' ||
       field === 'gapless'
@@ -304,6 +322,30 @@ export function editItems(
     }
     replace(key, value === null ? null : atom(key, data(22, Uint8Array.of(value))));
   }
+  for (const [field, key] of [
+    ['tvSeason', 'tvsn'],
+    ['tvEpisode', 'tves']
+  ] as const) {
+    const value = patch[field];
+    if (value === undefined) {
+      continue;
+    }
+    if (value === null) {
+      replace(key, null);
+      continue;
+    }
+    if (!Number.isSafeInteger(value) || value < 0) {
+      throw new InvalidPatchError(`MP4 ${field} must be a non-negative safe integer`);
+    }
+    // Use the usual four-byte signed representation, widening rather than overflowing.
+    const bytes = new Uint8Array(value <= 0x7fffffff ? 4 : 8);
+    if (bytes.length === 4) {
+      Token.UINT32_BE.put(bytes, 0, value);
+    } else {
+      Token.UINT64_BE.put(bytes, 0, BigInt(value));
+    }
+    replace(key, atom(key, data(21, bytes)));
+  }
   if (patch.bpm !== undefined) {
     if (patch.bpm === null) {
       replace('tmpo', null);
@@ -320,6 +362,7 @@ export function editItems(
   for (const [field, key] of [
     ['compilation', 'cpil'],
     ['gapless', 'pgap'],
+    ['podcast', 'pcst'],
     ['showMovement', 'shwm']
   ] as const) {
     const value = patch[field];
@@ -371,7 +414,7 @@ export function editItems(
       throw new InvalidPatchError('Invalid MP4 native key');
     }
     if (
-      ['trkn', 'disk', 'tmpo', 'cpil', 'pgap', 'covr'].includes(key) &&
+      ['trkn', 'disk', 'tmpo', 'cpil', 'pgap', 'pcst', 'tvsn', 'tves', 'covr'].includes(key) &&
       value !== null &&
       !(value instanceof Uint8Array)
     ) {
