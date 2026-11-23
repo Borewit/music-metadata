@@ -275,28 +275,28 @@ describe('Parse CAF (Core Audio File Format)', () => {
       assert.strictEqual(common.title, 'Fixture Piece');
       assert.strictEqual(common.artist, 'Able Baker');
       assert.strictEqual(common.album, 'The Book of Fixtures');
-      assert.deepEqual(common.track, { no: 7, of: null });
+      assert.deepEqual(common.trackNumber, 7);
       assert.strictEqual(common.bpm, 120);
       assert.strictEqual(common.key, 'Cm');
       assert.strictEqual(common.year, 2004);
       assert.strictEqual(common.date, '2004-06-01T12:00:00Z');
-      assert.deepEqual(common.composer, ['Charlie Delta']);
-      assert.deepEqual(common.lyricist, ['Echo Foxtrot']);
-      assert.deepEqual(common.genre, ['Jazz']);
+      assert.deepEqual(common.composers, ['Charlie Delta']);
+      assert.deepEqual(common.lyricists, ['Echo Foxtrot']);
+      assert.deepEqual(common.genres, ['Jazz']);
       assert.strictEqual(common.copyright, 'Copyright 2004 The CoolBandName');
-      assert.strictEqual(common.encodersettings, 'Fixture Encoder v4.2');
-      assert.strictEqual(common.encodedby, 'Fixture App v1.0');
+      assert.strictEqual(common.encoderSettings, 'Fixture Encoder v4.2');
+      assert.strictEqual(common.encodedBy, 'Fixture App v1.0');
     });
 
     it('keeps a comma separated value intact', async () => {
       const { common } = await mm.parseFile(path.join(cafSamplePath, 'info-tags.caf'));
-      assert.deepEqual(common.comment, [{ text: 'first note, second note' }]);
+      assert.deepEqual(common.comments, [{ text: 'first note, second note' }]);
     });
 
     it('splits comma separated values of list keys', async () => {
       const body = infoBody([
         ['artist', 'Able Baker, Charlie Delta'],
-        ['composer', 'Charlie Delta, Echo Foxtrot,'],
+        ['composer', 'Charlie Delta, Echo Foxtrot'],
         ['lyricist', ' Echo Foxtrot, Golf Hotel '],
         ['genre', 'Jazz,,Rock'],
         ['title', 'Split Title'],
@@ -309,15 +309,15 @@ describe('Parse CAF (Core Audio File Format)', () => {
         body
       );
       assert.deepEqual(common.artists, ['Able Baker', 'Charlie Delta']);
-      assert.deepEqual(common.composer, ['Charlie Delta', 'Echo Foxtrot']);
-      assert.deepEqual(common.lyricist, ['Echo Foxtrot', 'Golf Hotel']);
-      assert.deepEqual(common.genre, ['Jazz', 'Rock']);
+      assert.deepEqual(common.composers, ['Charlie Delta', 'Echo Foxtrot']);
+      assert.deepEqual(common.lyricists, ['Echo Foxtrot', 'Golf Hotel']);
+      assert.deepEqual(common.genres, ['Jazz', 'Rock']);
       assert.strictEqual(common.title, 'Split Title');
       // Freeform text keeps its literal comma
-      assert.deepEqual(common.comment, [{ text: 'first note, second note' }]);
+      assert.deepEqual(common.comments, [{ text: 'first note, second note' }]);
       const info = new Map(native.CAF.map(tag => [tag.id, tag.value]));
       assert.strictEqual(info.get('artist'), 'Able Baker, Charlie Delta');
-      assert.strictEqual(info.get('composer'), 'Charlie Delta, Echo Foxtrot,');
+      assert.strictEqual(info.get('composer'), 'Charlie Delta, Echo Foxtrot');
     });
 
     for (const id of ['constructor', 'toString', '__proto__', 'hasOwnProperty', 'valueOf']) {
@@ -343,7 +343,7 @@ describe('Parse CAF (Core Audio File Format)', () => {
             entries.map(([id, value]) => ({ id, value }))
           );
           assert.strictEqual(metadata.common.title, 'Following title');
-          assert.sameMembers(Object.keys(metadata.common), ['track', 'disk', 'movementIndex', 'title']);
+          assert.sameMembers(Object.keys(metadata.common), ['title']);
           assert.strictEqual(Object.getPrototypeOf(metadata.common), Object.prototype);
         });
       }
@@ -922,8 +922,13 @@ describe('Parse CAF (Core Audio File Format)', () => {
       );
     });
 
-    it('bounds comma-separated common-tag values before splitting them', async () => {
-      const body = infoBody([['artist', 'First,Second']]);
+    it.each([
+      ['artist', 'artists'],
+      ['composer', 'composers'],
+      ['lyricist', 'lyricists'],
+      ['genre', 'genres']
+    ] as const)('bounds comma-separated native %s values before splitting them', async (key, field) => {
+      const body = infoBody([[key, 'First,Second']]);
       const file = Buffer.concat([
         fileHeader,
         chunkHeader('desc', audioDescription.length),
@@ -937,7 +942,7 @@ describe('Parse CAF (Core Audio File Format)', () => {
           expect.stringContaining('Comma-separated value count 2 exceeds entry limit 1').asymmetricMatch(error.message)
       });
       const metadata = await mm.parseBuffer(file, { mimeType: cafMimeType }, { maxMetadataEntries: 2 });
-      assert.deepEqual(metadata.common.artists, ['First', 'Second']);
+      assert.deepEqual(metadata.common[field], ['First', 'Second']);
     });
 
     it('reassembles a large Information chunk from a stream in bounded pieces', async () => {

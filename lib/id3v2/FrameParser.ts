@@ -81,11 +81,11 @@ const urlEnc: ITextEncoding = { encoding: defaultEnc, bom: false };
 export function parseGenre(origVal: string, maxEntries = defaultMaxMetadataEntries): string[] {
   // match everything inside parentheses
   const genres: string[] = [];
-  const addGenre = (genre: string): void => {
+  const addGenre = (value: string): void => {
     if (genres.length >= maxEntries) {
       throw new Id3v2ContentError(`TCON value count ${genres.length + 1} exceeds entry limit ${maxEntries}`);
     }
-    genres.push(genre);
+    genres.push(value);
   };
   let word: string | undefined = '';
   for (let offset = 0; offset < origVal.length; ) {
@@ -349,13 +349,13 @@ export class FrameParser {
 
         const textStr = FrameParser.readNullTerminatedString(uint8Array.subarray(offset), textHeader.encoding);
 
-        const comment: IComment = {
+        const comments: IComment = {
           language: textHeader.language,
           descriptor: descriptorStr.text,
           text: textStr.text
         };
 
-        output = comment;
+        output = comments;
         break;
       }
 
@@ -526,7 +526,7 @@ export class FrameParser {
         }
 
         const toc: TableOfContents = {
-          label,
+          label: label,
           flags: { topLevel, ordered },
           childElementIds,
           // Optional embedded sub-frames (e.g. TIT2) follow after the child list.

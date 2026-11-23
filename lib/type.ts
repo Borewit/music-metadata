@@ -84,8 +84,10 @@ export interface IRating {
 }
 
 export interface ICommonTagsResult {
-  track: { no: number | null; of: number | null };
-  disk: { no: number | null; of: number | null };
+  /** Track number on the release. */
+  trackNumber?: number;
+  /** Disc number on the release. */
+  discNumber?: number;
   /**
    * Release year
    */
@@ -105,11 +107,11 @@ export interface ICommonTagsResult {
   /**
    * Track album artist/s. Contains the first album artist if multiple tags exist, or maybe several album artists written in a single string.
    */
-  albumartist?: string;
+  albumArtist?: string;
   /**
    * Track album artists, aims to capture every album artist in a different string.
    */
-  albumartists?: string[];
+  albumArtists?: string[];
   /**
    * Album title
    */
@@ -121,23 +123,23 @@ export interface ICommonTagsResult {
   /**
    * Original release date
    */
-  originaldate?: string;
+  originalDate?: string;
   /**
    * Original release year
    */
-  originalyear?: number;
+  originalYear?: number;
   /**
    * Release date
    */
-  releasedate?: string;
+  releaseDate?: string;
   /**
    * List of comments
    */
-  comment?: IComment[];
+  comments?: IComment[];
   /**
    * Genre
    */
-  genre?: string[];
+  genres?: string[];
   /**
    * Embedded album art
    */
@@ -145,7 +147,7 @@ export interface ICommonTagsResult {
   /**
    * Track composer
    */
-  composer?: string[];
+  composers?: string[];
   /**
    * Synchronized lyrics
    */
@@ -153,11 +155,11 @@ export interface ICommonTagsResult {
   /**
    * Album title, formatted for alphabetic ordering
    */
-  albumsort?: string;
+  albumSort?: string;
   /**
    * Track title, formatted for alphabetic ordering
    */
-  titlesort?: string;
+  titleSort?: string;
   /**
    * The canonical title of the work
    */
@@ -165,67 +167,104 @@ export interface ICommonTagsResult {
   /**
    * Track artist, formatted for alphabetic ordering
    */
-  artistsort?: string;
+  artistSort?: string;
   /**
    * Album artist, formatted for alphabetic ordering
    */
-  albumartistsort?: string;
+  albumArtistSort?: string;
   /**
    * Composer, formatted for alphabetic ordering
    */
-  composersort?: string;
+  composerSort?: string;
   /**
    * Lyricist(s)
    */
-  lyricist?: string[];
+  lyricists?: string[];
   /**
    * Writer(s)
    */
-  writer?: string[];
+  writers?: string[];
   /**
    * Conductor(s)
    */
-  conductor?: string[];
+  conductors?: string[];
   /**
    * Remixer(s)
    */
-  remixer?: string[];
+  remixers?: string[];
   /**
    * Arranger(s)
    */
-  arranger?: string[];
+  arrangers?: string[];
   /**
    * Engineer(s)
    */
-  engineer?: string[];
+  engineers?: string[];
   /**
    * Publisher(s)
    */
-  publisher?: string[];
+  publishers?: string[];
   /**
    * Producer(s)
    */
-  producer?: string[];
+  producers?: string[];
   /**
    * Mix-DJ(s)
    */
-  djmixer?: string[];
+  djMixers?: string[];
   /**
    * Mixed by
    */
-  mixer?: string[];
-  technician?: string[];
-  label?: string[];
+  mixers?: string[];
+  /**
+   * Technician(s) involved in the production
+   */
+  technicians?: string[];
+  /**
+   * Record label(s)
+   */
+  labels?: string[];
+  /**
+   * Content group or grouping, used to group related tracks
+   */
   grouping?: string;
-  subtitle?: string[];
+  /**
+   * Subtitle(s)
+   */
+  subtitles?: string[];
+  /**
+   * Description(s)
+   */
   description?: string[];
+  /**
+   * Extended description, e.g. for podcasts or audiobooks
+   */
   longDescription?: string;
-  discsubtitle?: string[];
-  totaltracks?: string;
-  totaldiscs?: string;
+  /**
+   * Disc subtitle(s), such as 'Data' or 'Bonus'
+   */
+  discSubtitle?: string[];
+  /**
+   * Total number of tracks on the release
+   */
+  trackTotal?: number;
+  /**
+   * Total number of discs on the release
+   */
+  discTotal?: number;
+  /** Total movements in the work. */
   movementTotal?: number;
+  /**
+   * Indicates whether the release is a compilation
+   */
   compilation?: boolean;
+  /**
+   * Rating(s) associated with the track or album
+   */
   rating?: IRating[];
+  /**
+   * Beats per minute
+   */
   bpm?: number;
   /**
    * Keywords to reflect the mood of the audio, e.g. 'Romantic' or 'Sad'
@@ -238,7 +277,7 @@ export interface ICommonTagsResult {
   /**
    * Release catalog number(s)
    */
-  catalognumber?: string[];
+  catalogNumber?: string[];
   /**
    * TV show title
    */
@@ -263,21 +302,65 @@ export interface ICommonTagsResult {
    * TV network
    */
   tvNetwork?: string;
+  /**
+   * Indicates whether the track belongs to a podcast
+   */
   podcast?: boolean;
-  podcasturl?: string;
-  releasestatus?: string;
-  releasetype?: string[];
-  releasecountry?: string;
+  /**
+   * Podcast URL
+   */
+  podcastUrl?: string;
+  /**
+   * Release status, e.g. 'Official'
+   */
+  releaseStatus?: string;
+  /**
+   * Release type(s), e.g. 'Album' or 'Single'
+   */
+  releaseType?: string[];
+  /**
+   * Release country
+   */
+  releaseCountry?: string;
+  /**
+   * Script used for the lyrics or text, e.g. 'Latn'
+   */
   script?: string;
+  /**
+   * Language used for the lyrics or metadata, e.g. 'eng'
+   */
   language?: string;
+  /**
+   * Copyright message
+   */
   copyright?: string;
+  /**
+   * License under which the release is distributed
+   */
   license?: string;
-  encodedby?: string;
-  encodersettings?: string;
+  /**
+   * Person or organisation that encoded the file
+   */
+  encodedBy?: string;
+  /**
+   * Settings used by the encoder
+   */
+  encoderSettings?: string;
+  /**
+   * Indicates whether the track is gapless
+   */
   gapless?: boolean;
+  /**
+   * Release barcode
+   */
   barcode?: string; // ToDo: multiple??
-  // International Standard Recording Code
-  isrc?: string[];
+  /**
+   * International Standard Recording Code(s)
+   */
+  isrcs?: string[];
+  /**
+   * Amazon Standard Identification Number
+   */
   asin?: string;
   /** MusicBrainz composer identifiers. */
   mbComposerId?: string[];
@@ -297,80 +380,157 @@ export interface ICommonTagsResult {
   replayGainTrackRange?: number;
   /** ReplayGain reference loudness, in dB SPL. */
   replayGainReferenceLoudness?: number;
-  musicbrainz_recordingid?: string;
-  musicbrainz_trackid?: string;
-  musicbrainz_albumid?: string;
-  musicbrainz_artistid?: string[];
-  musicbrainz_albumartistid?: string[];
-  musicbrainz_releasegroupid?: string;
-  musicbrainz_workid?: string;
-  musicbrainz_trmid?: string;
-  musicbrainz_discid?: string;
-  acoustid_id?: string;
-  acoustid_fingerprint?: string;
-  musicip_puid?: string;
-  musicip_fingerprint?: string;
+  /**
+   * MusicBrainz recording ID
+   */
+  mbRecordingId?: string;
+  /**
+   * MusicBrainz release track ID
+   */
+  mbReleaseTrackId?: string;
+  /**
+   * MusicBrainz release ID
+   */
+  mbReleaseId?: string;
+  /**
+   * MusicBrainz artist ID(s)
+   */
+  mbArtistId?: string[];
+  /**
+   * MusicBrainz album artist ID(s)
+   */
+  mbAlbumArtistId?: string[];
+  /**
+   * MusicBrainz release group ID
+   */
+  mbReleaseGroupId?: string;
+  /**
+   * MusicBrainz work ID
+   */
+  mbWorkId?: string;
+  /**
+   * MusicBrainz TRM ID (legacy audio fingerprint)
+   */
+  mbTrmId?: string;
+  /**
+   * MusicBrainz disc ID
+   */
+  mbDiscId?: string;
+  /**
+   * AcoustID
+   */
+  acoustId?: string;
+  /**
+   * Chromaprint fingerprint associated with the AcoustID
+   */
+  acoustIdFingerprint?: string;
+  /**
+   * MusicIP PUID (legacy audio fingerprint)
+   */
+  musicIpPuid?: string;
+  /**
+   * MusicIP fingerprint
+   */
+  musicIpFingerprint?: string;
+  /**
+   * Related website URL
+   */
   website?: string;
+  /**
+   * Performer(s) with the instrument they play, e.g. 'Joe:guitar'
+   */
   'performer:instrument'?: string[];
+  /**
+   * Average volume level
+   */
   averageLevel?: number;
+  /**
+   * Peak volume level
+   */
   peakLevel?: number;
+  /**
+   * Free-form notes
+   */
   notes?: string[];
-  originalalbum?: string;
-  originalartist?: string;
-  // Discogs:
-  discogs_artist_id?: number[];
-  discogs_release_id?: number;
-  discogs_label_id?: number;
-  discogs_master_release_id?: number;
-  discogs_votes?: number;
-  discogs_rating?: number;
+  /**
+   * Original album title
+   */
+  originalAlbum?: string;
+  /**
+   * Original artist
+   */
+  originalArtist?: string;
+  /**
+   * Discogs artist ID(s)
+   */
+  discogsArtistId?: number[];
+  /**
+   * Discogs release ID
+   */
+  discogsReleaseId?: number;
+  /**
+   * Discogs label ID
+   */
+  discogsLabelId?: number;
+  /**
+   * Discogs master release ID
+   */
+  discogsMasterReleaseId?: number;
+  /**
+   * Number of Discogs votes
+   */
+  discogsVotes?: number;
+  /**
+   * Discogs rating
+   */
+  discogsRating?: number;
 
   /**
    * Track gain ratio [0..1]
    */
-  replaygain_track_gain_ratio?: number;
+  replayGainTrackGainRatio?: number;
   /**
    * Track peak ratio [0..1]
    */
-  replaygain_track_peak_ratio?: number;
+  replayGainTrackPeakRatio?: number;
 
   /**
    * Track gain ratio
    */
-  replaygain_track_gain?: IRatio;
+  replayGainTrackGain?: IRatio;
 
   /**
    * Track peak ratio
    */
-  replaygain_track_peak?: IRatio;
+  replayGainTrackPeak?: IRatio;
 
   /**
    * Album gain ratio
    */
-  replaygain_album_gain?: IRatio;
+  replayGainAlbumGain?: IRatio;
 
   /**
    * Album peak ratio
    */
-  replaygain_album_peak?: IRatio;
+  replayGainAlbumPeak?: IRatio;
 
   /**
-   * minimum & maximum global gain values across a set of files scanned as an album
+   * ReplayGain undo information: gain adjustments applied to the left and right channels
    */
-  replaygain_undo?: {
+  replayGainUndo?: {
     leftChannel: number;
     rightChannel: number;
   };
 
   /**
-   * minimum & maximum global gain values across a set of file
+   * minimum & maximum global gain values across a set of files
    */
-  replaygain_track_minmax?: number[];
+  replayGainTrackMinMax?: number[];
 
   /**
    * minimum & maximum global gain values across a set of files scanned as an album
    */
-  replaygain_album_minmax?: number[];
+  replayGainAlbumMinMax?: number[];
 
   /**
    * The initial key of the music in the file, e.g. "A Minor".
@@ -381,7 +541,7 @@ export interface ICommonTagsResult {
   /**
    * Podcast Category
    */
-  category?: string[];
+  categories?: string[];
   /**
    * iTunes Video Quality
    *
@@ -399,9 +559,9 @@ export interface ICommonTagsResult {
    */
   movement?: string;
   /**
-   * Movement Index/Total
+   * Movement number within the work
    */
-  movementIndex: { no: number | null; of: number | null };
+  movementNumber?: number;
   /**
    * Podcast Identifier
    */
@@ -425,6 +585,9 @@ export interface ICommonTagsResult {
    */
   stik?: number;
 
+  /**
+   * Number of times the track has been played
+   */
   playCounter?: number;
 }
 

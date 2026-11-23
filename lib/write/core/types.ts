@@ -14,12 +14,12 @@ export type TextPatch = string | readonly string[] | null;
  *
  * A missing property is left untouched; `null` removes it.
  */
-export type NumberPairPatch = Partial<ICommonTagsResult['track']>;
+export type NumberPairPatch = { no?: number | null; of?: number | null };
 
 /**
  * Track or disc number as returned by `music-metadata`.
  */
-export type NumberPair = ICommonTagsResult['track'];
+export type NumberPair = { no: number | null; of: number | null };
 
 /**
  * Embedded picture, extending `music-metadata`'s `IPicture` with the optional
@@ -121,40 +121,40 @@ export type LyricsPatch = string | LyricsEntry | readonly (string | LyricsEntry)
 interface CustomTagPatch {
   notes?: TextPatch;
   barcode?: TextPatch;
-  releasecountry?: TextPatch;
+  releaseCountry?: TextPatch;
   asin?: TextPatch;
-  albumartistsort?: TextPatch;
-  artistsort?: TextPatch;
+  albumArtistSort?: TextPatch;
+  artistSort?: TextPatch;
   script?: TextPatch;
-  releasestatus?: TextPatch;
-  releasetype?: TextPatch;
-  acoustid_id?: TextPatch;
+  releaseStatus?: TextPatch;
+  releaseType?: TextPatch;
+  acoustId?: TextPatch;
   rating?: Readonly<NonNullable<ICommonTagsResult['rating']>> | null;
   title?: TextPatch;
   artist?: TextPatch;
   artists?: TextPatch;
-  albumartist?: TextPatch;
-  albumartists?: TextPatch;
+  albumArtist?: TextPatch;
+  albumArtists?: TextPatch;
   album?: TextPatch;
   date?: TextPatch;
-  originaldate?: TextPatch;
-  originalyear?: number | null;
-  releasedate?: TextPatch;
-  genre?: TextPatch;
-  comment?: Comment | readonly Comment[] | string | null;
-  composer?: TextPatch;
-  lyricist?: TextPatch;
-  writer?: TextPatch;
-  conductor?: TextPatch;
-  remixer?: TextPatch;
-  arranger?: TextPatch;
-  engineer?: TextPatch;
-  producer?: TextPatch;
-  mixer?: TextPatch;
-  technician?: TextPatch;
-  label?: TextPatch;
-  catalognumber?: TextPatch;
-  isrc?: TextPatch;
+  originalDate?: TextPatch;
+  originalYear?: number | null;
+  releaseDate?: TextPatch;
+  genres?: TextPatch;
+  comments?: Comment | readonly Comment[] | string | null;
+  composers?: TextPatch;
+  lyricists?: TextPatch;
+  writers?: TextPatch;
+  conductors?: TextPatch;
+  remixers?: TextPatch;
+  arrangers?: TextPatch;
+  engineers?: TextPatch;
+  producers?: TextPatch;
+  mixers?: TextPatch;
+  technicians?: TextPatch;
+  labels?: TextPatch;
+  catalogNumber?: TextPatch;
+  isrcs?: TextPatch;
   /** iTunes MP4 media kind. */
   stik?: number | null;
   bpm?: number | string | null;
@@ -162,7 +162,7 @@ interface CustomTagPatch {
   media?: TextPatch;
   mood?: TextPatch;
   grouping?: TextPatch;
-  subtitle?: TextPatch;
+  subtitles?: TextPatch;
   /**
    * MP4 Nero chapters: undefined preserves, null/[] removes, an array replaces.
    * Uses each chapter's timeScale (default 1). Supports at most 255 chapters
@@ -179,27 +179,27 @@ interface CustomTagPatch {
   track?: NumberPairPatch | null;
   disk?: NumberPairPatch | null;
   /** MusicBrainz recording identifier (the Vorbis `MUSICBRAINZ_TRACKID` field). */
-  musicbrainz_recordingid?: TextPatch;
+  mbRecordingId?: TextPatch;
   /** MusicBrainz release-track identifier (the Vorbis `MUSICBRAINZ_RELEASETRACKID` field). */
-  musicbrainz_trackid?: TextPatch;
+  mbReleaseTrackId?: TextPatch;
   /** MusicBrainz release identifier. */
-  musicbrainz_albumid?: TextPatch;
+  mbReleaseId?: TextPatch;
   /** MusicBrainz artist identifier. */
-  musicbrainz_artistid?: TextPatch;
+  mbArtistId?: TextPatch;
   /** MusicBrainz album-artist identifier. */
-  musicbrainz_albumartistid?: TextPatch;
+  mbAlbumArtistId?: TextPatch;
   /** MusicBrainz release-group identifier. */
-  musicbrainz_releasegroupid?: TextPatch;
+  mbReleaseGroupId?: TextPatch;
   /** MusicBrainz work identifier. */
-  musicbrainz_workid?: TextPatch;
+  mbWorkId?: TextPatch;
   /** ReplayGain track gain, e.g. `-6.20 dB`. */
-  replaygain_track_gain?: TextPatch | ICommonTagsResult['replaygain_track_gain'];
+  replayGainTrackGain?: TextPatch | ICommonTagsResult['replayGainTrackGain'];
   /** ReplayGain track peak, e.g. `0.988`. */
-  replaygain_track_peak?: TextPatch | ICommonTagsResult['replaygain_track_peak'];
+  replayGainTrackPeak?: TextPatch | ICommonTagsResult['replayGainTrackPeak'];
   /** ReplayGain album gain, e.g. `-6.20 dB`. */
-  replaygain_album_gain?: TextPatch | ICommonTagsResult['replaygain_album_gain'];
+  replayGainAlbumGain?: TextPatch | ICommonTagsResult['replayGainAlbumGain'];
   /** ReplayGain album peak, e.g. `0.988`. */
-  replaygain_album_peak?: TextPatch | ICommonTagsResult['replaygain_album_peak'];
+  replayGainAlbumPeak?: TextPatch | ICommonTagsResult['replayGainAlbumPeak'];
   /**
    * Format-native fields, applied after the common mapping.
    *

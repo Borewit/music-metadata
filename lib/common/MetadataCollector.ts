@@ -25,8 +25,8 @@ import { VorbisMovement } from './VorbisMovement.js';
 
 const debug = initDebug('music-metadata:collector');
 
-type SingularArtistId = 'artist' | 'albumartist';
-type PluralArtistId = 'artists' | 'albumartists';
+type SingularArtistId = 'artist' | 'albumArtist';
+type PluralArtistId = 'artists' | 'albumArtists';
 
 const TagPriority: TagType[] = [
   'matroska',
@@ -104,11 +104,7 @@ export class MetadataCollector implements INativeMetadataCollector {
     return toNativeTyped(this.native);
   }
 
-  public readonly common: ICommonTagsResult = {
-    track: { no: null, of: null },
-    disk: { no: null, of: null },
-    movementIndex: { no: null, of: null }
-  };
+  public readonly common: ICommonTagsResult = {};
 
   public readonly quality: IQualityInformation = {
     warnings: []
@@ -209,14 +205,14 @@ export class MetadataCollector implements INativeMetadataCollector {
       case 'artist':
         return this.handleSingularArtistTag(tagType, tag, 'artist', 'artists');
 
-      case 'albumartist':
-        return this.handleSingularArtistTag(tagType, tag, 'albumartist', 'albumartists');
+      case 'albumArtist':
+        return this.handleSingularArtistTag(tagType, tag, 'albumArtist', 'albumArtists');
 
       case 'artists':
         return this.handlePluralArtistTag(tagType, tag, 'artist', 'artists');
 
-      case 'albumartists':
-        return this.handlePluralArtistTag(tagType, tag, 'albumartist', 'albumartists');
+      case 'albumArtists':
+        return this.handlePluralArtistTag(tagType, tag, 'albumArtist', 'albumArtists');
 
       case 'picture':
         return this.postFixPicture(tag.value as IPicture).then(picture => {
@@ -226,34 +222,37 @@ export class MetadataCollector implements INativeMetadataCollector {
           }
         });
 
-      case 'totaltracks':
-        this.common.track.of = CommonTagMapper.toIntOrNull(tag.value as string);
-        this.notifyCommonTag({ id: 'track', value: { ...this.common.track } });
+      case 'trackTotal':
+      case 'discTotal':
+      case 'movementTotal': {
+        const total = CommonTagMapper.toIntOrNull(tag.value as string);
+        if (total !== null) {
+          this.setGenericTag(tagType, { id: tag.id, value: total });
+        }
         return;
+      }
 
-      case 'totaldiscs':
-        this.common.disk.of = CommonTagMapper.toIntOrNull(tag.value as string);
-        this.notifyCommonTag({ id: 'disk', value: { ...this.common.disk } });
-        return;
-
-      case 'movementTotal':
-        this.common.movementIndex.of = CommonTagMapper.toIntOrNull(tag.value as string);
-        this.notifyCommonTag({ id: 'movementIndex', value: { ...this.common.movementIndex } });
-        return;
-
-      case 'track':
-      case 'disk':
-      case 'movementIndex': {
-        const of = this.common[tag.id].of; // store of value, maybe maybe overwritten
-        this.common[tag.id] = CommonTagMapper.normalizeTrack(tag.value as string);
-        this.common[tag.id].of = of != null ? of : this.common[tag.id].of;
-        this.notifyCommonTag({ id: tag.id, value: { ...this.common[tag.id] } });
+      case 'trackNumber':
+      case 'discNumber':
+      case 'movementNumber': {
+        const pair = CommonTagMapper.normalizeTrack(tag.value as string);
+        if (pair.no !== null) {
+          this.setGenericTag(tagType, { id: tag.id, value: pair.no });
+        }
+        const totalId =
+          tag.id === 'trackNumber' ? 'trackTotal' : tag.id === 'discNumber' ? 'discTotal' : 'movementTotal';
+        if (
+          pair.of !== null &&
+          (this.common[totalId] === undefined || this.originPriority[tagType] < this.commonOrigin[totalId])
+        ) {
+          this.setGenericTag(tagType, { id: totalId, value: pair.of });
+        }
         return;
       }
 
       case 'bpm':
       case 'year':
-      case 'originalyear':
+      case 'originalYear':
         tag.value = Number.parseInt(tag.value as string, 10);
         break;
 
@@ -271,11 +270,11 @@ export class MetadataCollector implements INativeMetadataCollector {
       case 'hdVideo':
       case 'stik':
       case 'playCounter':
-      case 'discogs_label_id':
-      case 'discogs_release_id':
-      case 'discogs_master_release_id':
-      case 'discogs_artist_id':
-      case 'discogs_votes':
+      case 'discogsLabelId':
+      case 'discogsReleaseId':
+      case 'discogsMasterReleaseId':
+      case 'discogsArtistId':
+      case 'discogsVotes':
         tag.value = typeof tag.value === 'string' ? Number.parseInt(tag.value, 10) : tag.value;
         break;
 
@@ -289,14 +288,14 @@ export class MetadataCollector implements INativeMetadataCollector {
         break;
       }
 
-      case 'discogs_rating':
+      case 'discogsRating':
         tag.value = typeof tag.value === 'string' ? Number.parseFloat(tag.value) : tag.value;
         break;
 
-      case 'replaygain_track_gain':
-      case 'replaygain_track_peak':
-      case 'replaygain_album_gain':
-      case 'replaygain_album_peak': {
+      case 'replayGainTrackGain':
+      case 'replayGainTrackPeak':
+      case 'replayGainAlbumGain':
+      case 'replayGainAlbumPeak': {
         const ratio = toRatio(tag.value as string);
         if (!ratio) {
           this.addWarning(`Invalid ReplayGain value for ${tagType}.${tag.id}`);
@@ -325,12 +324,12 @@ export class MetadataCollector implements INativeMetadataCollector {
         break;
       }
 
-      case 'replaygain_album_minmax':
-      case 'replaygain_track_minmax':
+      case 'replayGainAlbumMinMax':
+      case 'replayGainTrackMinMax':
         tag.value = (tag.value as string).split(',', 2).map(v => Number.parseInt(v, 10));
         break;
 
-      case 'replaygain_undo': {
+      case 'replayGainUndo': {
         const minMix = (tag.value as string).split(',', 2).map(v => Number.parseInt(v, 10));
         tag.value = {
           leftChannel: minMix[0],
@@ -346,7 +345,7 @@ export class MetadataCollector implements INativeMetadataCollector {
         tag.value = tag.value === '1' || tag.value === 1 || tag.value === true; // boolean
         break;
 
-      case 'isrc': {
+      case 'isrcs': {
         // Only keep unique values
         const commonTag = this.common[tag.id];
         if (commonTag && commonTag.indexOf(tag.value as string) !== -1) {
@@ -355,7 +354,7 @@ export class MetadataCollector implements INativeMetadataCollector {
         break;
       }
 
-      case 'comment':
+      case 'comments':
         if (typeof tag.value === 'string') {
           tag.value = { text: tag.value };
         }
@@ -508,8 +507,12 @@ export class MetadataCollector implements INativeMetadataCollector {
         await this.postMap(tagType, { id: 'movement', value: movement.name });
       }
       // Selection already resolves embedded versus dedicated totals.
-      this.common.movementIndex.of = movement.index.of;
-      await this.postMap(tagType, { id: 'movementIndex', value: String(movement.index.no ?? '') });
+      if (movement.index.of === null) {
+        delete this.common.movementTotal;
+      } else {
+        await this.postMap(tagType, { id: 'movementTotal', value: String(movement.index.of) });
+      }
+      await this.postMap(tagType, { id: 'movementNumber', value: String(movement.index.no ?? '') });
       return;
     }
 

@@ -23,12 +23,12 @@ describe('Decode MP3/ID3v2.4', () => {
       assert.strictEqual(metadata.common.title, 'Home', 'title');
       assert.strictEqual(metadata.common.artist, 'Explo', 'common.artist');
       assert.deepEqual(metadata.common.artists, ['Explo', 'ions', 'nodejsftws'], 'common.artists');
-      assert.strictEqual(metadata.common.albumartist, 'Soundtrack', 'albumartist');
+      assert.strictEqual(metadata.common.albumArtist, 'Soundtrack', 'albumArtist');
       assert.strictEqual(metadata.common.album, 'Friday Night Lights [Original Movie Soundtrack]', 'album');
       assert.strictEqual(metadata.common.year, 2004, 'year');
-      assert.deepEqual(metadata.common.track, { no: 5, of: null }, 'common.track');
-      assert.deepEqual(metadata.common.disk, { no: 1, of: 1 }, 'common.disk');
-      assert.deepEqual(metadata.common.genre, ['Soundtrack', 'OST'], 'common.genres');
+      assert.deepEqual(metadata.common.trackNumber, 5, 'common.trackNumber');
+      assert.deepEqual(metadata.common.discNumber, 1, 'common.discNumber');
+      assert.deepEqual(metadata.common.genres, ['Soundtrack', 'OST'], 'common.genre');
       assert.strictEqual(metadata.common.picture[0].format, 'image/jpeg', 'common.picture 0 format');
       assert.strictEqual(metadata.common.picture[0].data.length, 80938, 'common.picture 0 length');
       assert.strictEqual(metadata.common.picture[1].format, 'image/jpeg', 'common.picture 1 format');
@@ -41,7 +41,7 @@ describe('Decode MP3/ID3v2.4', () => {
     const filePath = path.join(samplePath, 'mp3', 'issue-502.mp3');
     const { common } = await mm.parseFile(filePath);
     assert.deepEqual(
-      common.comment,
+      common.comments,
       [
         {
           descriptor: 'iTunPGAP',
@@ -109,15 +109,15 @@ describe('Decode MP3/ID3v2.4', () => {
       1,
       'ID3v2.4 tag TXXX:ISRC to be defined'
     );
-    assert.includeDeepMembers(common.isrc, ['DEAE61300058'], 'ISRC');
+    assert.includeDeepMembers(common.isrcs, ['DEAE61300058'], 'ISRC');
   });
 
   it('should support multiple album artists (TPE2)', async () => {
     const filePath = path.join(samplePath, 'mp3/id3v2.4-with-multiple-album-artists-null-separated.mp3');
     const { common } = await mm.parseFile(filePath);
 
-    assert.strictEqual(common.albumartist, 'ArtistOne', 'common.albumartist');
-    assert.deepEqual(common.albumartists, ['ArtistOne', 'ArtistTwo'], 'common.albumartists');
+    assert.strictEqual(common.albumArtist, 'ArtistOne', 'common.albumartist');
+    assert.deepEqual(common.albumArtists, ['ArtistOne', 'ArtistTwo'], 'common.albumartists');
   });
 
   // https://id3.org/id3v2.4.0-frame
@@ -227,7 +227,7 @@ describe('Decode MP3/ID3v2.4', () => {
       );
       assert.strictEqual(common.album, 'Not a synchsafe integer '.repeat(12).slice(0, 255), 'common.album');
       assert.strictEqual(common.artist, 'Artist', 'common.artist');
-      assert.deepEqual(common.genre, ['Silence'], 'common.genre');
+      assert.deepEqual(common.genres, ['Silence'], 'common.genre');
       assert.deepEqual(
         quality.warnings.map(warning => warning.message),
         [
@@ -294,7 +294,8 @@ describe('Decode MP3/ID3v2.4', () => {
       const filePath = path.join(samplePath, filename);
 
       return mm.parseFile(filePath).then(metadata => {
-        assert.deepEqual(metadata.common.movementIndex, { no: 1, of: 4 }, 'metadata.common.movementIndex');
+        assert.deepEqual(metadata.common.movementNumber, 1, 'metadata.common.movementNumber');
+        assert.deepEqual(metadata.common.movementTotal, 4, 'metadata.common.movementTotal');
       });
     });
 
@@ -312,7 +313,7 @@ describe('Decode MP3/ID3v2.4', () => {
       const filePath = path.join(samplePath, filename);
 
       return mm.parseFile(filePath).then(metadata => {
-        assert.deepEqual(metadata.common.category, ['Podcast Category'], 'metadata.common.category');
+        assert.deepEqual(metadata.common.categories, ['Podcast Category'], 'metadata.common.category');
       });
     });
 
@@ -339,7 +340,7 @@ describe('Decode MP3/ID3v2.4', () => {
       const filePath = path.join(samplePath, filename);
 
       return mm.parseFile(filePath).then(metadata => {
-        assert.strictEqual(metadata.common.podcasturl, 'http://podcast.url', 'metadata.common.podcasturl');
+        assert.strictEqual(metadata.common.podcastUrl, 'http://podcast.url', 'metadata.common.podcasturl');
       });
     });
 
@@ -348,7 +349,7 @@ describe('Decode MP3/ID3v2.4', () => {
       const filePath = path.join(samplePath, filename);
 
       return mm.parseFile(filePath).then(metadata => {
-        assert.deepEqual(metadata.common.subtitle, ['Short Description'], 'metadata.common.subscription');
+        assert.deepEqual(metadata.common.subtitles, ['Short Description'], 'metadata.common.subscription');
       });
     });
 
@@ -366,7 +367,7 @@ describe('Decode MP3/ID3v2.4', () => {
       const filePath = path.join(samplePath, filename);
 
       return mm.parseFile(filePath).then(metadata => {
-        assert.strictEqual(metadata.common.albumartistsort, 'Album Artist Sort', 'metadata.common.albumartistsort');
+        assert.strictEqual(metadata.common.albumArtistSort, 'Album Artist Sort', 'metadata.common.albumartistsort');
       });
     });
 
@@ -375,7 +376,7 @@ describe('Decode MP3/ID3v2.4', () => {
       const filePath = path.join(samplePath, filename);
 
       return mm.parseFile(filePath).then(metadata => {
-        assert.strictEqual(metadata.common.albumsort, 'Album Sort', 'metadata.common.albumsort');
+        assert.strictEqual(metadata.common.albumSort, 'Album Sort', 'metadata.common.albumsort');
       });
     });
 
@@ -384,7 +385,7 @@ describe('Decode MP3/ID3v2.4', () => {
       const filePath = path.join(samplePath, filename);
 
       return mm.parseFile(filePath).then(metadata => {
-        assert.strictEqual(metadata.common.artistsort, 'Artist Sort', 'metadata.common.artistsort');
+        assert.strictEqual(metadata.common.artistSort, 'Artist Sort', 'metadata.common.artistsort');
       });
     });
 
@@ -393,7 +394,7 @@ describe('Decode MP3/ID3v2.4', () => {
       const filePath = path.join(samplePath, filename);
 
       return mm.parseFile(filePath).then(metadata => {
-        assert.deepEqual(metadata.common.composersort, 'Composer Sort', 'metadata.common.composersort');
+        assert.deepEqual(metadata.common.composerSort, 'Composer Sort', 'metadata.common.composersort');
       });
     });
 
@@ -402,7 +403,7 @@ describe('Decode MP3/ID3v2.4', () => {
       const filePath = path.join(samplePath, filename);
 
       return mm.parseFile(filePath).then(metadata => {
-        assert.strictEqual(metadata.common.titlesort, 'Title Sort', 'metadata.common.titlesort');
+        assert.strictEqual(metadata.common.titleSort, 'Title Sort', 'metadata.common.titlesort');
       });
     });
 
@@ -430,7 +431,7 @@ describe('Decode MP3/ID3v2.4', () => {
 
       return mm.parseFile(filePath).then(metadata => {
         assert.deepEqual(
-          metadata.common.comment,
+          metadata.common.comments,
           [
             {
               descriptor: '',
@@ -448,7 +449,7 @@ describe('Decode MP3/ID3v2.4', () => {
       const filePath = path.join(samplePath, filename);
 
       return mm.parseFile(filePath).then(metadata => {
-        assert.strictEqual(metadata.common.releasedate, '2020-06-29T00:00:00.000Z', 'metadata.common.date');
+        assert.strictEqual(metadata.common.releaseDate, '2020-06-29T00:00:00.000Z', 'metadata.common.date');
       });
     });
 
@@ -457,7 +458,7 @@ describe('Decode MP3/ID3v2.4', () => {
       const filePath = path.join(samplePath, filename);
 
       return mm.parseFile(filePath).then(metadata => {
-        assert.strictEqual(metadata.common.originalalbum, 'Original Album', 'metadata.common.originalalbum');
+        assert.strictEqual(metadata.common.originalAlbum, 'Original Album', 'metadata.common.originalAlbum');
       });
     });
   });

@@ -22,6 +22,7 @@ import {
 import { updateBuffer as updateBrowserBuffer } from '../lib/write/browser.js';
 import * as sources from '../lib/write/core/source.js';
 import { openSource } from '../lib/write/core/source.js';
+import { FileTagSnapshot, writeFileTags } from '../lib/write/file.js';
 import { buildMp4Update } from '../lib/write/mp4/mp4.js';
 import { readTags } from './helpers/read.js';
 
@@ -114,23 +115,25 @@ describe('MP4 metadata', () => {
       const output = await updateBuffer(input, {
         title: '标题 🎵',
         artist: 'Artist',
-        albumartist: 'Album artist',
+        albumArtist: 'Album artist',
         album: 'Album',
-        genre: ['Ambient', 'Electronic'],
+        genres: ['Ambient', 'Electronic'],
         date: '2026-11-02',
         year: 2025,
-        track: { no: 2, of: 12 },
-        disk: { no: 1, of: 2 },
+        trackNumber: 2,
+        trackTotal: 12,
+        discNumber: 1,
+        discTotal: 2,
         bpm: 123,
         lyrics: [{ language: 'eng', text: 'Words' }],
-        comment: [{ text: 'Notes' }],
+        comments: [{ text: 'Notes' }],
         compilation: true,
         copyright: 'Copyright',
-        composer: ['A', 'B'],
-        isrc: ['USAAA2600001'],
-        catalognumber: 'CAT-1',
-        musicbrainz_albumid: 'release-id',
-        replaygain_track_gain: { dB: -6, ratio: 0.5 },
+        composers: ['A', 'B'],
+        isrcs: ['USAAA2600001'],
+        catalogNumber: 'CAT-1',
+        mbReleaseId: 'release-id',
+        replayGainTrackGain: { dB: -6, ratio: 0.5 },
         picture: [{ format: 'image/png', data: cover }],
         native: { '----:com.apple.iTunes:PRIVATE': 'Keep me' }
       });
@@ -138,18 +141,20 @@ describe('MP4 metadata', () => {
       const tags = await readTags(output);
       expect(tags.format).toBe('mp4');
       expect(tags.common.title).toBe('标题 🎵');
-      expect(tags.common.genre).toEqual(['Ambient', 'Electronic']);
-      expect(tags.common.track).toEqual({ no: 2, of: 12 });
-      expect(tags.common.disk).toEqual({ no: 1, of: 2 });
+      expect(tags.common.genres).toEqual(['Ambient', 'Electronic']);
+      expect(tags.common.trackNumber).toBe(2);
+      expect(tags.common.trackTotal).toBe(12);
+      expect(tags.common.discNumber).toBe(1);
+      expect(tags.common.discTotal).toBe(2);
       expect(tags.common.year).toBe(2026);
       expect(tags.common.bpm).toBe(123);
       expect(tags.common.compilation).toBe(true);
       expect(tags.common.lyrics?.[0]?.text).toBe('Words');
-      expect(tags.common.comment?.[0]?.text).toBe('Notes');
-      expect(tags.common.isrc).toEqual(['USAAA2600001']);
-      expect(tags.common.catalognumber).toEqual(['CAT-1']);
-      expect(tags.common.musicbrainz_albumid).toBe('release-id');
-      expect(tags.common.replaygain_track_gain?.dB).toBe(-6);
+      expect(tags.common.comments?.[0]?.text).toBe('Notes');
+      expect(tags.common.isrcs).toEqual(['USAAA2600001']);
+      expect(tags.common.catalogNumber).toEqual(['CAT-1']);
+      expect(tags.common.mbReleaseId).toBe('release-id');
+      expect(tags.common.replayGainTrackGain?.dB).toBe(-6);
       expect(Buffer.from(tags.pictures[0]!.data)).toEqual(cover);
       expect(Buffer.from(mdat(output))).toEqual(Buffer.from(mdat(input)));
       expect(chunkHeads(output)).toEqual(chunkHeads(input));
@@ -157,12 +162,14 @@ describe('MP4 metadata', () => {
       const newOffsets = offsets(output);
       const delta = output.length - input.length;
       expect(newOffsets).toEqual(oldOffsets.map(offset => offset + (name === 'aac-faststart' ? delta : 0)));
-      const again = await updateBuffer(output, { title: 'Short', track: { no: 3 }, picture: null, genre: null });
+      const again = await updateBuffer(output, { title: 'Short', trackNumber: 3, picture: null, genres: null });
       expect(chunkHeads(again)).toEqual(chunkHeads(input));
       const updated = await readTags(again);
-      expect(updated.common.track).toEqual({ no: 3, of: 12 });
+      expect(updated.common.trackNumber).toBe(3);
+      expect(updated.common.trackTotal).toBe(12);
+      expect(updated.pictures ?? updated.common.picture).toEqual([]);
       expect(updated.pictures).toEqual([]);
-      expect(updated.common.genre).toBeUndefined();
+      expect(updated.common.genres).toBeUndefined();
       expect(orderTags(updated.native.iTunes ?? [])['----:com.apple.iTunes:PRIVATE']?.[0]).toBe('Keep me');
       expect(Buffer.from(mdat(again))).toEqual(Buffer.from(mdat(input)));
     });
@@ -316,27 +323,27 @@ describe('MP4 metadata', () => {
       const recording = '883821fc-9bbc-4e04-be79-b4b12c4c4a4e';
       const releaseTrack = 'a046e3d1-650b-4b6f-9ace-e1b83c853528';
       await fs.writeFile(file, input);
-      await updateFile(file, { musicbrainz_recordingid: recording, musicbrainz_trackid: releaseTrack });
+      await updateFile(file, { mbRecordingId: recording, mbReleaseTrackId: releaseTrack });
       const tags = await readTags(file);
-      expect(tags.common.musicbrainz_recordingid).toBe(recording);
-      expect(tags.common.musicbrainz_trackid).toBe(releaseTrack);
+      expect(tags.common.mbRecordingId).toBe(recording);
+      expect(tags.common.mbReleaseTrackId).toBe(releaseTrack);
       expect(tags.native.iTunes).toContainEqual({ id: '----:com.apple.iTunes:MusicBrainz Track Id', value: recording });
       expect(tags.native.iTunes).toContainEqual({
         id: '----:com.apple.iTunes:MusicBrainz Release Track Id',
         value: releaseTrack
       });
       // Changing a recording must leave the release-track identity intact.
-      await updateFile(file, { musicbrainz_recordingid: releaseTrack, title: 'Other edit' });
+      await updateFile(file, { mbRecordingId: releaseTrack, title: 'Other edit' });
       const changed = await readTags(file);
-      expect(changed.common.musicbrainz_recordingid).toBe(releaseTrack);
-      expect(changed.common.musicbrainz_trackid).toBe(releaseTrack);
+      expect(changed.common.mbRecordingId).toBe(releaseTrack);
+      expect(changed.common.mbReleaseTrackId).toBe(releaseTrack);
       expect(
         changed.native.iTunes?.filter(tag => tag.id === '----:com.apple.iTunes:MusicBrainz Track Id')
       ).toHaveLength(1);
-      await updateFile(file, { musicbrainz_recordingid: null });
+      await updateFile(file, { mbRecordingId: null });
       const removed = await readTags(file);
-      expect(removed.common.musicbrainz_recordingid).toBeUndefined();
-      expect(removed.common.musicbrainz_trackid).toBe(releaseTrack);
+      expect(removed.common.mbRecordingId).toBeUndefined();
+      expect(removed.common.mbReleaseTrackId).toBe(releaseTrack);
       const output = await fs.readFile(file);
       expect(Buffer.from(mdat(output))).toEqual(Buffer.from(mdat(input)));
       expect(offsets(output)).toEqual(
@@ -354,34 +361,39 @@ describe('MP4 metadata', () => {
       const input = await fixture(name);
       await fs.writeFile(file, input);
       await updateFile(file, {
-        replaygain_track_gain: '-10.28 dB',
-        replaygain_track_peak: '0.999969',
-        replaygain_album_gain: '-9.98 dB',
-        replaygain_album_peak: '0.999980'
+        replayGainTrackGain: '-10.28 dB',
+        replayGainTrackPeak: '0.999969',
+        replayGainAlbumGain: '-9.98 dB',
+        replayGainAlbumPeak: '0.999980'
       });
       // Reopen after an unrelated edit to check persistence of untouched items.
       await updateFile(file, { title: 'Preserve ReplayGain' });
       const tags = await readTags(file);
-      expect(tags.common.replaygain_track_gain?.dB).toBeCloseTo(-10.28, 6);
-      expect(tags.common.replaygain_track_peak?.ratio).toBeCloseTo(0.999969, 6);
-      expect(tags.common.replaygain_album_gain?.dB).toBeCloseTo(-9.98, 6);
-      expect(tags.common.replaygain_album_peak?.ratio).toBeCloseTo(0.99998, 6);
+      expect(tags.common.replayGainTrackGain?.dB).toBeCloseTo(-10.28, 6);
+      expect(tags.common.replayGainTrackPeak?.ratio).toBeCloseTo(0.999969, 6);
+      expect(tags.common.replayGainAlbumGain?.dB).toBeCloseTo(-9.98, 6);
+      expect(tags.common.replayGainAlbumPeak?.ratio).toBeCloseTo(0.99998, 6);
+      const nativeReplayGain = {
+        replayGainTrackGain: 'replaygain_track_gain',
+        replayGainTrackPeak: 'replaygain_track_peak',
+        replayGainAlbumGain: 'replaygain_album_gain',
+        replayGainAlbumPeak: 'replaygain_album_peak'
+      } as const;
       for (const [field, value] of Object.entries({
-        replaygain_track_gain: '-10.28 dB',
-        replaygain_track_peak: '0.999969',
-        replaygain_album_gain: '-9.98 dB',
-        replaygain_album_peak: '0.999980'
+        replayGainTrackGain: '-10.28 dB',
+        replayGainTrackPeak: '0.999969',
+        replayGainAlbumGain: '-9.98 dB',
+        replayGainAlbumPeak: '0.999980'
       })) {
-        expect(tags.native.iTunes?.filter(tag => tag.id === `----:com.apple.iTunes:${field}`)).toEqual([
-          { id: `----:com.apple.iTunes:${field}`, value }
-        ]);
+        const id = `----:com.apple.iTunes:${nativeReplayGain[field as keyof typeof nativeReplayGain]}`;
+        expect(tags.native.iTunes?.filter(tag => tag.id === id)).toEqual([{ id, value }]);
       }
-      await updateFile(file, { replaygain_track_gain: null, replaygain_album_peak: null });
+      await updateFile(file, { replayGainTrackGain: null, replayGainAlbumPeak: null });
       const removed = await readTags(file);
-      expect(removed.common.replaygain_track_gain).toBeUndefined();
-      expect(removed.common.replaygain_album_peak).toBeUndefined();
-      expect(removed.common.replaygain_track_peak?.ratio).toBeCloseTo(0.999969, 6);
-      expect(removed.common.replaygain_album_gain?.dB).toBeCloseTo(-9.98, 6);
+      expect(removed.common.replayGainTrackGain).toBeUndefined();
+      expect(removed.common.replayGainAlbumPeak).toBeUndefined();
+      expect(removed.common.replayGainTrackPeak?.ratio).toBeCloseTo(0.999969, 6);
+      expect(removed.common.replayGainAlbumGain?.dB).toBeCloseTo(-9.98, 6);
       const output = await fs.readFile(file);
       expect(Buffer.from(mdat(output))).toEqual(Buffer.from(mdat(input)));
       expect(offsets(output)).toEqual(
@@ -399,7 +411,8 @@ describe('MP4 metadata', () => {
       const input = await fixture('aac-faststart');
       await fs.writeFile(file, input);
       const mediaFile = await MediaFile.open(file);
-      expect(mediaFile.metadata.common.movementIndex).toEqual({ no: null, of: null });
+      expect(mediaFile.metadata.common.movementNumber).toBeUndefined();
+      expect(mediaFile.metadata.common.movementTotal).toBeUndefined();
       mediaFile.metadata.common.title = 'Dry run';
       const dry = await mediaFile.save({ dryRun: true });
       expect(dry.format).toBe('mp4');
@@ -471,42 +484,42 @@ describe('MP4 metadata', () => {
         pathName,
         await updateBuffer(await fixture('aac-faststart'), {
           artists: ['Original'],
-          albumartists: ['Original album artist']
+          albumArtists: ['Original album artist']
         })
       );
       const file = await MediaFile.open(pathName);
       const tags = file.metadata.common;
       tags.artist = 'Solo';
-      tags.albumartist = 'Album solo';
+      tags.albumArtist = 'Album solo';
       await file.save();
       expect((await parseFile(pathName)).common).toMatchObject({
         artist: 'Solo',
         artists: ['Solo'],
-        albumartist: 'Album solo',
-        albumartists: ['Album solo']
+        albumArtist: 'Album solo',
+        albumArtists: ['Album solo']
       });
       expect(tags.artists).toEqual(['Solo']);
-      expect(tags.albumartists).toEqual(['Album solo']);
+      expect(tags.albumArtists).toEqual(['Album solo']);
       tags.artists!.push('Guest');
-      tags.albumartists = ['Ensemble'];
+      tags.albumArtists = ['Ensemble'];
       tags.artist = 'Conflicting singular';
       await file.save();
-      const saved = { artist: 'Solo', artists: ['Solo', 'Guest'], albumartist: 'Ensemble', albumartists: ['Ensemble'] };
+      const saved = { artist: 'Solo', artists: ['Solo', 'Guest'], albumArtist: 'Ensemble', albumArtists: ['Ensemble'] };
       expect((await parseFile(pathName)).common).toMatchObject(saved);
       expect(tags).toMatchObject(saved);
 
       tags.artist = 'Next';
-      tags.albumartist = 'Next album artist';
+      tags.albumArtist = 'Next album artist';
       await file.save({ dryRun: true });
       expect(tags.artists).toEqual(saved.artists);
-      expect(tags.albumartists).toEqual(saved.albumartists);
+      expect(tags.albumArtists).toEqual(saved.albumArtists);
       await file.save();
       await file.save();
       expect((await parseFile(pathName)).common).toMatchObject({
         artist: 'Next',
         artists: ['Next'],
-        albumartist: 'Next album artist',
-        albumartists: ['Next album artist']
+        albumArtist: 'Next album artist',
+        albumArtists: ['Next album artist']
       });
     } finally {
       await fs.rm(dir, { recursive: true, force: true });
@@ -536,7 +549,7 @@ describe('MP4 metadata', () => {
       );
 
       const mediaFile = await MediaFile.open(file);
-      expect(mediaFile.metadata.common.movementIndex).toEqual({ no: 1, of: 3 });
+      expect(mediaFile.metadata.common).toMatchObject({ movementNumber: 1, movementTotal: 3 });
       mediaFile.metadata.common.title = 'New title';
       await mediaFile.save();
 
@@ -546,12 +559,12 @@ describe('MP4 metadata', () => {
         stik: 2,
         hdVideo: 2,
         showMovement: true,
-        category: ['Classical', 'Music'],
+        categories: ['Classical', 'Music'],
         podcastId: 'episode-1',
         keywords: ['live', 'concert']
       });
       expect(common.movement).toBe('Allegro');
-      expect(common.movementIndex).toEqual({ no: 1, of: 3 });
+      expect(common).toMatchObject({ movementNumber: 1, movementTotal: 3 });
       expect(native.iTunes).toEqual(
         expect.arrayContaining([
           { id: '©mvn', value: 'Allegro' },
@@ -559,12 +572,54 @@ describe('MP4 metadata', () => {
           { id: '©mvc', value: 3 }
         ])
       );
-      mediaFile.metadata.common.movementIndex = { no: null, of: null };
+      mediaFile.metadata.common.movementNumber = null;
+      mediaFile.metadata.common.movementTotal = null;
       await mediaFile.save({ dryRun: true });
-      expect((await parseFile(file)).common.movementIndex).toEqual({ no: 1, of: 3 });
+      expect((await parseFile(file)).common).toMatchObject({ movementNumber: 1, movementTotal: 3 });
       await mediaFile.save();
-      expect((await parseFile(file)).common.movementIndex).toEqual({ no: null, of: null });
+      expect((await parseFile(file)).common.movementNumber).toBeUndefined();
       expect(mdat(await fs.readFile(file))).toEqual(mdat(input));
+    } finally {
+      await fs.rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('clears saved canonical movement fields using a pair patch', async () => {
+    const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'mm-movement-'));
+    try {
+      const file = path.join(dir, 'track.m4a');
+      await fs.writeFile(file, await fixture('aac-faststart'));
+      const snapshot = new FileTagSnapshot((await parseFile(file)).common);
+      await writeFileTags(file, { movementNumber: 2, movementTotal: 3 }, {}, snapshot);
+      expect((await parseFile(file)).common).toMatchObject({ movementNumber: 2, movementTotal: 3 });
+      await writeFileTags(file, { title: 'New title' }, {}, snapshot);
+      await writeFileTags(file, { movementNumber: null }, {}, snapshot);
+      expect((await parseFile(file)).common.movementTotal).toBe(3);
+
+      await writeFileTags(file, { movementIndex: { no: null, of: null } }, {}, snapshot);
+      const { common } = await parseFile(file);
+      expect(common.movementNumber).toBeUndefined();
+      expect(common.movementTotal).toBeUndefined();
+    } finally {
+      await fs.rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('clears both saved movement components with a null pair and treats a repeated clear as a no-op', async () => {
+    const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'mm-movement-'));
+    try {
+      const file = path.join(dir, 'track.m4a');
+      await fs.writeFile(file, await fixture('aac-faststart'));
+      const snapshot = new FileTagSnapshot((await parseFile(file)).common);
+      await writeFileTags(file, { movementNumber: 2, movementTotal: 3 }, {}, snapshot);
+      await writeFileTags(file, { movementIndex: null }, {}, snapshot);
+      const cleared = await fs.readFile(file);
+      const { common } = await parseFile(file);
+      expect(common.movementNumber).toBeUndefined();
+      expect(common.movementTotal).toBeUndefined();
+
+      await writeFileTags(file, { movementIndex: { no: null, of: null } }, {}, snapshot);
+      expect(await fs.readFile(file)).toEqual(cleared);
     } finally {
       await fs.rm(dir, { recursive: true, force: true });
     }
@@ -573,7 +628,8 @@ describe('MP4 metadata', () => {
   it('removes MP4 movement name and index tags when cleared', async () => {
     const input = await updateBuffer(await fixture('aac-faststart'), {
       movement: 'Allegro',
-      movementIndex: { no: 1, of: 3 },
+      movementNumber: 1,
+      movementTotal: 3,
       native: {
         '----:com.apple.iTunes:Movement Name': 'Allegro',
         '----:com.apple.iTunes:Movement': '1/3',
@@ -581,10 +637,10 @@ describe('MP4 metadata', () => {
       }
     });
 
-    const output = await updateBuffer(input, { movement: null, movementIndex: null });
+    const output = await updateBuffer(input, { movement: null, movementNumber: null, movementTotal: null });
     const { common, native } = await parseBuffer(output, 'audio/mp4');
     expect(common.movement).toBeUndefined();
-    expect(common.movementIndex).toEqual({ no: null, of: null });
+    expect(common.movementNumber).toBeUndefined();
     const ids = (native.iTunes ?? []).map(tag => tag.id);
     for (const id of [
       '©mvn',
@@ -599,12 +655,26 @@ describe('MP4 metadata', () => {
     expect(mdat(output)).toEqual(mdat(input));
   });
 
+  it('preserves explicit movement components when removing the MP4 movement name', async () => {
+    const input = await updateBuffer(await fixture('aac-faststart'), {
+      movement: 'Allegro',
+      movementNumber: 1,
+      movementTotal: 3
+    });
+    const output = await updateBuffer(input, { movement: null, movementNumber: 2 });
+    const { common } = await parseBuffer(output, 'audio/mp4');
+    expect(common.movement).toBeUndefined();
+    expect(common.movementNumber).toBe(2);
+    expect(common.movementTotal).toBe(3);
+    expect(mdat(output)).toEqual(mdat(input));
+  });
+
   it('preserves the total in a combined movement alias when editing only the number', async () => {
     const input = await updateBuffer(await fixture('aac-faststart'), {
       native: { '----:com.apple.iTunes:Movement': '1/3' }
     });
-    const output = await updateBuffer(input, { movementIndex: { no: 2 } });
-    expect((await parseBuffer(output, 'audio/mp4')).common.movementIndex).toEqual({ no: 2, of: 3 });
+    const output = await updateBuffer(input, { movementNumber: 2 });
+    expect((await parseBuffer(output, 'audio/mp4')).common).toMatchObject({ movementNumber: 2, movementTotal: 3 });
   });
 
   it('rejects an MP4 movement number that exceeds int32', async () => {
@@ -1357,23 +1427,27 @@ describe('MP4 structure variants', () => {
       compilation: true,
       gapless: true,
       bpm: 140,
-      track: { no: 3, of: 8 },
-      disk: { no: 2, of: 4 }
+      trackNumber: 3,
+      trackTotal: 8,
+      discNumber: 2,
+      discTotal: 4
     });
     const output = await updateBuffer(initial, {
       compilation: false,
       gapless: false,
       bpm: 0,
-      track: { no: 0 },
-      disk: { of: 0 }
+      trackNumber: 0,
+      discTotal: 0
     });
     const tags = await readTags(output);
     expect(tags.common.compilation).toBe(false);
     expect(tags.common.gapless).toBe(false);
     expect(tags.common.bpm).toBe(0);
     // music-metadata normalizes zero pair components to null in common tags.
-    expect(tags.common.track).toEqual({ no: null, of: 8 });
-    expect(tags.common.disk).toEqual({ no: 2, of: null });
+    expect(tags.common.trackNumber).toBeUndefined();
+    expect(tags.common.trackTotal).toBe(8);
+    expect(tags.common.discNumber).toBe(2);
+    expect(tags.common.discTotal).toBeUndefined();
     expect(tags.native.iTunes).toContainEqual({ id: 'trkn', value: '0/8' });
     expect(tags.native.iTunes).toContainEqual({ id: 'disk', value: '2/0' });
     for (const id of ['cpil', 'pgap', 'tmpo']) {
@@ -1400,7 +1474,7 @@ describe('MP4 structure variants', () => {
         { format: 'image/png', data: png }
       ]
     });
-    const preserved = await updateBuffer(tagged, { title: 'Keep both pictures' });
+    const preserved = await updateBuffer(tagged, { title: 'Keep both picture' });
     const pictures = (await readTags(preserved)).pictures;
     expect(pictures.map(picture => picture.format)).toEqual(['image/jpeg', 'image/png']);
     expect(pictures.map(picture => Buffer.from(picture.data))).toEqual([Buffer.from(jpeg), png]);
@@ -1515,10 +1589,10 @@ describe('MP4 structure variants', () => {
     // The terminal moov uses a size-to-end header.
     const movie = boxes(input).find(b => b.type === 'moov')!;
     input.writeUInt32BE(0, movie.start);
-    const result = await updateBuffer(input, { artists: ['One', 'Two'], totaltracks: '9' });
+    const result = await updateBuffer(input, { artists: ['One', 'Two'], trackTotal: 9 });
     const common = (await readTags(result)).common;
     expect(common.artists).toEqual(['One', 'Two']);
-    expect(common.track.of).toBe(9);
+    expect(common.trackTotal).toBe(9);
     expect(Buffer.from(mdat(result))).toEqual(Buffer.from(mdat(input)));
   });
 
@@ -1647,15 +1721,17 @@ describe('MP4 structure variants', () => {
     const media = boxes(input).find(b => b.type === 'mdat')!;
     input.writeUInt32BE(0, media.start);
     const first = await updateBuffer(input, {
-      track: { no: 2, of: 10 },
-      disk: { no: 1, of: 2 },
+      trackNumber: 2,
+      trackTotal: 10,
+      discNumber: 1,
+      discTotal: 2,
       bpm: 120,
       gapless: true
     });
-    const output = await updateBuffer(first, { track: null, disk: null, bpm: null, gapless: null });
+    const output = await updateBuffer(first, { trackNumber: null, discNumber: null, bpm: null, gapless: null });
     const tags = await readTags(output);
-    expect(tags.common.track).toEqual({ no: null, of: null });
-    expect(tags.common.disk).toEqual({ no: null, of: null });
+    expect(tags.common.trackNumber).toBeUndefined();
+    expect(tags.common.discNumber).toBeUndefined();
     expect(tags.common.bpm).toBeUndefined();
     expect(tags.common.gapless).toBeUndefined();
     expect(Buffer.from(mdat(output))).toEqual(Buffer.from(mdat(input)));
@@ -1666,11 +1742,11 @@ describe('MP4 structure variants', () => {
       native: { '----:com.apple.iTunes:REPLAYGAIN_TRACK_GAIN': '-10 dB' }
     });
     const output = await updateBuffer(input, {
-      replaygain_track_gain: '-6 dB',
+      replayGainTrackGain: '-6 dB',
       native: { '----:com.apple.iTunes:ReplayGain_Track_Gain': '-3 dB' }
     });
     const tags = await readTags(output);
-    expect(tags.common.replaygain_track_gain?.dB).toBe(-3);
+    expect(tags.common.replayGainTrackGain?.dB).toBe(-3);
     expect(tags.native.iTunes?.filter(tag => tag.id.toLowerCase().endsWith(':replaygain_track_gain'))).toHaveLength(1);
   });
 
@@ -1695,7 +1771,7 @@ describe('MP4 structure variants', () => {
       updateBuffer(original, { picture: [{ format: 'image/webp', data: new Uint8Array() }] })
     ).rejects.toBeInstanceOf(UnsupportedFeatureError);
     await expect(updateBuffer(original, { bpm: -1 })).rejects.toThrow();
-    await expect(updateBuffer(original, { track: { no: 65536 } })).rejects.toThrow();
+    await expect(updateBuffer(original, { trackNumber: 65536 })).rejects.toThrow();
     await expect(updateBuffer(original, { native: { 'bad-key': 'value' } })).rejects.toThrow();
     const result = await updateBuffer(original, {
       native: { '©nam': null, '----:com.apple.iTunes:PRIVATE': ['A', 'B'] }
@@ -1708,17 +1784,17 @@ describe('MP4 structure variants', () => {
 describe('MP4 existing-common write parity', () => {
   // Literal external names, independent of the library's common mapping tables.
   const fields = [
-    ['djmixer', '----:com.apple.iTunes:DJMIXER', ['DJ One', 'DJ Two']],
-    ['musicbrainz_trmid', '----:com.apple.iTunes:MusicBrainz TRM Id', 'trm-id'],
-    ['acoustid_id', '----:com.apple.iTunes:Acoustid Id', 'acoustid-id'],
-    ['acoustid_fingerprint', '----:com.apple.iTunes:Acoustid Fingerprint', 'fingerprint-value'],
-    ['musicip_puid', '----:com.apple.iTunes:MusicIP PUID', 'puid-id'],
-    ['musicip_fingerprint', '----:com.apple.iTunes:fingerprint', 'musicip-value'],
+    ['djMixers', '----:com.apple.iTunes:DJMIXER', ['DJ One', 'DJ Two']],
+    ['mbTrmId', '----:com.apple.iTunes:MusicBrainz TRM Id', 'trm-id'],
+    ['acoustId', '----:com.apple.iTunes:Acoustid Id', 'acoustid-id'],
+    ['acoustIdFingerprint', '----:com.apple.iTunes:Acoustid Fingerprint', 'fingerprint-value'],
+    ['musicIpPuid', '----:com.apple.iTunes:MusicIP PUID', 'puid-id'],
+    ['musicIpFingerprint', '----:com.apple.iTunes:fingerprint', 'musicip-value'],
     ['tvShow', 'tvsh', 'A Show'],
     ['tvShowSort', 'sosn', 'Show, A'],
     ['tvEpisodeId', 'tven', 'Episode ID'],
     ['tvNetwork', 'tvnn', 'Network'],
-    ['podcasturl', 'purl', 'https://example.org/podcast.xml']
+    ['podcastUrl', 'purl', 'https://example.org/podcast.xml']
   ] as const satisfies readonly (readonly [keyof ICommonTagsResult, string, unknown])[];
 
   it.each(fields)('reads, rewrites and removes %s using its native key %s', async (field, key, value) => {
@@ -1814,9 +1890,9 @@ describe('MP4 existing-common write parity', () => {
 
   it('encodes structured ReplayGain fields as scalar text and removes them independently', async () => {
     const fields = {
-      replaygain_track_minmax: [10, 120],
-      replaygain_album_minmax: [20, 200],
-      replaygain_undo: { leftChannel: -3, rightChannel: 5 }
+      replayGainTrackMinMax: [10, 120],
+      replayGainAlbumMinMax: [20, 200],
+      replayGainUndo: { leftChannel: -3, rightChannel: 5 }
     } satisfies TagPatch;
     const native = {
       '----:com.apple.iTunes:replaygain_track_minmax': '10,120',
@@ -1833,17 +1909,17 @@ describe('MP4 existing-common write parity', () => {
       Object.fromEntries(Object.entries(native).map(([key, value]) => [key, [value]]))
     );
     const removed = await parseBuffer(
-      await updateBuffer(output, { replaygain_track_minmax: null, replaygain_undo: null })
+      await updateBuffer(output, { replayGainTrackMinMax: null, replayGainUndo: null })
     );
-    expect(removed.common.replaygain_track_minmax).toBeUndefined();
-    expect(removed.common.replaygain_undo).toBeUndefined();
-    expect(removed.common.replaygain_album_minmax).toEqual(fields.replaygain_album_minmax);
+    expect(removed.common.replayGainTrackMinMax).toBeUndefined();
+    expect(removed.common.replayGainUndo).toBeUndefined();
+    expect(removed.common.replayGainAlbumMinMax).toEqual(fields.replayGainAlbumMinMax);
   });
 
   it.each([
-    { replaygain_track_minmax: [1] },
-    { replaygain_album_minmax: [1, Number.NaN] },
-    { replaygain_undo: { leftChannel: 0.5, rightChannel: 1 } }
+    { replayGainTrackMinMax: [1] },
+    { replayGainAlbumMinMax: [1, Number.NaN] },
+    { replayGainUndo: { leftChannel: 0.5, rightChannel: 1 } }
   ])('rejects malformed structured ReplayGain fields %j', async patch => {
     await expect(updateBuffer(await fixture('alac'), patch)).rejects.toBeInstanceOf(InvalidPatchError);
   });

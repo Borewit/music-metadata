@@ -27,6 +27,12 @@ describe('APEv2 writing', () => {
     covers = await readFile(path.join(samplePath, 'ape/monkeysaudio.ape'));
   });
 
+  it('preserves APEv2 number tags when both pair values are undefined', async () => {
+    const input = await updateBuffer(ape, { native: { Track: '02/13', Disc: '01/03' } });
+    const output = await updateBuffer(input, { track: undefined, disk: undefined });
+    expect(output).toEqual(input);
+  });
+
   function layout(bytes: Uint8Array) {
     const buffer = Buffer.from(bytes.buffer, bytes.byteOffset, bytes.byteLength);
     const end = buffer.subarray(-128, -125).toString() === 'TAG' ? buffer.length - 128 : buffer.length;
@@ -69,14 +75,16 @@ describe('APEv2 writing', () => {
       const updated = await updateBuffer(original, {
         title: '日本語 🎵',
         artists: ['Artist A', 'Artist B'],
-        albumartist: 'Album artist',
+        albumArtist: 'Album artist',
         album: 'New album',
         date: '2026-11-13',
-        track: { no: 2, of: 12 },
-        disk: { no: 1, of: 2 },
-        comment: [{ text: 'first comment' }, { text: 'second comment' }],
-        genre: ['Rock', 'Jazz'],
-        composer: ['Composer'],
+        trackNumber: 2,
+        trackTotal: 12,
+        discNumber: 1,
+        discTotal: 2,
+        comments: [{ text: 'first comment' }, { text: 'second comment' }],
+        genres: ['Rock', 'Jazz'],
+        composers: ['Composer'],
         lyrics: {
           syncText: [
             { text: 'line one', timestamp: 0 },
@@ -85,13 +93,13 @@ describe('APEv2 writing', () => {
         },
         compilation: true,
         bpm: 120,
-        musicbrainz_recordingid: 'recording-id',
-        replaygain_track_gain: { dB: -6, ratio: 0.5 },
-        replaygain_album_gain: '-3 dB',
-        replaygain_album_peak: '0.9',
-        replaygain_track_minmax: [100, 200],
-        replaygain_album_minmax: [50, 250],
-        replaygain_undo: { leftChannel: 2, rightChannel: -2 },
+        mbRecordingId: 'recording-id',
+        replayGainTrackGain: { dB: -6, ratio: 0.5 },
+        replayGainAlbumGain: '-3 dB',
+        replayGainAlbumPeak: '0.9',
+        replayGainTrackMinMax: [100, 200],
+        replayGainAlbumMinMax: [50, 250],
+        replayGainUndo: { leftChannel: 2, rightChannel: -2 },
         native: { 'Editor Note': ['één', 'two'], Binary: new Uint8Array([0, 1, 2]) }
       });
       const after = await parseBuffer(updated);
@@ -104,23 +112,25 @@ describe('APEv2 writing', () => {
       expect(after.common).toMatchObject({
         title: '日本語 🎵',
         artists: ['Artist A', 'Artist B'],
-        albumartist: 'Album artist',
+        albumArtist: 'Album artist',
         album: 'New album',
         date: '2026-11-13',
-        track: { no: 2, of: 12 },
-        disk: { no: 1, of: 2 },
-        comment: [{ text: 'first comment' }, { text: 'second comment' }],
-        genre: ['Rock', 'Jazz'],
-        composer: ['Composer'],
+        trackNumber: 2,
+        trackTotal: 12,
+        discNumber: 1,
+        discTotal: 2,
+        comments: [{ text: 'first comment' }, { text: 'second comment' }],
+        genres: ['Rock', 'Jazz'],
+        composers: ['Composer'],
         compilation: true,
         bpm: 120,
-        musicbrainz_recordingid: 'recording-id',
-        replaygain_track_gain: { dB: -6 },
-        replaygain_album_gain: { dB: -3 },
-        replaygain_album_peak: { ratio: 0.9 },
-        replaygain_track_minmax: [100, 200],
-        replaygain_album_minmax: [50, 250],
-        replaygain_undo: { leftChannel: 2, rightChannel: -2 }
+        mbRecordingId: 'recording-id',
+        replayGainTrackGain: { dB: -6 },
+        replayGainAlbumGain: { dB: -3 },
+        replayGainAlbumPeak: { ratio: 0.9 },
+        replayGainTrackMinMax: [100, 200],
+        replayGainAlbumMinMax: [50, 250],
+        replayGainUndo: { leftChannel: 2, rightChannel: -2 }
       });
       expect(after.common.lyrics?.[0]?.text).toBe('line one\nline two');
       expect(after.native.APEv2?.filter(tag => tag.id === 'Comment')).toHaveLength(2);
@@ -169,7 +179,9 @@ describe('APEv2 writing', () => {
       const original = await readFile(path.join(samplePath, fixture));
       expect(await updateBuffer(original, {})).toEqual(new Uint8Array(original));
       const audio = original.subarray(0, layout(original).start);
-      expect(await updateBuffer(audio, { native: null, track: {}, picture: null })).toEqual(new Uint8Array(audio));
+      expect(await updateBuffer(audio, { native: null, trackNumber: null, picture: null })).toEqual(
+        new Uint8Array(audio)
+      );
       const updated = await updateBuffer(audio, { title: 'Created' });
       expect((await parseBuffer(updated)).common.title).toBe('Created');
       expect(await updateBuffer(updated, { title: null })).toEqual(new Uint8Array(audio));
@@ -177,7 +189,7 @@ describe('APEv2 writing', () => {
   }
 
   it('preserves the album artist credit and individual names', async () => {
-    const tags = { albumartist: 'A feat. B', albumartists: ['A', 'B'] };
+    const tags = { albumArtist: 'A feat. B', albumArtists: ['A', 'B'] };
     const updated = await updateBuffer(ape, tags);
     expect((await parseBuffer(updated)).common).toMatchObject(tags);
   });
@@ -188,25 +200,33 @@ describe('APEv2 writing', () => {
     });
     const updated = await updateBuffer(original, {
       year: 2026,
-      track: { no: null },
-      disk: { of: 6 },
-      totaltracks: '12',
+      trackNumber: null,
+      trackTotal: 12,
+      discTotal: 6,
       native: { Title: 'Native wins' },
       title: 'Common'
     });
     const tag = layout(updated);
-    expect(tag.items.has('YEAR')).toBe(false);
-    expect(tag.items.has('DISCNUMBER')).toBe(false);
+    expect((await parseBuffer(updated)).common.date).toBe('2026');
+    expect((await parseBuffer(updated)).common.discTotal).toBe(6);
     expect(itemValue(tag.items.get('DISC')!).toString()).toBe('2/6');
     expect(itemValue(tag.items.get('TRACK')!).toString()).toBe('/12');
     const after = await parseBuffer(updated);
     expect(after.common).toMatchObject({
       title: 'Native wins',
       date: '2026',
-      track: { no: null, of: 12 },
-      disk: { no: 2, of: 6 }
+      trackTotal: 12,
+      discNumber: 2,
+      discTotal: 6
     });
-    const cleared = await updateBuffer(updated, { track: { of: null }, disk: null, native: { Title: [] } });
+    expect(after.common.trackNumber).toBeUndefined();
+    const cleared = await updateBuffer(updated, {
+      trackNumber: null,
+      trackTotal: null,
+      discNumber: null,
+      discTotal: null,
+      native: { Title: [] }
+    });
     expect(layout(cleared).items.has('TRACK')).toBe(false);
     expect(layout(cleared).items.has('DISC')).toBe(false);
     expect(layout(cleared).items.has('TITLE')).toBe(false);
@@ -215,11 +235,11 @@ describe('APEv2 writing', () => {
   it('removes text and lyrics values without touching unrelated native data', async () => {
     const input = await updateBuffer(ape, {
       title: 'old',
-      comment: 'comment',
+      comments: 'comments',
       lyrics: 'lyrics',
       native: { Unknown: 'keep' }
     });
-    const cleared = await updateBuffer(input, { title: [], comment: null, lyrics: '' });
+    const cleared = await updateBuffer(input, { title: [], comments: null, lyrics: '' });
     const tag = layout(cleared);
     for (const key of ['TITLE', 'COMMENT', 'LYRICS']) {
       expect(tag.items.has(key)).toBe(false);
@@ -333,10 +353,12 @@ describe('APEv2 writing', () => {
         ['MOVEMENTNUMBER', '3/4']
       ];
       const input = await updateBuffer(ape, { native: Object.fromEntries(numberFirst ? entries.reverse() : entries) });
-      const before = (await parseBuffer(input)).common.movementIndex;
-      expect(before).toEqual(numberFirst ? { no: 2, of: 4 } : { no: 3, of: 4 });
-      const updated = await updateBuffer(input, { movementIndex: { of: null } });
-      expect((await parseBuffer(updated)).common.movementIndex).toEqual({ no: before.no, of: null });
+      const before = (await parseBuffer(input)).common;
+      expect(before).toMatchObject({ movementNumber: numberFirst ? 2 : 3, movementTotal: 4 });
+      const updated = await updateBuffer(input, { movementTotal: null });
+      const after = (await parseBuffer(updated)).common;
+      expect(after.movementNumber).toBe(before.movementNumber);
+      expect(after.movementTotal).toBeUndefined();
     });
   }
 
@@ -354,12 +376,14 @@ describe('APEv2 writing', () => {
           }
           const input = await updateBuffer(ape, { title: 'Movement aliases', native });
           const of = dedicatedTotal !== undefined ? 8 : numberFirst && secondValue.includes('/') ? 6 : 4;
-          const before = (await parseBuffer(input)).common.movementIndex;
-          expect(before).toEqual({ no: numberFirst ? 2 : 3, of });
-          const updated = await updateBuffer(input, { movementIndex: { no: 7 } });
-          expect((await parseBuffer(updated)).common.movementIndex).toEqual({ no: 7, of });
-          const cleared = await updateBuffer(input, { movementIndex: { of: null } });
-          expect((await parseBuffer(cleared)).common.movementIndex).toEqual({ no: before.no, of: null });
+          const before = (await parseBuffer(input)).common;
+          expect(before).toMatchObject({ movementNumber: numberFirst ? 2 : 3, movementTotal: of });
+          const updated = await updateBuffer(input, { movementNumber: 7 });
+          expect((await parseBuffer(updated)).common).toMatchObject({ movementNumber: 7, movementTotal: of });
+          const cleared = await updateBuffer(input, { movementTotal: null });
+          const after = (await parseBuffer(cleared)).common;
+          expect(after.movementNumber).toBe(before.movementNumber);
+          expect(after.movementTotal).toBeUndefined();
         });
       }
     }
@@ -370,17 +394,19 @@ describe('APEv2 writing', () => {
       const input = Buffer.from(await updateBuffer(ape, { native: { MOVEMENT: '2', MOVEMENTTOTAL: '4' } }));
       const item = layout(input).items.get(locked)!;
       input.writeUInt32LE(1, item.byteOffset - input.byteOffset + 4);
-      expect(await updateBuffer(input, { movementIndex: {} })).toEqual(new Uint8Array(input));
-      const patch = locked === 'MOVEMENT' ? { of: 5 } : { no: 3 };
-      const updated = await updateBuffer(input, { movementIndex: patch });
-      expect((await parseBuffer(updated)).common.movementIndex).toEqual(
-        locked === 'MOVEMENT' ? { no: 2, of: 5 } : { no: 3, of: 4 }
+      expect(await updateBuffer(input, { movementNumber: undefined, movementTotal: undefined })).toEqual(
+        new Uint8Array(input)
+      );
+      const patch = locked === 'MOVEMENT' ? { movementTotal: 5 } : { movementNumber: 3 };
+      const updated = await updateBuffer(input, patch);
+      expect((await parseBuffer(updated)).common).toMatchObject(
+        locked === 'MOVEMENT' ? { movementNumber: 2, movementTotal: 5 } : { movementNumber: 3, movementTotal: 4 }
       );
       expect(layout(updated).items.get(locked)).toEqual(layout(input).items.get(locked));
       await expect(
-        updateBuffer(input, { movementIndex: locked === 'MOVEMENT' ? { no: 3 } : { of: 5 } })
+        updateBuffer(input, locked === 'MOVEMENT' ? { movementNumber: 3 } : { movementTotal: 5 })
       ).rejects.toThrow('read-only');
-      await expect(updateBuffer(input, { movementIndex: null })).rejects.toThrow('read-only');
+      await expect(updateBuffer(input, { movementNumber: null, movementTotal: null })).rejects.toThrow('read-only');
     });
   }
 
@@ -417,7 +443,7 @@ describe('APEv2 writing', () => {
     ['case-insensitive duplicate patch keys', { native: { Title: 'one', TITLE: 'two' } }, InvalidPatchError],
     ['structured native object', { native: { Custom: { text: 'bad' } } }, InvalidPatchError],
     ['NUL text', { title: 'one\0two' }, InvalidPatchError],
-    ['invalid number pair', { track: { no: -1 } }, InvalidPatchError],
+    ['invalid number pair', { trackNumber: -1 }, InvalidPatchError],
     ['invalid common object', { title: {} } as TagPatch, InvalidPatchError],
     ['invalid native root', { native: [] } as unknown as TagPatch, InvalidPatchError],
     [
@@ -456,21 +482,21 @@ describe('APEv2 writing', () => {
 
   it('accepts the empty movement index supplied by the reader', async () => {
     const input = ape;
-    const { movementIndex } = (await parseBuffer(input)).common;
-    expect(movementIndex).toEqual({ no: null, of: null });
-    const updated = await updateBuffer(input, { title: 'Edited', movementIndex });
-    expect((await parseBuffer(updated)).common).toMatchObject({ title: 'Edited', movementIndex });
-    const numbered = await updateBuffer(input, { movementIndex: { no: 1, of: 3 } });
-    expect((await parseBuffer(numbered)).common.movementIndex).toEqual({ no: 1, of: 3 });
+    const { movementNumber } = (await parseBuffer(input)).common;
+    expect(movementNumber).toBeUndefined();
+    const updated = await updateBuffer(input, { title: 'Edited', movementNumber });
+    expect((await parseBuffer(updated)).common).toMatchObject({ title: 'Edited' });
+    const numbered = await updateBuffer(input, { movementNumber: 1, movementTotal: 3 });
+    expect((await parseBuffer(numbered)).common).toMatchObject({ movementNumber: 1, movementTotal: 3 });
   });
 
   it('rejects partial number-pair edits on binary native values', async () => {
     const input = await updateBuffer(ape, { native: { Track: new Uint8Array([0, 1]) } });
-    await expect(updateBuffer(input, { track: { no: 1 } })).rejects.toThrow('non-text');
-    expect((await parseBuffer(await updateBuffer(input, { track: { no: 1, of: 2 } }))).common.track).toEqual({
-      no: 1,
-      of: 2
-    });
+    await expect(updateBuffer(input, { trackNumber: 1 })).rejects.toThrow('non-text');
+    expect((await parseBuffer(await updateBuffer(input, { trackNumber: 1, trackTotal: 2 }))).common.trackNumber).toBe(
+      1
+    );
+    expect((await parseBuffer(await updateBuffer(input, { trackNumber: 1, trackTotal: 2 }))).common.trackTotal).toBe(2);
   });
 
   it.each([

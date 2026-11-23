@@ -4,7 +4,8 @@ import { concatBytes, ensureAvailable } from '../core/bytes.js';
 import type { WriteChunk } from '../core/chunks.js';
 import { InvalidFileError, InvalidPatchError, UnsupportedFeatureError } from '../core/errors.js';
 import type { ByteSource } from '../core/source.shared.js';
-import type { TagPatch, WriteOptions } from '../core/types.js';
+import type { WriteOptions } from '../core/types.js';
+import type { InternalPatch } from '../mapping/common.js';
 import {
   MAX_HEADER_BYTES,
   MAX_OBJECTS,
@@ -19,7 +20,7 @@ import { applyPatch } from './tags.js';
 /** Rewrite only the ASF header; data packets and packet-number-based Simple Index objects stay byte-identical. */
 export async function buildAsfUpdate(
   source: ByteSource,
-  patch: TagPatch,
+  patch: InternalPatch,
   options: WriteOptions
 ): Promise<{ chunks: WriteChunk[]; paddingBytes: number }> {
   if (options.replaceId3 || options.stripFlacId3) {

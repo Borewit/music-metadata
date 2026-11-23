@@ -293,14 +293,14 @@ describe('Extract metadata from ID3v2.3 header', () => {
     function checkCommon(common) {
       assert.strictEqual(common.title, 'Home', 'common.title');
       assert.deepEqual(common.artists, ['Explosions In The Sky', 'Another', 'And Another'], 'common.artists');
-      assert.strictEqual(common.albumartist, 'Soundtrack', 'common.albumartist');
+      assert.strictEqual(common.albumArtist, 'Soundtrack', 'common.albumartist');
       assert.strictEqual(common.album, 'Friday Night Lights [Original Movie Soundtrack]', 'common.album');
       assert.strictEqual(common.year, 2004, 'common.year');
-      assert.strictEqual(common.track.no, 5, 'common.track.no');
-      assert.strictEqual(common.track.of, null, 'common.track.of');
-      assert.strictEqual(common.disk.no, 1, 'common.disk.no');
-      assert.strictEqual(common.disk.of, 1, 'common.disk.of');
-      assert.strictEqual(common.genre[0], 'Soundtrack', 'common.genre');
+      assert.strictEqual(common.trackNumber, 5, 'common.track.no');
+      assert.strictEqual(common.trackTotal, undefined, 'common.track.of');
+      assert.strictEqual(common.discNumber, 1, 'common.disk.no');
+      assert.strictEqual(common.discTotal, 1, 'common.disk.of');
+      assert.strictEqual(common.genres[0], 'Soundtrack', 'common.genre');
       assert.strictEqual(common.picture[0].format, 'image/jpeg', 'common.picture format');
       assert.strictEqual(common.picture[0].data.length, 80938, 'common.picture length');
     }
@@ -363,12 +363,12 @@ describe('Extract metadata from ID3v2.3 header', () => {
         assert.strictEqual(common.title, 'Strawberry', 'common.title');
         assert.strictEqual(common.artist, 'Union Youth', 'common.artist');
         assert.strictEqual(common.album, 'The Royal Gene', 'common.album');
-        assert.strictEqual(common.albumartist, undefined, 'common.albumartist');
+        assert.strictEqual(common.albumArtist, undefined, 'common.albumartist');
         assert.strictEqual(common.year, 2002, 'common.year');
-        assert.deepEqual(common.track, { no: 4, of: null }, 'common.track = 4/?');
-        assert.strictEqual(common.track.of, null, 'common.track.of = null');
-        assert.deepEqual(common.genre, ['Alternative'], 'common.genre');
-        assert.isUndefined(common.comment, 'common.comment');
+        assert.deepEqual(common.trackNumber, 4, 'common.track = 4/?');
+        assert.isUndefined(common.trackTotal, 'common.track.of = null');
+        assert.deepEqual(common.genres, ['Alternative'], 'common.genre');
+        assert.isUndefined(common.comments, 'common.comment');
       }
 
       return mm.parseFile(filePath).then(result => {
@@ -466,14 +466,14 @@ describe('Extract metadata from ID3v2.3 header', () => {
 
   /**
    * Contrary to e.g. TCOM/TPE1, ID3v2.3 does not define '/' as a value separator
-   * for the genre frame (TCON), so a genre like "Duo Cello/Piano" must stay intact.
+   * for the genres frame (TCON), so a genres like "Duo Cello/Piano" must stay intact.
    * Related issue: https://github.com/Borewit/music-metadata/issues/2724
    */
   it('should preserve slashes in the ID3v2.3 genre (TCON)', async () => {
     const filePath = path.join(samplePath, 'mp3', 'issue-2724-id3v2.3.mp3');
     const { common } = await mm.parseFile(filePath);
 
-    assert.deepEqual(common.genre, ['Duo Cello/Piano'], 'common.genre must not be split on "/"');
+    assert.deepEqual(common.genres, ['Duo Cello/Piano'], 'common.genre must not be split on "/"');
   });
 
   it('should retain nonstandard slash-separated IPLS credits', async () => {
@@ -501,9 +501,9 @@ describe('Extract metadata from ID3v2.3 header', () => {
     assert.deepEqual(id3v23.TPE1, ['2 Unlimited2', 'Ray', 'Anita'], 'null separated id3v23.TPE1');
 
     assert.deepEqual(common.artists, ['2 Unlimited2', 'Ray', 'Anita'], 'common.artists');
-    assert.isDefined(common.comment, 'common.comment');
+    assert.isDefined(common.comments, 'common.comment');
     assert.deepEqual(
-      common.comment,
+      common.comments,
       [
         {
           descriptor: '',
@@ -518,7 +518,7 @@ describe('Extract metadata from ID3v2.3 header', () => {
       ],
       'common.comment'
     );
-    assert.deepEqual(common.genre, ['Dance', 'Classics'], 'common.genre');
+    assert.deepEqual(common.genres, ['Dance', 'Classics'], 'common.genre');
 
     ['TPE1', 'TCOM', 'TCON'].forEach(tag => {
       assert.includeDeepMembers(
@@ -536,7 +536,7 @@ describe('Extract metadata from ID3v2.3 header', () => {
       const { format, common } = await mm.parseFile(filePath);
       assert.strictEqual(format.container, 'MPEG', 'format.container');
       assert.strictEqual(format.codec, 'MPEG 2 Layer 3', 'format.codec');
-      assert.deepStrictEqual(common.genre, ['Electronic', 'Pop-Folk'], 'common.genre');
+      assert.deepStrictEqual(common.genres, ['Electronic', 'Pop-Folk'], 'common.genre');
     });
   });
 

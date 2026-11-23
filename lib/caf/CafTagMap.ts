@@ -10,17 +10,17 @@ const infoTagMap: INativeTagMap = {
   'key signature': 'key',
   artist: 'artist',
   album: 'album',
-  'track number': 'track',
+  'track number': 'trackNumber',
   year: 'year',
-  composer: 'composer',
-  lyricist: 'lyricist',
-  genre: 'genre',
+  composer: 'composers',
+  lyricist: 'lyricists',
+  genre: 'genres',
   title: 'title',
   'recorded date': 'date',
-  comments: 'comment',
+  comments: 'comments',
   copyright: 'copyright',
-  'source encoder': 'encodersettings',
-  'encoding application': 'encodedby'
+  'source encoder': 'encoderSettings',
+  'encoding application': 'encodedBy'
 };
 
 const commaSeparatedKeys = new Set(['artist', 'composer', 'lyricist', 'genre']);

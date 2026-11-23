@@ -49,11 +49,13 @@ describe('Read synthetic FLAC metadata', () => {
     expect(result.common.artists).toEqual(['First artist', 'Second artist']);
     expect(result.common.album).toBe('An album');
     expect(result.common.date).toBe('2024-01-02');
-    expect(result.common.track).toEqual({ no: 3, of: 12 });
-    expect(result.common.disk).toEqual({ no: 1, of: 2 });
-    expect(result.common.genre).toEqual(['Rock', 'Pop']);
-    expect(result.common.musicbrainz_recordingid).toBe('recording-id');
-    expect(result.common.musicbrainz_trackid).toBe('release-track-id');
+    expect(result.common.trackNumber).toBe(3);
+    expect(result.common.trackTotal).toBe(12);
+    expect(result.common.discNumber).toBe(1);
+    expect(result.common.discTotal).toBe(2);
+    expect(result.common.genres).toEqual(['Rock', 'Pop']);
+    expect(result.common.mbRecordingId).toBe('recording-id');
+    expect(result.common.mbReleaseTrackId).toBe('release-track-id');
     expect(mm.orderTags(result.native.vorbis).TITLE).toEqual(['Original title']);
     expect(mm.orderTags(result.native.vorbis).ARTIST).toEqual(['First artist', 'Second artist']);
   });
@@ -62,8 +64,10 @@ describe('Read synthetic FLAC metadata', () => {
     const input = makeFlac({ withVorbisComment: false });
     const result = await mm.parseBuffer(input, { mimeType: 'audio/flac' });
     expect(result.native.vorbis).toBeUndefined();
-    expect(result.common.track).toEqual({ no: null, of: null });
-    expect(result.common.disk).toEqual({ no: null, of: null });
+    expect(result.common.trackNumber).toBeUndefined();
+    expect(result.common.trackTotal).toBeUndefined();
+    expect(result.common.discNumber).toBeUndefined();
+    expect(result.common.discTotal).toBeUndefined();
   });
 
   it('reads native FLAC PICTURE blocks', async () => {
@@ -175,12 +179,12 @@ describe('Parse FLAC Vorbis comment', () => {
   function checkCommon(common: mm.ICommonTagsResult) {
     assert.strictEqual(common.title, 'Brian Eno', 'common.title');
     assert.deepEqual(common.artists, ['MGMT'], 'common.artists');
-    assert.strictEqual(common.albumartist, undefined, 'common.albumartist');
+    assert.strictEqual(common.albumArtist, undefined, 'common.albumartist');
     assert.strictEqual(common.album, 'Congratulations', 'common.album');
     assert.strictEqual(common.year, 2010, 'common.year');
-    assert.deepEqual(common.track, { no: 7, of: null }, 'common.track');
-    assert.deepEqual(common.disk, { no: null, of: null }, 'common.disk');
-    assert.deepEqual(common.genre, ['Alt. Rock'], 'genre');
+    assert.deepEqual(common.trackNumber, 7, 'common.track');
+    assert.deepEqual(common.discNumber, undefined, 'common.disk');
+    assert.deepEqual(common.genres, ['Alt. Rock'], 'genres');
     assert.strictEqual(common.picture![0].format, 'image/jpeg', 'common.picture format');
     assert.strictEqual(common.picture![0].data.length, 175668, 'common.picture length');
   }
@@ -224,8 +228,8 @@ describe('Parse FLAC Vorbis comment', () => {
     const filePath = path.join(samplePath, 'flac/flac-multiple-album-artists-tags.flac');
     const { common } = await mm.parseFile(filePath);
 
-    assert.strictEqual(common.albumartist, 'Album Artist One', 'common.albumartist');
-    assert.deepEqual(common.albumartists, ['Album Artist One', 'Album Artist Two'], 'common.albumartists');
+    assert.strictEqual(common.albumArtist, 'Album Artist One', 'common.albumartist');
+    assert.deepEqual(common.albumArtists, ['Album Artist One', 'Album Artist Two'], 'common.albumartists');
   });
 
   describe('should be able to recognize a ID3v2 tag header prefixing a FLAC file', () => {
@@ -743,7 +747,7 @@ describe('Parse FLAC Vorbis comment', () => {
     assert.isTrue(format.hasAudio, 'format.hasAudio');
     assert.isFalse(format.hasVideo, 'format.hasAudio');
 
-    assert.strictEqual(common.albumartist, 'Various Artists', 'common.albumartist');
+    assert.strictEqual(common.albumArtist, 'Various Artists', 'common.albumartist');
   });
 
   it('RATING mapping', async () => {
@@ -900,24 +904,24 @@ describe('Parse FLAC Vorbis comment', () => {
         assert.deepEqual(common.title, 'Brian Eno', 'common.tagtitle');
         assert.deepEqual(common.artist, 'MGMT', 'common.artist');
         assert.deepEqual(common.artists, ['MGMT'], 'common.artist');
-        assert.deepEqual(common.albumartist, 'MGMT', 'common.albumartist');
+        assert.deepEqual(common.albumArtist, 'MGMT', 'common.albumartist');
         assert.deepEqual(common.album, 'Oracular Spectacular / Congratulations', 'common.album');
-        assert.deepEqual(common.track, { no: 7, of: 9 }, 'common.track');
-        assert.deepEqual(common.disk, { no: 2, of: 2 }, 'common.disk');
-        assert.deepEqual(common.discsubtitle, ['Cogratulations'], 'common.discsubtitle');
+        assert.deepEqual(common.trackNumber, 7, 'common.track');
+        assert.deepEqual(common.discNumber, 2, 'common.disk');
+        assert.deepEqual(common.discSubtitle, ['Cogratulations'], 'common.discsubtitle');
         assert.deepEqual(common.date, '2011-09-11', 'common.date');
         assert.deepEqual(common.year, 2011, 'common.year');
-        assert.deepEqual(common.releasecountry, 'XE', 'common.releasecountry');
+        assert.deepEqual(common.releaseCountry, 'XE', 'common.releasecountry');
         assert.deepEqual(common.asin, 'B0055U9LNC', 'common.asin');
         assert.deepEqual(common.barcode, '886979357723', 'common.barcode');
-        assert.deepEqual(common.label, ['Sony Music'], 'common.label');
-        assert.deepEqual(common.catalognumber, ['88697935772'], 'common.catalognumber');
-        assert.deepEqual(common.originalyear, 2011, 'common.originalyear');
-        assert.deepEqual(common.originaldate, '2011-09-11', 'common.originaldate');
-        assert.deepEqual(common.releasestatus, 'official', 'common.releasestatus');
-        assert.deepEqual(common.releasetype, ['album', 'compilation'], 'common.releasetype');
+        assert.deepEqual(common.labels, ['Sony Music'], 'common.label');
+        assert.deepEqual(common.catalogNumber, ['88697935772'], 'common.catalognumber');
+        assert.deepEqual(common.originalYear, 2011, 'common.originalyear');
+        assert.deepEqual(common.originalDate, '2011-09-11', 'common.originaldate');
+        assert.deepEqual(common.releaseStatus, 'official', 'common.releasestatus');
+        assert.deepEqual(common.releaseType, ['album', 'compilation'], 'common.releasetype');
         assert.deepEqual(
-          common.comment,
+          common.comments,
           [
             {
               text: 'EAC-Secure Mode'
@@ -925,37 +929,25 @@ describe('Parse FLAC Vorbis comment', () => {
           ],
           'common.comment'
         );
-        assert.deepEqual(common.genre, ['Alt. Rock'], 'common.genre');
+        assert.deepEqual(common.genres, ['Alt. Rock'], 'common.genre');
+        assert.deepEqual(common.mbReleaseId, '6032dfc4-8880-4fea-b1c0-aaee52e1113c', 'common.musicbrainz_albumid');
         assert.deepEqual(
-          common.musicbrainz_albumid,
-          '6032dfc4-8880-4fea-b1c0-aaee52e1113c',
-          'common.musicbrainz_albumid'
-        );
-        assert.deepEqual(
-          common.musicbrainz_recordingid,
+          common.mbRecordingId,
           'b0c1d984-ba93-4167-880a-ac02255bf9e7',
           'common.musicbrainz_recordingid'
         );
         assert.deepEqual(
-          common.musicbrainz_albumartistid,
+          common.mbAlbumArtistId,
           ['c485632c-b784-4ee9-8ea1-c5fb365681fc'],
           'common.musicbrainz_albumartistid'
         );
+        assert.deepEqual(common.mbArtistId, ['c485632c-b784-4ee9-8ea1-c5fb365681fc'], 'common.musicbrainz_artistid');
         assert.deepEqual(
-          common.musicbrainz_artistid,
-          ['c485632c-b784-4ee9-8ea1-c5fb365681fc'],
-          'common.musicbrainz_artistid'
-        );
-        assert.deepEqual(
-          common.musicbrainz_releasegroupid,
+          common.mbReleaseGroupId,
           '9a3237f4-c2a5-467f-9a8e-fe1d247ff520',
           'common.musicbrainz_releasegroupid'
         );
-        assert.deepEqual(
-          common.musicbrainz_trackid,
-          '0f53f7a3-89df-4069-9357-d04252239b6d',
-          'common.musicbrainz_trackid'
-        );
+        assert.deepEqual(common.mbReleaseTrackId, '0f53f7a3-89df-4069-9357-d04252239b6d', 'common.musicbrainz_trackid');
 
         assert.isDefined(common.picture, 'common.picture');
         assert.deepEqual(common.picture[0].format, 'image/jpeg', 'picture format');
@@ -1039,12 +1031,12 @@ describe('Parse FLAC Vorbis comment', () => {
     it('should decode replaygain tags from FLAC/Vorbis', async () => {
       return mm.parseFile(filePath).then(metadata => {
         assert.deepEqual(
-          metadata.common.replaygain_track_gain,
+          metadata.common.replayGainTrackGain,
           { dB: -7.03, ratio: 0.1981527025805098 },
           'replaygain_track_gain.ratio'
         );
         assert.deepEqual(
-          metadata.common.replaygain_track_peak,
+          metadata.common.replayGainTrackPeak,
           { dB: -0.0037125893296365503, ratio: 0.99914551 },
           'replaygain_track_peak.ratio = -0.00371259 dB'
         );

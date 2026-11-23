@@ -39,12 +39,12 @@ describe('FLAC writing', () => {
             acoustid_id_fingerprint: spelling === 'standard' ? null : 'AQAAAA'
           }
         });
-        const output = await updateBuffer(input, { acoustid_fingerprint: value });
+        const output = await updateBuffer(input, { acoustIdFingerprint: value });
         const result = await readTags(output);
         expect(vorbisValues(result, 'ACOUSTID_FINGERPRINT')).toEqual(value === null ? [] : [value]);
         expect(vorbisValues(result, 'ACOUSTID_ID_FINGERPRINT')).toEqual([]);
-        expect(result.common.acoustid_fingerprint).toBe(value ?? undefined);
-        expect(result.common.acoustid_id).toBe('12345678-1234-4234-8234-1234567890ab');
+        expect(result.common.acoustIdFingerprint).toBe(value ?? undefined);
+        expect(result.common.acoustId).toBe('12345678-1234-4234-8234-1234567890ab');
         expect(extractAudio(output)).toEqual(extractAudio(original));
       });
     }
@@ -56,7 +56,7 @@ describe('FLAC writing', () => {
       const result = await readTags(await updateBuffer(input, { title: 'Changed title' }));
       expect(vorbisValues(result, 'ACOUSTID_ID_FINGERPRINT')).toEqual(['AQAAAA']);
       expect(vorbisValues(result, 'ACOUSTID_FINGERPRINT')).toEqual([]);
-      expect(result.common.acoustid_fingerprint).toBe('AQAAAA');
+      expect(result.common.acoustIdFingerprint).toBe('AQAAAA');
       expect(result.common.title).toBe('Changed title');
     });
   });
@@ -96,9 +96,10 @@ describe('FLAC writing', () => {
     const output = await updateBuffer(input, {
       title: 'New',
       album: 'Added',
-      genre: ['Jazz', 'Blues'],
-      track: { no: 4, of: 9 },
-      disk: { no: 1 },
+      genres: ['Jazz', 'Blues'],
+      trackNumber: 4,
+      trackTotal: 9,
+      discNumber: 1,
       native: { CUSTOM_FIELD: 'updated' }
     });
 
@@ -106,16 +107,17 @@ describe('FLAC writing', () => {
     expect(result.common.title).toBe('New');
     expect(result.common.artist).toBe('Keep me');
     expect(result.common.album).toBe('Added');
-    expect(result.common.genre).toEqual(['Jazz', 'Blues']);
-    expect(result.common.track).toEqual({ no: 4, of: 9 });
-    expect(result.common.disk).toEqual({ no: 1, of: null });
+    expect(result.common.genres).toEqual(['Jazz', 'Blues']);
+    expect(result.common.trackNumber).toBe(4);
+    expect(result.common.trackTotal).toBe(9);
+    expect(result.common.discNumber).toBe(1);
     expect(vorbisValues(result, 'CUSTOM_FIELD')).toEqual(['updated']);
 
-    const deleted = await updateBuffer(output, { title: null, album: null, genre: null });
+    const deleted = await updateBuffer(output, { title: null, album: null, genres: null });
     const deletedResult = await readTags(deleted);
     expect(deletedResult.common.title).toBeUndefined();
     expect(deletedResult.common.album).toBeUndefined();
-    expect(deletedResult.common.genre).toBeUndefined();
+    expect(deletedResult.common.genres).toBeUndefined();
     expect(deletedResult.common.artist).toBe('Keep me');
   });
 
@@ -148,14 +150,14 @@ describe('FLAC writing', () => {
     const input = makeFlac();
     const output = await updateBuffer(input, {
       artists: ['Artist A', 'Artist B'],
-      albumartists: ['Album Artist A', 'Album Artist B']
+      albumArtists: ['Album Artist A', 'Album Artist B']
     });
 
     const result = await readTags(output);
     expect(result.common.artists).toEqual(['Artist A', 'Artist B']);
     expect(result.common.artist).toBe('Artist A');
-    expect(result.common.albumartists).toEqual(['Album Artist A', 'Album Artist B']);
-    expect(result.common.albumartist).toBe('Album Artist A');
+    expect(result.common.albumArtists).toEqual(['Album Artist A', 'Album Artist B']);
+    expect(result.common.albumArtist).toBe('Album Artist A');
   });
 
   it('writes and removes pictures', async () => {
@@ -610,11 +612,11 @@ describe('competing FLAC tag families', () => {
     const before = await readTags(input);
     const title = `Partial edit: ${fixture}`;
     const comment = 'round-trip test';
-    const output = await updateBuffer(input, { title, comment });
+    const output = await updateBuffer(input, { title, comments: comment });
     const after = await readTags(output);
 
     expect(after.common.title).toBe(title);
-    expect(after.common.comment?.map(entry => entry.text)).toEqual([comment]);
+    expect(after.common.comments?.map(entry => entry.text)).toEqual([comment]);
     expect(after.native.vorbis?.filter(tag => tag.id.toUpperCase() === 'TITLE').map(tag => tag.value)).toEqual([title]);
     expect(after.native.vorbis?.filter(tag => tag.id.toUpperCase() === 'COMMENT').map(tag => tag.value)).toEqual([
       comment

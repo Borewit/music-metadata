@@ -8,7 +8,8 @@ import { InvalidFileError, InvalidPatchError, UnsupportedFeatureError } from '..
 import { lyricsText, normalizeLyrics } from '../core/lyrics.js';
 import { normalizeComments, normalizeNumberPair, textValues, validatePictures } from '../core/patch.js';
 import type { ByteSource } from '../core/source.shared.js';
-import type { TagPatch, WriteOptions } from '../core/types.js';
+import type { WriteOptions } from '../core/types.js';
+import type { InternalPatch } from '../mapping/common.js';
 import { commonText, structuredText } from '../mapping/common.js';
 
 const MAX_TAG_BYTES = 64 * 1024 * 1024;
@@ -23,13 +24,16 @@ for (const [key, field] of Object.entries(apev2TagMap)) {
     aliases.set(field, [...(aliases.get(field) ?? []), key]);
   }
 }
+aliases.set('track', aliases.get('trackNumber') ?? ['Track']);
+aliases.set('disk', aliases.get('discNumber') ?? ['Disc']);
+
 const normalizedAliases = new Set([
   'year',
   'movementTotal',
-  'totaltracks',
-  'totaldiscs',
-  'replaygain_track_gain_ratio',
-  'replaygain_track_peak_ratio'
+  'trackTotal',
+  'discTotal',
+  'replayGainTrackGainRatio',
+  'replayGainTrackPeakRatio'
 ]);
 
 interface Item {
@@ -52,7 +56,7 @@ interface Tag {
 /** APEv2 tail metadata uses the same source-range plan on all three containers and both platforms. */
 export async function buildApeUpdate(
   source: ByteSource,
-  patch: TagPatch,
+  patch: InternalPatch,
   options: WriteOptions,
   format: 'ape' | 'wv' | 'mpc'
 ): Promise<{ chunks: WriteChunk[]; paddingBytes: number }> {
@@ -227,7 +231,7 @@ function validKey(key: string): boolean {
   return /^[\x20-\x7e]{2,255}$/.test(key) && !['OGGS', 'TAG', 'ID3', 'MP+'].includes(key.toUpperCase());
 }
 
-function applyPatch(items: Map<string, Item>, patch: TagPatch): boolean {
+function applyPatch(items: Map<string, Item>, patch: InternalPatch): boolean {
   let changed = false;
   const replace = (keys: readonly string[], item?: Item): void => {
     for (const key of keys) {
@@ -248,7 +252,7 @@ function applyPatch(items: Map<string, Item>, patch: TagPatch): boolean {
   if (patch.movementIndex !== undefined) {
     const pair = normalizeNumberPair(patch.movementIndex, 'movementIndex');
     if (pair !== undefined && (pair === null || pair.no !== undefined || pair.of !== undefined)) {
-      const keys = aliases.get('movementIndex') ?? ['MOVEMENT', 'MOVEMENTNUMBER'];
+      const keys = aliases.get('movementNumber') ?? ['MOVEMENT', 'MOVEMENTNUMBER'];
       // Like the reader, retain the last number and first non-null embedded total.
       const previous = [...items.values()].filter(item => keys.includes(item.key.toUpperCase()));
       const total = items.get('MOVEMENTTOTAL');
@@ -280,17 +284,17 @@ function applyPatch(items: Map<string, Item>, patch: TagPatch): boolean {
   }
   const structured = structuredText(patch);
   for (const [field, value] of Object.entries(patch)) {
-    if (value === undefined || field === 'native' || normalizedAliases.has(field)) {
+    if (field === 'native' || normalizedAliases.has(field)) {
       continue;
     }
-    if (field === 'movementIndex') {
+    if (field === 'movementIndex' || value === undefined) {
       continue;
     }
     const keys = aliases.get(field);
     if (!keys) {
       throw new UnsupportedFeatureError(`APEv2 does not support common field: ${field}; use native for unmapped items`);
     }
-    const key = field === 'disk' ? 'Disc' : keys[keys.length - 1];
+    const key = field === 'disk' || field === 'discNumber' ? 'Disc' : keys[keys.length - 1];
     if (field === 'picture') {
       const pictures = validatePictures(patch.picture);
       const covers = new Map<string, Item>();
@@ -298,7 +302,7 @@ function applyPatch(items: Map<string, Item>, patch: TagPatch): boolean {
         const role = picture.type ?? 'Cover (front)';
         const coverKey = role === 'Cover (front)' ? FRONT : role === 'Cover (back)' ? BACK : undefined;
         if (!coverKey) {
-          throw new UnsupportedFeatureError('APEv2 supports only front and back cover pictures');
+          throw new UnsupportedFeatureError('APEv2 supports only front and back cover picture');
         }
         if (covers.has(coverKey)) {
           throw new InvalidPatchError(`Duplicate APEv2 picture role: ${role}`);
@@ -325,7 +329,11 @@ function applyPatch(items: Map<string, Item>, patch: TagPatch): boolean {
     }
     let values: string[] | null;
     if (field === 'track' || field === 'disk') {
-      const pair = normalizeNumberPair(patch[field], field);
+      const value = patch[field];
+      const pair =
+        typeof value === 'number'
+          ? { no: value }
+          : normalizeNumberPair(value as { no?: number | null; of?: number | null }, field);
       if (pair && pair.no === undefined && pair.of === undefined) {
         continue;
       }
@@ -339,8 +347,8 @@ function applyPatch(items: Map<string, Item>, patch: TagPatch): boolean {
       const no = pair?.no !== undefined ? pair.no : existing.no;
       const of = pair?.of !== undefined ? pair.of : existing.of;
       values = pair === null || (no === null && of === null) ? null : [of === null ? String(no) : `${no ?? ''}/${of}`];
-    } else if (field === 'comment') {
-      values = normalizeComments(patch.comment)?.map(comment => comment.text ?? '') ?? null;
+    } else if (field === 'comments') {
+      values = normalizeComments(patch.comments)?.map(comment => comment.text ?? '') ?? null;
     } else if (field === 'lyrics') {
       values = normalizeLyrics(patch.lyrics)?.map(lyricsText) ?? null;
     } else {

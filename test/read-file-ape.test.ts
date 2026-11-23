@@ -19,13 +19,13 @@ describe("Parse APE (Monkey's Audio)", () => {
     assert.strictEqual(common.title, '07. Shadow On The Sun', 'common.title');
     assert.strictEqual(common.artist, 'Audioslave', 'common.artist');
     assert.deepEqual(common.artists, ['Audioslave', 'Chris Cornell'], 'common.artists');
-    // Used to be ['Audioslave'], but 'APEv2/Album Artist'->'albumartist' is not set in actual file!
-    assert.deepEqual(common.albumartist, undefined, 'common.albumartist');
+    // Used to be ['Audioslave'], but 'APEv2/Album Artist'->'albumArtist' is not set in actual file!
+    assert.deepEqual(common.albumArtist, undefined, 'common.albumartist');
     assert.strictEqual(common.album, 'Audioslave', 'common.album');
     assert.strictEqual(common.year, 2002, 'common.year');
-    assert.deepEqual(common.genre, ['Alternative'], 'common.genre');
-    assert.deepEqual(common.track, { no: 7, of: null }, 'common.track');
-    assert.deepEqual(common.disk, { no: 3, of: null }, 'common.disk');
+    assert.deepEqual(common.genres, ['Alternative'], 'common.genre');
+    assert.deepEqual(common.trackNumber, 7, 'common.track');
+    assert.deepEqual(common.discNumber, 3, 'common.disk');
     assert.strictEqual(common.picture![0].format, 'image/jpeg', 'common.picture 0 format');
     assert.strictEqual(common.picture![0].data.length, 48658, 'common.picture 0 length');
     assert.strictEqual(common.picture![1].format, 'image/jpeg', 'common.picture 1 format');

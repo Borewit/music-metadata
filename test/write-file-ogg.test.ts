@@ -601,7 +601,7 @@ describe('Ogg page budget', () => {
   }, 30000);
 
   it('rejects output pagination exceeding the limit even when input is within it', async () => {
-    // The comment and setup packets share a page in this input but are
+    // The comments and setup packets share a page in this input but are
     // regenerated on separate pages, adding one page to the output.
     const input = await withEmptyAudioPages('vorbis.ogg', 100000);
     await expect(updateBuffer(input, {}).then(() => 'accepted')).rejects.toThrow('Ogg page count exceeds limit');

@@ -60,10 +60,10 @@ describe('Parse Musepack (.mpc)', () => {
         assert.strictEqual(common.album, 'Broad Souls');
         assert.strictEqual(common.date, '2004-05-03');
         assert.strictEqual(common.barcode, '802085273528');
-        assert.deepEqual(common.catalognumber, ['LUNECD35']);
+        assert.deepEqual(common.catalogNumber, ['LUNECD35']);
         assert.strictEqual(common.media, 'CD');
-        assert.strictEqual(common.releasecountry, 'GB');
-        assert.deepEqual(common.track, { no: 9, of: 10 });
+        assert.strictEqual(common.releaseCountry, 'GB');
+        assert.deepEqual(common.trackNumber, 9);
       });
     });
   });
@@ -89,7 +89,7 @@ describe('Parse Musepack (.mpc)', () => {
         assert.strictEqual(common.artist, 'Faze Action');
         assert.strictEqual(common.album, 'Broad Souls');
         assert.strictEqual(common.date, '2004');
-        assert.deepEqual(common.track, { no: 9, of: null });
+        assert.deepEqual(common.trackNumber, 9);
       });
     });
   });
@@ -112,11 +112,11 @@ describe('Parse Musepack (.mpc)', () => {
         assert.strictEqual(common.title, 'Goldberg Variations, BWV 988: Variatio 4 a 1 Clav.');
         assert.strictEqual(common.artist, 'Johann Sebastian Bach');
         assert.deepEqual(common.artists, ['Johann Sebastian Bach']);
-        assert.deepEqual(common.isrc, ['QMNYZ1200005']);
+        assert.deepEqual(common.isrcs, ['QMNYZ1200005']);
         assert.deepEqual(common.license, 'https://creativecommons.org/publicdomain/zero/1.0/');
         assert.strictEqual(common.album, 'Open Goldberg Variations');
         assert.strictEqual(common.date, '2012-05-28');
-        assert.deepEqual(common.track, { no: 5, of: 32 });
+        assert.deepEqual(common.trackNumber, 5);
       });
     });
   });

@@ -5,6 +5,7 @@ import { InvalidFileError, InvalidPatchError, UnsupportedFormatError } from '../
 import { validatePictures } from '../core/patch.js';
 import type { ByteSource } from '../core/source.shared.js';
 import type { Picture, TagPatch, WriteOptions } from '../core/types.js';
+import type { InternalPatch } from '../mapping/common.js';
 import { applyVorbisPatch } from '../mapping/vorbis.js';
 import { parseVorbisComment, serializeVorbisComment } from '../vorbis/comment.js';
 import { serializePicture } from './picture.js';
@@ -120,7 +121,7 @@ export async function parseFlac(source: ByteSource): Promise<ParsedFlac> {
  */
 export async function buildFlacUpdate(
   source: ByteSource,
-  patch: TagPatch,
+  patch: InternalPatch,
   options: WriteOptions = {}
 ): Promise<FlacUpdate> {
   const parsed = await parseFlac(source);

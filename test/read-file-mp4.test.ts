@@ -70,12 +70,12 @@ describe('Parse MPEG-4', () => {
         const metadata = await parser.parse(() => context.skip(), path.join(mp4Samples, 'mdta-tags.m4b'), 'audio/mp4');
         assert.equal(metadata.common.title, 'Indexed metadata sample');
         assert.equal(metadata.common.album, 'Metadata Audiobook');
-        assert.equal(metadata.common.albumartist, 'Sample Author');
+        assert.equal(metadata.common.albumArtist, 'Sample Author');
         assert.equal(metadata.common.artist, 'Sample Narrator');
-        assert.deepEqual(metadata.common.composer, ['Sample Narrator']);
+        assert.deepEqual(metadata.common.composers, ['Sample Narrator']);
         assert.equal(metadata.common.date, '2024-02-03');
-        assert.deepEqual(metadata.common.label, ['Sample Publisher']);
-        assert.deepEqual(metadata.common.subtitle, ['A playable regression sample']);
+        assert.deepEqual(metadata.common.labels, ['Sample Publisher']);
+        assert.deepEqual(metadata.common.subtitles, ['A playable regression sample']);
         assert.equal(metadata.common.asin, 'B000TEST');
         assert.approximately(metadata.format.duration, 1.25, 0.03);
         const native = mm.orderTags(metadata.native.iTunes);
@@ -588,13 +588,13 @@ describe('Parse MPEG-4', () => {
       });
 
       for (const [id, value, expected] of [
-        [number, '2', { no: 2, of: null }],
-        [total, '4', { no: null, of: 4 }]
+        [number, '2', 2],
+        [total, '4', 4]
       ] as const) {
         it(`maps standalone ${id}`, async () => {
           const metadata = new MetadataCollector();
           await metadata.addTag('iTunes', id, value);
-          assert.deepEqual(metadata.common.movementIndex, expected);
+          assert.strictEqual(metadata.common[number === id ? 'movementNumber' : 'movementTotal'], expected);
         });
       }
 
@@ -611,7 +611,8 @@ describe('Parse MPEG-4', () => {
           for (const tag of tags) {
             await metadata.addTag('iTunes', tag.id, tag.value);
           }
-          assert.deepEqual(metadata.common.movementIndex, { no: 2, of: 4 });
+          assert.deepEqual(metadata.common.movementNumber, 2);
+          assert.deepEqual(metadata.common.movementTotal, 4);
         });
       }
     }
@@ -622,7 +623,8 @@ describe('Parse MPEG-4', () => {
       await metadata.addTag('iTunes', '----:com.apple.iTunes:movement', '2/4');
       await metadata.addTag('iTunes', '----:com.apple.iTunes:movement total', '5');
       assert.strictEqual(metadata.common.movement, 'Allegro');
-      assert.deepEqual(metadata.common.movementIndex, { no: 2, of: 5 });
+      assert.deepEqual(metadata.common.movementNumber, 2);
+      assert.deepEqual(metadata.common.movementTotal, 5);
     });
   });
 
@@ -630,7 +632,7 @@ describe('Parse MPEG-4', () => {
     for (const [sourceId, valueType] of [
       ['©day', 'string'],
       ['tmpo', 'number'],
-      ['covr', 'picture']
+      ['covr', 'pictures']
     ]) {
       it(`exposes ${valueType} data atoms under the typed date identifier`, async () => {
         const input = await fs.promises.readFile(path.join(mp4Samples, 'id4.m4a'));
@@ -672,14 +674,14 @@ describe('Parse MPEG-4', () => {
     function checkCommon(common: mm.ICommonTagsResult) {
       assert.strictEqual(common.title, 'Voodoo People (Pendulum Remix)', 'title');
       assert.strictEqual(common.artist, 'The Prodigy', 'artist');
-      assert.strictEqual(common.albumartist, 'Pendulum', 'albumartist');
+      assert.strictEqual(common.albumArtist, 'Pendulum', 'albumArtist');
       assert.strictEqual(common.album, 'Voodoo People', 'album');
       assert.strictEqual(common.year, 2005, 'year');
-      assert.strictEqual(common.track.no, 1, 'track no');
-      assert.strictEqual(common.track.of, 12, 'track of');
-      assert.strictEqual(common.disk.no, 1, 'disk no');
-      assert.strictEqual(common.disk.of, 1, 'disk of');
-      assert.strictEqual(common.genre![0], 'Electronic', 'genre');
+      assert.strictEqual(common.trackNumber, 1, 'track no');
+      assert.strictEqual(common.trackTotal, 12, 'track of');
+      assert.strictEqual(common.discNumber, 1, 'disk no');
+      assert.strictEqual(common.discTotal, 1, 'disk of');
+      assert.strictEqual(common.genres![0], 'Electronic', 'genres');
       assert.strictEqual(common.picture![0].format, 'image/jpeg', 'picture 0 format');
       assert.strictEqual(common.picture![0].data.length, 196450, 'picture 0 length');
       assert.strictEqual(common.picture![1].format, 'image/jpeg', 'picture 1 format');
@@ -769,8 +771,8 @@ describe('Parse MPEG-4', () => {
         assert.isAtLeast(native.iTunes.length, 1);
 
         assert.deepEqual(common.album, "Live at Tom's Bullpen in Dover, DE (2016-04-30)");
-        assert.deepEqual(common.albumartist, "They Say We're Sinking");
-        assert.deepEqual(common.comment, [
+        assert.deepEqual(common.albumArtist, "They Say We're Sinking");
+        assert.deepEqual(common.comments, [
           { text: 'youtube rip\r\nSource: https://www.youtube.com/playlist?list=PLZ4QPxwBgg9TfsFVAArOBfuve_0e7zQaV' }
         ]);
       });
@@ -796,13 +798,13 @@ describe('Parse MPEG-4', () => {
         assert.deepEqual(format.hasVideo, false, 'format.hasVideo');
 
         assert.strictEqual(common.title, 'Uprising');
-        assert.deepEqual(common.composer, ['Muse']);
+        assert.deepEqual(common.composers, ['Muse']);
         assert.deepEqual(common.artists, ['Muse']);
-        assert.deepEqual(common.genre, ['Rock']);
+        assert.deepEqual(common.genres, ['Rock']);
         assert.strictEqual(common.date, '2009');
-        assert.strictEqual(common.encodedby, 'iTunes 8.2.0.23, QuickTime 7.6.2');
-        assert.deepEqual(common.disk, { no: 1, of: 1 });
-        assert.deepEqual(common.track, { no: 1, of: null });
+        assert.strictEqual(common.encodedBy, 'iTunes 8.2.0.23, QuickTime 7.6.2');
+        assert.deepEqual(common.discNumber, 1);
+        assert.deepEqual(common.trackNumber, 1);
       });
     });
   });
@@ -895,11 +897,11 @@ describe('Parse MPEG-4', () => {
 
           assert.strictEqual(common.title, 'GloriesIreland00-12_librivox');
           assert.deepEqual(common.artists, ['Joseph Dunn']);
-          assert.deepEqual(common.genre, ['Audiobook']);
-          assert.strictEqual(common.encodedby, 'Chapter and Verse V 1.5');
-          assert.deepEqual(common.disk, { no: null, of: null });
-          assert.deepEqual(common.track, { no: 1, of: null });
-          assert.deepEqual(common.comment, [{ text: 'https://archive.org/details/glories_of_ireland_1801_librivox' }]);
+          assert.deepEqual(common.genres, ['Audiobook']);
+          assert.strictEqual(common.encodedBy, 'Chapter and Verse V 1.5');
+          assert.deepEqual(common.discNumber, undefined);
+          assert.deepEqual(common.trackNumber, 1);
+          assert.deepEqual(common.comments, [{ text: 'https://archive.org/details/glories_of_ireland_1801_librivox' }]);
 
           const iTunes = mm.orderTags(native.iTunes);
           assert.deepEqual(iTunes.stik, [2], 'iTunes.stik = 2 = Audiobook'); // Ref: http://www.zoyinc.com/?p=1004
@@ -929,7 +931,7 @@ describe('Parse MPEG-4', () => {
 
           assert.deepEqual(common.artist, 'Mr. Pickles');
           assert.deepEqual(common.artists, ['Mr. Pickles']);
-          assert.deepEqual(common.albumartist, 'Mr. Pickles');
+          assert.deepEqual(common.albumArtist, 'Mr. Pickles');
           assert.deepEqual(common.copyright, '© & TM - Cartoon Network - 2016');
 
           const iTunes = mm.orderTags(native.iTunes);
@@ -975,11 +977,11 @@ describe('Parse MPEG-4', () => {
         assert.deepEqual(format.hasVideo, false, 'format.hasVideo');
 
         assert.deepEqual(common.album, 'We Don`t Need to Whisper');
-        assert.deepEqual(common.albumartist, 'Angels and Airwaves');
+        assert.deepEqual(common.albumArtist, 'Angels and Airwaves');
         assert.deepEqual(common.artist, 'Angels and Airwaves');
         assert.deepEqual(common.artists, ['Angels and Airwaves']);
         assert.strictEqual(common.bpm, 89);
-        assert.deepEqual(common.genre, ['Rock']);
+        assert.deepEqual(common.genres, ['Rock']);
         assert.strictEqual(common.title, 'Distraction');
       });
     });
@@ -998,7 +1000,7 @@ describe('Parse MPEG-4', () => {
         assert.deepEqual(format.hasVideo, false, 'format.hasVideo');
 
         assert.deepEqual(common.album, 'Trumpsta (Remixes)');
-        assert.deepEqual(common.albumartist, 'Contiez');
+        assert.deepEqual(common.albumArtist, 'Contiez');
         assert.deepEqual(common.artist, 'Contiez');
         assert.deepEqual(common.artists, ['Contiez']);
         assert.strictEqual(common.title, 'Trumpsta (Djuro Remix)');
@@ -1217,7 +1219,8 @@ describe('Parse MPEG-4', () => {
       const filePath = path.join(samplePath, filename);
 
       return mm.parseFile(filePath).then(metadata => {
-        assert.deepEqual(metadata.common.movementIndex, { no: 1, of: 4 }, 'metadata.common.movementIndex');
+        assert.deepEqual(metadata.common.movementNumber, 1, 'metadata.common.movementNumber');
+        assert.deepEqual(metadata.common.movementTotal, 4, 'metadata.common.movementTotal');
       });
     });
 
@@ -1253,7 +1256,7 @@ describe('Parse MPEG-4', () => {
       const filePath = path.join(samplePath, filename);
 
       return mm.parseFile(filePath).then(metadata => {
-        assert.deepEqual(metadata.common.category, ['Podcast Category'], 'metadata.common.category');
+        assert.deepEqual(metadata.common.categories, ['Podcast Category'], 'metadata.common.category');
       });
     });
 
@@ -1280,7 +1283,7 @@ describe('Parse MPEG-4', () => {
       const filePath = path.join(samplePath, filename);
 
       return mm.parseFile(filePath).then(metadata => {
-        assert.strictEqual(metadata.common.podcasturl, 'http://podcast.url', 'metadata.common.podcasturl');
+        assert.strictEqual(metadata.common.podcastUrl, 'http://podcast.url', 'metadata.common.podcasturl');
       });
     });
 
@@ -1307,7 +1310,7 @@ describe('Parse MPEG-4', () => {
       const filePath = path.join(samplePath, filename);
 
       return mm.parseFile(filePath).then(metadata => {
-        assert.strictEqual(metadata.common.albumartistsort, 'Album Artist Sort', 'metadata.common.albumartistsort');
+        assert.strictEqual(metadata.common.albumArtistSort, 'Album Artist Sort', 'metadata.common.albumartistsort');
       });
     });
 
@@ -1316,7 +1319,7 @@ describe('Parse MPEG-4', () => {
       const filePath = path.join(samplePath, filename);
 
       return mm.parseFile(filePath).then(metadata => {
-        assert.strictEqual(metadata.common.albumsort, 'Album Sort', 'metadata.common.albumsort');
+        assert.strictEqual(metadata.common.albumSort, 'Album Sort', 'metadata.common.albumsort');
       });
     });
 
@@ -1325,7 +1328,7 @@ describe('Parse MPEG-4', () => {
       const filePath = path.join(samplePath, filename);
 
       return mm.parseFile(filePath).then(metadata => {
-        assert.strictEqual(metadata.common.artistsort, 'Artist Sort', 'metadata.common.artistsort');
+        assert.strictEqual(metadata.common.artistSort, 'Artist Sort', 'metadata.common.artistsort');
       });
     });
 
@@ -1334,7 +1337,7 @@ describe('Parse MPEG-4', () => {
       const filePath = path.join(samplePath, filename);
 
       return mm.parseFile(filePath).then(metadata => {
-        assert.deepEqual(metadata.common.composersort, 'Composer Sort', 'metadata.common.composersort');
+        assert.deepEqual(metadata.common.composerSort, 'Composer Sort', 'metadata.common.composersort');
       });
     });
 
@@ -1343,7 +1346,7 @@ describe('Parse MPEG-4', () => {
       const filePath = path.join(samplePath, filename);
 
       return mm.parseFile(filePath).then(metadata => {
-        assert.strictEqual(metadata.common.titlesort, 'Title Sort', 'metadata.common.titlesort');
+        assert.strictEqual(metadata.common.titleSort, 'Title Sort', 'metadata.common.titlesort');
       });
     });
 
@@ -1370,7 +1373,7 @@ describe('Parse MPEG-4', () => {
       const filePath = path.join(samplePath, filename);
 
       return mm.parseFile(filePath).then(metadata => {
-        assert.deepEqual(metadata.common.comment, [{ text: 'Tagged with Mp3tag v3.01' }], 'metadata.common.comment');
+        assert.deepEqual(metadata.common.comments, [{ text: 'Tagged with Mp3tag v3.01' }], 'metadata.common.comment');
       });
     });
 
@@ -3446,11 +3449,11 @@ describe('Parse MPEG-4', () => {
 
           assert.strictEqual(common.title, 'Babys Songbook', 'common.title');
           assert.deepEqual(common.artists, ['Walter Crane'], 'common.artists');
-          assert.deepEqual(common.genre, ['Audiobook']);
-          assert.strictEqual(common.encodedby, 'Chapter and Verse V 1.5');
-          assert.deepEqual(common.disk, { no: null, of: null }, 'common.disk');
-          assert.deepEqual(common.track, { no: null, of: null }, 'common.track');
-          assert.isUndefined(common.comment, 'common.comment');
+          assert.deepEqual(common.genres, ['Audiobook']);
+          assert.strictEqual(common.encodedBy, 'Chapter and Verse V 1.5');
+          assert.deepEqual(common.discNumber, undefined, 'common.discNumber');
+          assert.deepEqual(common.trackNumber, undefined, 'common.trackNumber');
+          assert.isUndefined(common.comments, 'common.comment');
 
           const iTunes = mm.orderTags(metadata.native.iTunes);
           assert.deepEqual(iTunes.stik, [2], 'iTunes.stik = 2 = Audiobook'); // Ref: http://www.zoyinc.com/?p=1004

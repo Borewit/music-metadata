@@ -55,7 +55,8 @@ describe('WAV ID3v2.4 writing', () => {
     const patch = {
       title: '音楽',
       artists: ['A', 'B'],
-      track: { no: 2, of: 9 },
+      trackNumber: 2,
+      trackTotal: 9,
       lyrics: 'Lyrics',
       picture: [{ format: 'image/png', type: 'Cover (front)', data: Buffer.from('image') }],
       native: { 'TXXX:PRIVATE': 'keep' }
@@ -65,7 +66,8 @@ describe('WAV ID3v2.4 writing', () => {
     expect(metadata.common.title).toBe('音楽');
     expect(Buffer.from(metadata.common.picture![0]!.data)).toEqual(Buffer.from('image'));
     expect(metadata.common.artists).toEqual(['A', 'B']);
-    expect(metadata.common.track).toEqual({ no: 2, of: 9 });
+    expect(metadata.common.trackNumber).toBe(2);
+    expect(metadata.common.trackTotal).toBe(9);
     expect(
       chunks(output)
         .filter(c => c.id !== 'id3 ')

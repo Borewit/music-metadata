@@ -54,7 +54,7 @@ describe('BWF loudness', () => {
         [-2300, 700, -100, -1800, -2000]
       );
       assert.equal(metadata.common.title, 'Following title');
-      assert.isUndefined(metadata.common.replaygain_track_gain);
+      assert.isUndefined(metadata.common.replayGainTrackGain);
     });
   }
 

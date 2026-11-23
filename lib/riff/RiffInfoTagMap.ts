@@ -11,22 +11,22 @@ export const riffInfoTagMap: INativeTagMap = {
   INAM: 'title', // Title
   TITL: 'title',
   IPRD: 'album', // Product
-  ITRK: 'track',
-  IPRT: 'track', // Additional tag for track index
-  COMM: 'comment', // Comments
-  ICMT: 'comment', // Country
+  ITRK: 'trackNumber',
+  IPRT: 'trackNumber', // Additional tag for track index
+  COMM: 'comments', // Comments
+  ICMT: 'comments', // Country
   ICOP: 'copyright',
-  ICNT: 'releasecountry',
-  GNRE: 'genre', // Genre
-  IWRI: 'writer', // WrittenBy
+  ICNT: 'releaseCountry',
+  GNRE: 'genres', // Genre
+  IWRI: 'writers', // WrittenBy
   RATE: 'rating',
   YEAR: 'year',
-  ISFT: 'encodedby', // Software
-  CODE: 'encodedby', // EncodedBy
+  ISFT: 'encodedBy', // Software
+  CODE: 'encodedBy', // EncodedBy
   TURL: 'website', // URL,
-  IGNR: 'genre', // Genre
-  IENG: 'engineer', // Engineer
-  ITCH: 'technician', // Technician
+  IGNR: 'genres', // Genre
+  IENG: 'engineers', // Engineer
+  ITCH: 'technicians', // Technician
   IMED: 'media', // Original Media
   IRPD: 'album' // Product, where the file was intended for
 };

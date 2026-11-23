@@ -24,23 +24,25 @@ describe('music-metadata read-back', () => {
       title: 'Parity title',
       artist: 'Display artist',
       artists: ['Artist A', 'Artist B'],
-      albumartist: 'Display album artist',
-      albumartists: ['Album Artist A', 'Album Artist B'],
+      albumArtist: 'Display album artist',
+      albumArtists: ['Album Artist A', 'Album Artist B'],
       album: 'Parity album',
       date: '2025-06-01',
-      originaldate: '1999-01-01',
-      genre: ['Jazz', 'Fusion'],
-      comment: 'Parity comment',
-      composer: ['Composer A', 'Composer B'],
-      track: { no: 4, of: 12 },
-      disk: { no: 1, of: 2 },
-      musicbrainz_recordingid: 'recording-id',
-      musicbrainz_trackid: 'release-track-id',
-      musicbrainz_albumid: 'album-id',
-      musicbrainz_artistid: ['artist-id-1', 'artist-id-2'],
-      musicbrainz_albumartistid: ['album-artist-id'],
-      musicbrainz_releasegroupid: 'release-group-id',
-      musicbrainz_workid: 'work-id'
+      originalDate: '1999-01-01',
+      genres: ['Jazz', 'Fusion'],
+      comments: 'Parity comment',
+      composers: ['Composer A', 'Composer B'],
+      trackNumber: 4,
+      trackTotal: 12,
+      discNumber: 1,
+      discTotal: 2,
+      mbRecordingId: 'recording-id',
+      mbReleaseTrackId: 'release-track-id',
+      mbReleaseId: 'album-id',
+      mbArtistId: ['artist-id-1', 'artist-id-2'],
+      mbAlbumArtistId: ['album-artist-id'],
+      mbReleaseGroupId: 'release-group-id',
+      mbWorkId: 'work-id'
     });
 
     const parsed = await parseBuffer(output, { mimeType: 'audio/flac' });
@@ -50,23 +52,25 @@ describe('music-metadata read-back', () => {
     // Preserve the display artist independently of the individual artist list.
     expect(common.artist).toBe('Display artist');
     expect(common.artists).toEqual(['Artist A', 'Artist B']);
-    expect(common.albumartist).toBe('Display album artist');
-    expect(common.albumartists).toEqual(['Album Artist A', 'Album Artist B']);
+    expect(common.albumArtist).toBe('Display album artist');
+    expect(common.albumArtists).toEqual(['Album Artist A', 'Album Artist B']);
     expect(common.album).toBe('Parity album');
     expect(common.date).toBe('2025-06-01');
-    expect(common.originaldate).toBe('1999-01-01');
-    expect(common.genre).toEqual(['Jazz', 'Fusion']);
-    expect(common.comment?.map(comment => comment.text)).toEqual(['Parity comment']);
-    expect(common.composer).toEqual(['Composer A', 'Composer B']);
-    expect(common.track).toEqual({ no: 4, of: 12 });
-    expect(common.disk).toEqual({ no: 1, of: 2 });
-    expect(common.musicbrainz_recordingid).toBe('recording-id');
-    expect(common.musicbrainz_trackid).toBe('release-track-id');
-    expect(common.musicbrainz_albumid).toBe('album-id');
-    expect(common.musicbrainz_artistid).toEqual(['artist-id-1', 'artist-id-2']);
-    expect(common.musicbrainz_albumartistid).toEqual(['album-artist-id']);
-    expect(common.musicbrainz_releasegroupid).toBe('release-group-id');
-    expect(common.musicbrainz_workid).toBe('work-id');
+    expect(common.originalDate).toBe('1999-01-01');
+    expect(common.genres).toEqual(['Jazz', 'Fusion']);
+    expect(common.comments?.map(comments => comments.text)).toEqual(['Parity comment']);
+    expect(common.composers).toEqual(['Composer A', 'Composer B']);
+    expect(common.trackNumber).toBe(4);
+    expect(common.trackTotal).toBe(12);
+    expect(common.discNumber).toBe(1);
+    expect(common.discTotal).toBe(2);
+    expect(common.mbRecordingId).toBe('recording-id');
+    expect(common.mbReleaseTrackId).toBe('release-track-id');
+    expect(common.mbReleaseId).toBe('album-id');
+    expect(common.mbArtistId).toEqual(['artist-id-1', 'artist-id-2']);
+    expect(common.mbAlbumArtistId).toEqual(['album-artist-id']);
+    expect(common.mbReleaseGroupId).toBe('release-group-id');
+    expect(common.mbWorkId).toBe('work-id');
 
     const viaEditor = await readTags(output);
     expect(viaEditor.common).toEqual(common);
@@ -88,7 +92,7 @@ void lyricsEntryArray;
 describe('complete common-tag writing', () => {
   it('reads back Vorbis common text fields with their declared types', async () => {
     const fields = [
-      'technician',
+      'technicians',
       'longDescription',
       'tvShow',
       'tvShowSort',
@@ -97,19 +101,19 @@ describe('complete common-tag writing', () => {
       'tvEpisodeId',
       'tvNetwork',
       'podcast',
-      'podcasturl',
+      'podcastUrl',
       'gapless',
-      'musicip_fingerprint',
+      'musicIpFingerprint',
       'performer:instrument',
       'averageLevel',
       'peakLevel',
-      'originalalbum',
-      'originalartist',
-      'category',
+      'originalAlbum',
+      'originalArtist',
+      'categories',
       'hdVideo',
       'keywords',
       'movement',
-      'movementIndex',
+      'movementNumber',
       'podcastId',
       'showMovement',
       'stik',
@@ -142,7 +146,7 @@ describe('complete common-tag writing', () => {
   it('reads back ID3 common text fields with their declared types', async () => {
     const fields = [
       'work',
-      'technician',
+      'technicians',
       'longDescription',
       'tvShow',
       'tvShowSort',
@@ -181,8 +185,8 @@ describe('complete common-tag writing', () => {
       const output = await updateBuffer(input, completePatch);
       const parsed = await parseBuffer(output, { mimeType: `audio/${format === 'mp3' ? 'mpeg' : 'flac'}` });
       expect(parsed.common.title).toBe(fullCommon.title);
-      expect(parsed.common.replaygain_track_gain).toEqual(fullCommon.replaygain_track_gain);
-      expect(parsed.common.replaygain_track_peak).toEqual(fullCommon.replaygain_track_peak);
+      expect(parsed.common.replayGainTrackGain).toEqual(fullCommon.replayGainTrackGain);
+      expect(parsed.common.replayGainTrackPeak).toEqual(fullCommon.replayGainTrackPeak);
       expect(input).toEqual(Buffer.from(source));
       const audio = (data: Uint8Array) => {
         if (format === 'mp3') {
@@ -211,16 +215,22 @@ describe('complete common-tag writing', () => {
 });
 
 const nativeOverrides: Record<string, string> = {
-  albumartists: 'TPE2',
-  isrc: 'TSRC',
-  acoustid_id: 'TXXX:Acoustid Id',
-  producer: 'TIPL',
-  engineer: 'TIPL',
-  arranger: 'TIPL',
-  mixer: 'TIPL',
-  djmixer: 'TIPL',
-  replaygain_track_gain_ratio: 'TXXX:REPLAYGAIN_TRACK_GAIN',
-  replaygain_track_peak_ratio: 'TXXX:REPLAYGAIN_TRACK_PEAK'
+  albumArtists: 'TPE2',
+  isrcs: 'TSRC',
+  acoustId: 'TXXX:Acoustid Id',
+  producers: 'TIPL',
+  engineers: 'TIPL',
+  arrangers: 'TIPL',
+  mixers: 'TIPL',
+  djMixers: 'TIPL',
+  trackNumber: 'TRCK',
+  trackTotal: 'TRCK',
+  discNumber: 'TPOS',
+  discTotal: 'TPOS',
+  movementNumber: 'MVIN',
+  movementTotal: 'MVIN',
+  replayGainTrackGainRatio: 'TXXX:REPLAYGAIN_TRACK_GAIN',
+  replayGainTrackPeakRatio: 'TXXX:REPLAYGAIN_TRACK_PEAK'
 };
 
 describe('every common field has an observable write effect', () => {
@@ -251,13 +261,13 @@ describe('every common field has an observable write effect', () => {
             const field =
               key === 'artists'
                 ? 'ARTIST'
-                : key === 'albumartists'
+                : key === 'albumArtists'
                   ? 'ALBUMARTIST'
                   : key === 'rating'
                     ? 'RATING:listener@example.com'
-                    : key === 'replaygain_track_gain_ratio'
+                    : key === 'replayGainTrackGainRatio'
                       ? 'REPLAYGAIN_TRACK_GAIN'
-                      : key === 'replaygain_track_peak_ratio'
+                      : key === 'replayGainTrackPeakRatio'
                         ? 'REPLAYGAIN_TRACK_PEAK'
                         : COMMON_FIELDS[key].vorbis;
             expect(
@@ -363,7 +373,7 @@ describe('file integrity across full common-tag rewrites', () => {
           await updateFile(file, completePatch, { atomic, padding: 0 });
           expect(preservedRegions(await readFile(file), format)).toEqual(expected);
           const failedBefore = await readFile(file);
-          await expect(updateFile(file, { track: { no: -1 } }, { atomic })).rejects.toThrow();
+          await expect(updateFile(file, { trackNumber: -1 }, { atomic })).rejects.toThrow();
           expect((await readFile(file)).equals(failedBefore)).toBe(true);
           const clear = Object.fromEntries(Object.keys(completePatch).map(key => [key, null])) as TagPatch;
           await updateFile(file, clear, { atomic, padding: 0 });
@@ -371,8 +381,8 @@ describe('file integrity across full common-tag rewrites', () => {
           const empty = await parseBuffer(await readFile(file), {
             mimeType: `audio/${format === 'mp3' ? 'mpeg' : format === 'wav' ? 'wav' : 'flac'}`
           });
-          expect(empty.common.track).toEqual({ no: null, of: null });
-          expect(empty.common.disk).toEqual({ no: null, of: null });
+          expect(empty.common.trackNumber).toBeUndefined();
+          expect(empty.common.discNumber).toBeUndefined();
           expect(empty.common.picture).toBeUndefined();
         } finally {
           await rm(dir, { recursive: true, force: true });
@@ -382,10 +392,10 @@ describe('file integrity across full common-tag rewrites', () => {
   }
 });
 
-it('preserves repeated disc subtitles in order', async () => {
-  const discsubtitle = ['Part one', 'Part two'];
-  const updated = await updateBuffer(makeFlac(), { discsubtitle });
-  expect((await parseBuffer(updated)).common.discsubtitle).toEqual(discsubtitle);
+it('preserves repeated disc subtitle in order', async () => {
+  const discSubtitle = ['Part one', 'Part two'];
+  const updated = await updateBuffer(makeFlac(), { discSubtitle });
+  expect((await parseBuffer(updated)).common.discSubtitle).toEqual(discSubtitle);
 });
 
 describe('lyrics patch semantics', () => {
@@ -536,9 +546,9 @@ describe('lyrics patch semantics', () => {
   });
 });
 
-it('reads fractional Discogs ratings as numbers', async () => {
-  const updated = await updateBuffer(makeFlac(), { discogs_rating: 4.75 });
-  expect((await parseBuffer(updated)).common.discogs_rating).toBe(4.75);
+it('reads fractional Discogs rating as numbers', async () => {
+  const updated = await updateBuffer(makeFlac(), { discogsRating: 4.75 });
+  expect((await parseBuffer(updated)).common.discogsRating).toBe(4.75);
 });
 
 describe('structured common values', () => {
@@ -605,17 +615,36 @@ describe('structured common values', () => {
   it('normalizes aliases and retains partial number pairs', async () => {
     const output = await updateBuffer(makeFlac(), {
       year: 2026,
-      totaltracks: '12',
-      totaldiscs: '2',
-      replaygain_track_gain_ratio: 0.5,
-      replaygain_track_peak_ratio: 0.75
+      trackTotal: 12,
+      discTotal: 2,
+      replayGainTrackGainRatio: 0.5,
+      replayGainTrackPeakRatio: 0.75
     });
     const parsed = await parseBuffer(output, { mimeType: 'audio/flac' });
     expect(parsed.common.year).toBe(2026);
-    expect(parsed.common.track.of).toBe(12);
-    expect(parsed.common.disk.of).toBe(2);
-    expect(parsed.common.replaygain_track_gain?.ratio).toBe(0.5);
-    expect(parsed.common.replaygain_track_peak?.ratio).toBe(0.75);
+    expect(parsed.common.trackTotal).toBe(12);
+    expect(parsed.common.discTotal).toBe(2);
+    expect(parsed.common.replayGainTrackGain?.ratio).toBe(0.5);
+    expect(parsed.common.replayGainTrackPeak?.ratio).toBe(0.75);
+  });
+  it('clears ReplayGain track tags through the ratio aliases', async () => {
+    const source = await updateBuffer(makeFlac(), {
+      replayGainTrackGainRatio: 0.5,
+      replayGainTrackPeakRatio: 0.75
+    });
+    const output = await updateBuffer(source, {
+      replayGainTrackGainRatio: null,
+      replayGainTrackPeakRatio: null
+    });
+    const { common } = await parseBuffer(output, { mimeType: 'audio/flac' });
+    expect(common.replayGainTrackGain).toBeUndefined();
+    expect(common.replayGainTrackPeak).toBeUndefined();
+  });
+
+  it('ignores invalid native track totals', async () => {
+    const output = await updateBuffer(makeFlac(), { native: { TRACKTOTAL: 'unknown' } });
+    const { common } = await parseBuffer(output, { mimeType: 'audio/flac' });
+    expect(common.trackTotal).toBeUndefined();
   });
 });
 

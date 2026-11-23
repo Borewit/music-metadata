@@ -13,18 +13,18 @@ type Field = keyof typeof completePatch;
 
 const allFields = Object.keys(completePatch) as Field[];
 const allAliases = [
-  'totaltracks',
-  'totaldiscs',
+  'trackTotal',
+  'discTotal',
   'movementTotal',
-  'replaygain_track_gain_ratio',
-  'replaygain_track_peak_ratio'
+  'replayGainTrackGainRatio',
+  'replayGainTrackPeakRatio'
 ] as const;
 const apeAliases = [
-  'totaltracks',
-  'totaldiscs',
+  'trackTotal',
+  'discTotal',
   'movementTotal',
-  'replaygain_track_gain_ratio',
-  'replaygain_track_peak_ratio'
+  'replayGainTrackGainRatio',
+  'replayGainTrackPeakRatio'
 ] as const;
 const asfAliases = apeAliases.filter(field => field !== 'movementTotal');
 
@@ -40,15 +40,15 @@ const mp4AdditionalFields = [
   'replayGainAlbumRange',
   'replayGainTrackRange',
   'replayGainReferenceLoudness',
-  'arranger',
+  'arrangers',
   'performer:instrument',
 
-  'djmixer',
-  'musicbrainz_trmid',
-  'acoustid_id',
-  'acoustid_fingerprint',
-  'musicip_puid',
-  'musicip_fingerprint',
+  'djMixers',
+  'mbTrmId',
+  'acoustId',
+  'acoustIdFingerprint',
+  'musicIpPuid',
+  'musicIpFingerprint',
   'tvShow',
   'tvShowSort',
   'tvSeason',
@@ -56,89 +56,91 @@ const mp4AdditionalFields = [
   'tvEpisodeId',
   'tvNetwork',
   'podcast',
-  'podcasturl',
-  'replaygain_track_minmax',
-  'replaygain_album_minmax',
-  'replaygain_undo'
+  'podcastUrl',
+  'replayGainTrackMinMax',
+  'replayGainAlbumMinMax',
+  'replayGainUndo'
 ] as const satisfies readonly Field[];
 
 const mp4Fields = [
   ...mp4AdditionalFields,
-  'track',
-  'disk',
+  'trackNumber',
+  'trackTotal',
+  'discNumber',
+  'discTotal',
   'year',
   'title',
   'artist',
   'artists',
-  'albumartist',
-  'albumartists',
+  'albumArtist',
+  'albumArtists',
   'album',
   'date',
-  'originaldate',
-  'originalyear',
-  'releasedate',
-  'comment',
-  'genre',
-  'composer',
+  'originalDate',
+  'originalYear',
+  'releaseDate',
+  'comments',
+  'genres',
+  'composers',
   'lyrics',
-  'albumsort',
-  'titlesort',
+  'albumSort',
+  'titleSort',
   'work',
-  'artistsort',
-  'albumartistsort',
-  'composersort',
-  'lyricist',
-  'conductor',
-  'remixer',
-  'engineer',
-  'producer',
-  'mixer',
-  'label',
+  'artistSort',
+  'albumArtistSort',
+  'composerSort',
+  'lyricists',
+  'conductors',
+  'remixers',
+  'engineers',
+  'producers',
+  'mixers',
+  'labels',
   'grouping',
-  'subtitle',
+  'subtitles',
   'description',
   'longDescription',
-  'discsubtitle',
-  'totaltracks',
-  'totaldiscs',
+  'discSubtitle',
+  'trackTotal',
+  'discTotal',
   'movementTotal',
   'compilation',
   'bpm',
   'mood',
   'media',
-  'catalognumber',
-  'releasestatus',
-  'releasetype',
-  'releasecountry',
+  'catalogNumber',
+  'releaseStatus',
+  'releaseType',
+  'releaseCountry',
   'script',
   'language',
   'copyright',
   'license',
-  'encodedby',
+  'encodedBy',
   'gapless',
   'barcode',
-  'isrc',
+  'isrcs',
   'asin',
-  'musicbrainz_recordingid',
-  'musicbrainz_trackid',
-  'musicbrainz_albumid',
-  'musicbrainz_artistid',
-  'musicbrainz_albumartistid',
-  'musicbrainz_releasegroupid',
-  'musicbrainz_workid',
-  'musicbrainz_discid',
-  'replaygain_track_gain_ratio',
-  'replaygain_track_peak_ratio',
-  'replaygain_track_gain',
-  'replaygain_track_peak',
-  'replaygain_album_gain',
-  'replaygain_album_peak',
+  'mbRecordingId',
+  'mbReleaseTrackId',
+  'mbReleaseId',
+  'mbArtistId',
+  'mbAlbumArtistId',
+  'mbReleaseGroupId',
+  'mbWorkId',
+  'mbDiscId',
+  'replayGainTrackGainRatio',
+  'replayGainTrackPeakRatio',
+  'replayGainTrackGain',
+  'replayGainTrackPeak',
+  'replayGainAlbumGain',
+  'replayGainAlbumPeak',
   'key',
-  'category',
+  'categories',
   'hdVideo',
   'keywords',
   'movement',
-  'movementIndex',
+  'movementNumber',
   'podcastId',
   'showMovement',
   'stik',
@@ -177,15 +179,15 @@ function caseFor(
 }
 
 const cases: readonly FormatCase[] = [
-  caseFor('flac', 'flac/Lavf.flac', 'audio/flac', allFields, ['publisher', 'description']),
+  caseFor('flac', 'flac/Lavf.flac', 'audio/flac', allFields, ['publishers', 'description']),
   caseFor('mp3', "mp3/MusicBrainz - Beth Hart - Sinner's Prayer [id3v2.4].V2.mp3", 'audio/mpeg', allFields, [
-    'publisher'
+    'publishers'
   ]),
-  caseFor('aac', 'aac/adts-mpeg4.aac', 'audio/aac', allFields, ['publisher']),
-  caseFor('wav', 'wav/alaw.wav', 'audio/wav', allFields, ['publisher']),
+  caseFor('aac', 'aac/adts-mpeg4.aac', 'audio/aac', allFields, ['publishers']),
+  caseFor('wav', 'wav/alaw.wav', 'audio/wav', allFields, ['publishers']),
   caseFor('mp4', 'mp4/aac-faststart.m4a', 'audio/mp4', mp4Fields),
-  caseFor('ogg', 'ogg/generated-vorbis.ogg', 'audio/ogg', allFields, ['publisher', 'description']),
-  caseFor('ogg', 'ogg/generated-opus.opus', 'audio/ogg', allFields, ['publisher', 'description']),
+  caseFor('ogg', 'ogg/generated-vorbis.ogg', 'audio/ogg', allFields, ['publishers', 'description']),
+  caseFor('ogg', 'ogg/generated-opus.opus', 'audio/ogg', allFields, ['publishers', 'description']),
   caseFor('ape', 'ape/monkeysaudio-date.ape', 'audio/ape', [...apeFields, 'year'], [], apeAliases),
   caseFor('wv', 'wavpack/unknown-count-multichannel.wv', 'audio/wavpack', [...apeFields, 'year'], [], apeAliases),
   caseFor('mpc', 'mpc/apev2-no-header.sv7.mpc', 'audio/musepack', [...apeFields, 'year'], [], apeAliases),
@@ -209,7 +211,7 @@ function expectedValue(field: Field): unknown {
 }
 
 const patchLyrics = completePatch.lyrics as readonly { text: string }[];
-const patchComment = completePatch.comment as readonly { text: string }[];
+const patchComment = completePatch.comments as readonly { text: string }[];
 
 function actualValue(common: ICommonTagsResult, field: Field): unknown {
   switch (field) {
@@ -217,8 +219,8 @@ function actualValue(common: ICommonTagsResult, field: Field): unknown {
       return common.picture?.map(picture => ({ format: picture.format, data: picture.data }));
     case 'lyrics':
       return common.lyrics?.map(entry => entry.text);
-    case 'comment':
-      return common.comment?.map(entry => entry.text);
+    case 'comments':
+      return common.comments?.map(entry => entry.text);
     default:
       return (common as unknown as Record<string, unknown>)[field];
   }
@@ -230,7 +232,7 @@ function normalizedExpected(field: Field): unknown {
       return completePatch.picture.map(picture => ({ format: picture.format, data: picture.data }));
     case 'lyrics':
       return patchLyrics.map(entry => entry.text);
-    case 'comment':
+    case 'comments':
       return patchComment.map(entry => entry.text);
     default:
       return expectedValue(field);
@@ -241,8 +243,8 @@ function batchExpected(format: Format, field: Field): unknown {
   if (field === 'artist' && format === 'mp4') {
     return completePatch.artists[0];
   }
-  if (field === 'albumartist' && ['mp3', 'aac', 'wav', 'mp4'].includes(format)) {
-    return completePatch.albumartists[0];
+  if (field === 'albumArtist' && ['mp3', 'aac', 'wav', 'mp4'].includes(format)) {
+    return completePatch.albumArtists[0];
   }
   return normalizedExpected(field);
 }
@@ -318,20 +320,20 @@ it.each(aliasCases)('normalizes $field for $fixture', async ({ fixture, mimeType
   const output = await updateBuffer(await inputFor(fixture), { [field]: expectedValue(field) });
   const { common } = await parseBuffer(output, { mimeType });
   switch (field) {
-    case 'totaltracks':
-      expect(common.track.of).toBe(Number(completePatch.totaltracks));
+    case 'trackTotal':
+      expect(common.trackTotal).toBe(completePatch.trackTotal);
       break;
-    case 'totaldiscs':
-      expect(common.disk.of).toBe(Number(completePatch.totaldiscs));
+    case 'discTotal':
+      expect(common.discTotal).toBe(completePatch.discTotal);
       break;
     case 'movementTotal':
-      expect(common.movementIndex.of).toBe(completePatch.movementTotal);
+      expect(common.movementTotal).toBe(completePatch.movementTotal);
       break;
-    case 'replaygain_track_gain_ratio':
-      expect(common.replaygain_track_gain?.ratio).toBe(completePatch.replaygain_track_gain_ratio);
+    case 'replayGainTrackGainRatio':
+      expect(common.replayGainTrackGain?.ratio).toBe(completePatch.replayGainTrackGainRatio);
       break;
-    case 'replaygain_track_peak_ratio':
-      expect(common.replaygain_track_peak?.ratio).toBe(completePatch.replaygain_track_peak_ratio);
+    case 'replayGainTrackPeakRatio':
+      expect(common.replayGainTrackPeak?.ratio).toBe(completePatch.replayGainTrackPeakRatio);
       break;
   }
 });
@@ -353,13 +355,6 @@ it.each(cases)(
   }
 );
 
-// Empty common metadata still contains these number pairs on the current public API.
-const emptyCommon = {
-  track: { no: null, of: null },
-  disk: { no: null, of: null },
-  movementIndex: { no: null, of: null }
-};
-
 const cleanInputs = new Map<string, Promise<Uint8Array>>();
 
 function cleanInputFor(testCase: FormatCase): Promise<Uint8Array> {
@@ -370,7 +365,7 @@ function cleanInputFor(testCase: FormatCase): Promise<Uint8Array> {
         await inputFor(testCase.fixture),
         Object.fromEntries(testCase.writable.map(field => [field, null]))
       );
-      expect((await parseBuffer(cleared, { mimeType: testCase.mimeType })).common).toEqual(emptyCommon);
+      expect((await parseBuffer(cleared, { mimeType: testCase.mimeType })).common).toEqual({});
       return cleared;
     })();
     cleanInputs.set(testCase.fixture, input);
@@ -390,11 +385,8 @@ it.each([
     const expected = Object.fromEntries(mp4AdditionalFields.map(field => [field, completePatch[field]]));
     const original = await updateBuffer(await cleanInputFor(source), expected);
     const { common } = await parseBuffer(original, { mimeType: source.mimeType });
-    expect(common).toEqual({ ...emptyCommon, ...expected });
+    expect(common).toEqual(expected);
     const copy = await updateBuffer(await cleanInputFor(destination), common);
-    expect((await parseBuffer(copy, { mimeType: destination.mimeType })).common).toEqual({
-      ...emptyCommon,
-      ...expected
-    });
+    expect((await parseBuffer(copy, { mimeType: destination.mimeType })).common).toEqual(expected);
   }
 );

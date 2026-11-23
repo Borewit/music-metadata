@@ -11,7 +11,8 @@ import {
   UnsupportedFormatError
 } from '../core/errors.js';
 import type { ByteSource } from '../core/source.shared.js';
-import type { TagPatch, WriteOptions } from '../core/types.js';
+import type { WriteOptions } from '../core/types.js';
+import type { InternalPatch } from '../mapping/common.js';
 import { applyId3Patch } from '../mapping/id3v2.js';
 import { decodeFrameData, decodeText, encodeFrame, type Frame, makeFrames, syncSafe } from './frames.js';
 
@@ -85,7 +86,12 @@ function validateAudioHeader(audio: Uint8Array, audioLength: number): 'mp3' | 'a
   return 'mp3';
 }
 
-export async function buildId3Update(source: ByteSource, patch: TagPatch, options: WriteOptions, embedded = false) {
+export async function buildId3Update(
+  source: ByteSource,
+  patch: InternalPatch,
+  options: WriteOptions,
+  embedded = false
+) {
   let audioOffset = 0;
   let oldLength = 0;
   const frames: Frame[] = [];

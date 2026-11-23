@@ -6,7 +6,7 @@ import { normalizeCommonPatch } from './mapping/common.js';
 
 const artistPairs = [
   ['artist', 'artists'],
-  ['albumartist', 'albumartists']
+  ['albumArtist', 'albumArtists']
 ] as const;
 
 function sameArtists(left: TagPatch['artists'], right: TagPatch['artists']): boolean {
@@ -20,21 +20,30 @@ function sameArtists(left: TagPatch['artists'], right: TagPatch['artists']): boo
 }
 
 export class FileTagSnapshot {
-  private readonly artists: Pick<CommonTags, 'artist' | 'artists' | 'albumartist' | 'albumartists'>;
+  private readonly artists: Pick<CommonTags, 'artist' | 'artists' | 'albumArtist' | 'albumArtists'>;
   private year: number | undefined;
   private date: string | undefined;
-  private hasMovementIndex: boolean;
+  private movementNumber: TagPatch['movementNumber'];
+  private movementTotal: TagPatch['movementTotal'];
 
   constructor(common: CommonTags) {
-    const { artist, artists, albumartist, albumartists, movementIndex } = common;
-    this.artists = { artist, artists: artists?.slice(), albumartist, albumartists: albumartists?.slice() };
+    const { artist, artists, albumArtist, albumArtists, movementNumber, movementTotal } = common;
+    this.artists = { artist, artists: artists?.slice(), albumArtist, albumArtists: albumArtists?.slice() };
     this.year = common.year;
     this.date = common.date;
-    this.hasMovementIndex = movementIndex.no !== null || movementIndex.of !== null;
+    this.movementNumber = movementNumber;
+    this.movementTotal = movementTotal;
   }
 
   normalize(patch: TagPatch): void {
-    if (!this.hasMovementIndex && patch.movementIndex?.no === null && patch.movementIndex.of === null) {
+    if (
+      this.movementNumber == null &&
+      this.movementTotal == null &&
+      patch.movementNumber === undefined &&
+      patch.movementTotal === undefined &&
+      patch.movementIndex?.no === null &&
+      patch.movementIndex.of === null
+    ) {
       delete patch.movementIndex;
     }
     if (patch.year !== this.year && patch.date === this.date) {
@@ -68,9 +77,13 @@ export class FileTagSnapshot {
     }
   }
 
-  recordSave(patch: TagPatch): void {
-    const movement = patch.movementIndex;
-    this.hasMovementIndex = movement?.no != null || movement?.of != null;
+  recordSave(movement: TagPatch['movementIndex']): void {
+    if (movement === null || movement?.no !== undefined) {
+      this.movementNumber = movement === null ? null : movement.no;
+    }
+    if (movement === null || movement?.of !== undefined) {
+      this.movementTotal = movement === null ? null : movement.of;
+    }
   }
 
   recordDate(input: TagPatch, submitted: TagPatch, date: TagPatch['date']): void {
@@ -119,7 +132,7 @@ export async function writeFileTags(
       beforeReplace: () => source.close()
     });
     if (!options.dryRun) {
-      snapshot?.recordSave(patch);
+      snapshot?.recordSave(normalized.movementIndex);
       snapshot?.recordDate(input, submitted, normalized.date);
       if (update.format === 'mp4') {
         snapshot?.recordMp4Artists(input, submitted, patch);

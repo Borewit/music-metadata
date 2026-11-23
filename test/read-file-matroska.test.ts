@@ -20,24 +20,12 @@ describe('Matroska formats', () => {
     // Common mapped EBML tags
     assert.strictEqual(common.title, 'Solid Ground', 'common.title');
     assert.strictEqual(common.artist, 'Poxfil', 'common.artist');
-    assert.strictEqual(common.artistsort, 'Poxfil', 'common.artistsort');
-    assert.deepEqual(common.label, ['blocSonic'], 'common.label');
-    assert.strictEqual(
-      common.musicbrainz_albumid,
-      'abf39f57-0b01-4b51-9c1e-b21e8ada5091',
-      'common.musicbrainz_albumid'
-    );
-    assert.deepEqual(
-      common.musicbrainz_artistid,
-      ['ee315b01-df5e-451e-8cd6-90a9f1faaf51'],
-      'common.musicbrainz_artistid'
-    );
-    assert.strictEqual(
-      common.musicbrainz_recordingid,
-      '209dbf50-509d-4ac3-aec5-e96da99dfdd9',
-      'common.musicbrainz_recordingid'
-    );
-    assert.deepEqual(common.track, { no: 2, of: 10 }, 'common.track');
+    assert.strictEqual(common.artistSort, 'Poxfil', 'common.artistsort');
+    assert.deepEqual(common.labels, ['blocSonic'], 'common.label');
+    assert.strictEqual(common.mbReleaseId, 'abf39f57-0b01-4b51-9c1e-b21e8ada5091', 'common.musicbrainz_albumid');
+    assert.deepEqual(common.mbArtistId, ['ee315b01-df5e-451e-8cd6-90a9f1faaf51'], 'common.musicbrainz_artistid');
+    assert.strictEqual(common.mbRecordingId, '209dbf50-509d-4ac3-aec5-e96da99dfdd9', 'common.musicbrainz_recordingid');
+    assert.deepEqual(common.trackNumber, 2, 'common.track');
   }
 
   describe('Matroska audio (.mka)', () => {
@@ -119,9 +107,9 @@ describe('Matroska formats', () => {
 
       assert.strictEqual(common.title, 'Solid Ground', 'common.title');
       assert.strictEqual(common.artist, 'Poxfil', 'common.artist');
-      assert.deepStrictEqual(common.track, { no: 2, of: 10 }, 'common.track');
-      assert.strictEqual(common.encodedby, 'Max 0.8b', 'common.encodersettings');
-      assert.strictEqual(common.encodersettings, '--bitrate 96 --vbr', 'common.encodersettings');
+      assert.deepStrictEqual(common.trackNumber, 2, 'common.track');
+      assert.strictEqual(common.encodedBy, 'Max 0.8b', 'common.encodersettings');
+      assert.strictEqual(common.encoderSettings, '--bitrate 96 --vbr', 'common.encodersettings');
     });
 
     it('should parse "My Baby Boy.webm"', async () => {
@@ -135,12 +123,12 @@ describe('Matroska formats', () => {
 
       assert.strictEqual(common.title, 'My Baby Boy', 'common.title');
       assert.strictEqual(common.artist, 'theAngelcy', 'common.artist');
-      assert.strictEqual(common.albumartist, 'theAngelcy', 'common.albumartist');
-      assert.deepStrictEqual(common.track, { no: 2, of: 13 }, 'common.track');
-      assert.deepStrictEqual(common.disk, { no: 1, of: 1 }, 'common.disk');
-      assert.deepStrictEqual(common.genre, ['Folk'], 'common.genre');
-      assert.strictEqual(common.encodedby, 'opusenc from opus-tools 0.2', 'common.encodersettings');
-      assert.strictEqual(common.encodersettings, '--bitrate 96 --vbr', 'common.encodersettings');
+      assert.strictEqual(common.albumArtist, 'theAngelcy', 'common.albumartist');
+      assert.deepStrictEqual(common.trackNumber, 2, 'common.track');
+      assert.deepStrictEqual(common.discNumber, 1, 'common.disk');
+      assert.deepStrictEqual(common.genres, ['Folk'], 'common.genre');
+      assert.strictEqual(common.encodedBy, 'opusenc from opus-tools 0.2', 'common.encodersettings');
+      assert.strictEqual(common.encoderSettings, '--bitrate 96 --vbr', 'common.encodersettings');
     });
 
     it('shoud ignore trailing null characters', async () => {
@@ -975,10 +963,10 @@ describe('Matroska formats', () => {
     const { common } = await mm.parseFile(path.join(matroskaSamplePath, 'ffmpeg-flat-tags.webm'), { duration: false });
 
     assert.strictEqual(common.album, 'Album', 'common.album');
-    assert.strictEqual(common.albumartist, 'Various', 'common.albumartist');
+    assert.strictEqual(common.albumArtist, 'Various', 'common.albumartist');
     assert.strictEqual(common.date, '2021-03-04', 'common.date');
-    assert.deepEqual(common.composer, ['Writer'], 'common.composer');
-    assert.strictEqual(common.disk.no, 2, 'common.disk.no');
+    assert.deepEqual(common.composers, ['Writer'], 'common.composer');
+    assert.strictEqual(common.discNumber, 2, 'common.disk.no');
   });
 
   describe('Cluster timing duration recovery', () => {

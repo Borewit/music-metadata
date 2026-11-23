@@ -4,52 +4,53 @@ import { normalizeLyrics } from '../core/lyrics.js';
 import { normalizeComments, normalizeNumberPair, textValues, validatePictures } from '../core/patch.js';
 import type { TagPatch } from '../core/types.js';
 import { decodeFrameData, decodeText, type Frame, makeFrames } from '../id3v2/frames.js';
+import type { InternalPatch } from './common.js';
 import { COMMON_FIELDS, commonText, EXTRA_COMMON_FIELDS, structuredText } from './common.js';
 
 const textFields = {
   title: 'TIT2',
   artist: 'TPE1',
   artists: 'TXXX:Artists',
-  albumartist: 'TPE2',
-  albumartists: 'TPE2',
+  albumArtist: 'TPE2',
+  albumArtists: 'TPE2',
   album: 'TALB',
   date: 'TDRC',
-  originaldate: 'TDOR',
-  releasedate: 'TDRL',
-  genre: 'TCON',
-  composer: 'TCOM',
-  lyricist: 'TEXT',
-  writer: 'TXXX:Writer',
-  conductor: 'TPE3',
-  remixer: 'TPE4',
-  label: 'TPUB',
-  catalognumber: 'TXXX:CATALOGNUMBER',
-  isrc: 'TSRC',
+  originalDate: 'TDOR',
+  releaseDate: 'TDRL',
+  genres: 'TCON',
+  composers: 'TCOM',
+  lyricists: 'TEXT',
+  writers: 'TXXX:Writer',
+  conductors: 'TPE3',
+  remixers: 'TPE4',
+  labels: 'TPUB',
+  catalogNumber: 'TXXX:CATALOGNUMBER',
+  isrcs: 'TSRC',
   copyright: 'TCOP',
   media: 'TMED',
   mood: 'TMOO',
   grouping: 'TIT1',
-  subtitle: 'TIT3',
+  subtitles: 'TIT3',
   website: 'WOAR',
   barcode: 'TXXX:BARCODE',
   asin: 'TXXX:ASIN',
   script: 'TXXX:SCRIPT',
-  releasestatus: 'TXXX:MusicBrainz Album Status',
-  releasetype: 'TXXX:MusicBrainz Album Type',
-  releasecountry: 'TXXX:MusicBrainz Album Release Country',
-  acoustid_id: 'TXXX:Acoustid Id',
-  artistsort: 'TSOP',
-  albumartistsort: 'TSO2',
-  musicbrainz_trackid: 'TXXX:MusicBrainz Release Track Id',
-  musicbrainz_albumid: 'TXXX:MusicBrainz Album Id',
-  musicbrainz_artistid: 'TXXX:MusicBrainz Artist Id',
-  musicbrainz_albumartistid: 'TXXX:MusicBrainz Album Artist Id',
-  musicbrainz_releasegroupid: 'TXXX:MusicBrainz Release Group Id',
-  musicbrainz_workid: 'TXXX:MusicBrainz Work Id',
-  replaygain_track_gain: 'TXXX:REPLAYGAIN_TRACK_GAIN',
-  replaygain_track_peak: 'TXXX:REPLAYGAIN_TRACK_PEAK',
-  replaygain_album_gain: 'TXXX:REPLAYGAIN_ALBUM_GAIN',
-  replaygain_album_peak: 'TXXX:REPLAYGAIN_ALBUM_PEAK'
+  releaseStatus: 'TXXX:MusicBrainz Album Status',
+  releaseType: 'TXXX:MusicBrainz Album Type',
+  releaseCountry: 'TXXX:MusicBrainz Album Release Country',
+  acoustId: 'TXXX:Acoustid Id',
+  artistSort: 'TSOP',
+  albumArtistSort: 'TSO2',
+  mbReleaseTrackId: 'TXXX:MusicBrainz Release Track Id',
+  mbReleaseId: 'TXXX:MusicBrainz Album Id',
+  mbArtistId: 'TXXX:MusicBrainz Artist Id',
+  mbAlbumArtistId: 'TXXX:MusicBrainz Album Artist Id',
+  mbReleaseGroupId: 'TXXX:MusicBrainz Release Group Id',
+  mbWorkId: 'TXXX:MusicBrainz Work Id',
+  replayGainTrackGain: 'TXXX:REPLAYGAIN_TRACK_GAIN',
+  replayGainTrackPeak: 'TXXX:REPLAYGAIN_TRACK_PEAK',
+  replayGainAlbumGain: 'TXXX:REPLAYGAIN_ALBUM_GAIN',
+  replayGainAlbumPeak: 'TXXX:REPLAYGAIN_ALBUM_PEAK'
 } as const;
 
 function ratingFrames(frames: Frame[], ratings: NonNullable<TagPatch['rating']>) {
@@ -82,10 +83,14 @@ function ratingFrames(frames: Frame[], ratings: NonNullable<TagPatch['rating']>)
   });
 }
 
-export function applyId3Patch(frames: Frame[], patch: TagPatch, replace: (key: string, value: unknown) => void): void {
+export function applyId3Patch(
+  frames: Frame[],
+  patch: InternalPatch,
+  replace: (key: string, value: unknown) => void
+): void {
   for (const key of EXTRA_COMMON_FIELDS) {
     if (patch[key] !== undefined) {
-      if (key === 'djmixer') {
+      if (key === 'djMixers') {
         continue;
       }
       if (key === 'averageLevel' || key === 'peakLevel') {
@@ -122,14 +127,14 @@ export function applyId3Patch(frames: Frame[], patch: TagPatch, replace: (key: s
       replace(frame, textValues(value as import('../core/types.js').TextPatch));
     }
   }
-  if (patch.albumartists !== undefined) {
+  if (patch.albumArtists !== undefined) {
     replace('TXXX:ALBUMARTISTS', null);
   }
   if (patch.notes !== undefined) {
     replace('TXXX:NOTES', textValues(patch.notes));
   }
-  if (patch.technician !== undefined) {
-    replace('TXXX:TECHNICIAN', textValues(patch.technician));
+  if (patch.technicians !== undefined) {
+    replace('TXXX:TECHNICIAN', textValues(patch.technicians));
   }
   if (patch['performer:instrument'] !== undefined) {
     replace('TMCL', null);
@@ -152,7 +157,7 @@ export function applyId3Patch(frames: Frame[], patch: TagPatch, replace: (key: s
   }
   for (const [key, frame] of [
     ['bpm', 'TBPM'],
-    ['originalyear', 'TXXX:originalyear']
+    ['originalYear', 'TXXX:originalyear']
   ] as const) {
     const value = patch[key];
     if (value !== undefined) {
@@ -183,8 +188,8 @@ export function applyId3Patch(frames: Frame[], patch: TagPatch, replace: (key: s
     const of = pair.of === undefined ? previous[1] : pair.of;
     replace(id, no == null && of == null ? null : `${no ?? ''}${of == null ? '' : `/${of}`}`);
   }
-  if (patch.comment !== undefined) {
-    const comments = normalizeComments(patch.comment);
+  if (patch.comments !== undefined) {
+    const comments = normalizeComments(patch.comments);
     const cddbComment = comments?.findLast(comment => comment.descriptor === 'iTunes_CDDB_1');
     const retainCddb = patch.itunesCddb1 === undefined && !cddbComment;
     if (patch.itunesCddb1 === undefined && cddbComment) {
@@ -255,8 +260,8 @@ export function applyId3Patch(frames: Frame[], patch: TagPatch, replace: (key: s
   if (patch.picture !== undefined) {
     replace('APIC', validatePictures(patch.picture));
   }
-  if (patch.musicbrainz_recordingid !== undefined) {
-    const values = textValues(patch.musicbrainz_recordingid);
+  if (patch.mbRecordingId !== undefined) {
+    const values = textValues(patch.mbRecordingId);
     if (values && values.length !== 1) {
       throw new InvalidPatchError('musicbrainz_recordingid requires one value');
     }
@@ -291,7 +296,7 @@ export function applyId3Patch(frames: Frame[], patch: TagPatch, replace: (key: s
   if (patch.rating !== undefined) {
     replace('POPM', patch.rating?.length ? ratingFrames(frames, patch.rating) : null);
   }
-  const roles = ['producer', 'engineer', 'arranger', 'mixer', 'djmixer'] as const;
+  const roles = ['producers', 'engineers', 'arrangers', 'mixers', 'djMixers'] as const;
   if (roles.some(role => patch[role] !== undefined)) {
     const people = Object.create(null) as Record<string, string[]>;
     for (const frame of frames.filter(frame => frame.id === 'TIPL')) {
@@ -307,7 +312,7 @@ export function applyId3Patch(frames: Frame[], patch: TagPatch, replace: (key: s
       if (patch[role] === undefined) {
         continue;
       }
-      const name = role === 'mixer' ? 'mix' : role === 'djmixer' ? 'DJ-mix' : role;
+      const name = role === 'mixers' ? 'mix' : role === 'djMixers' ? 'DJ-mix' : role.slice(0, -1);
       const values = textValues(patch[role]);
       delete people[name];
       if (values?.length) {

@@ -220,7 +220,7 @@ interface IId3v1Header {
   year?: string;
   comment?: string;
   track?: number;
-  genre: number;
+  genre?: number;
 }
 
 /**
@@ -323,7 +323,7 @@ export class ID3v1Parser extends BasicParser {
           await this.addTag(id, header[id]);
         }
       }
-      const genre = ID3v1Parser.getGenre(header.genre);
+      const genre = ID3v1Parser.getGenre(header.genre ?? 255);
       if (genre) {
         await this.addTag('genre', genre);
       }

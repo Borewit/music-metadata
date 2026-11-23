@@ -2,6 +2,7 @@ import { buildApeUpdate } from '../apev2/apev2.js';
 import { buildAsfUpdate } from '../asf/asf.js';
 import { buildFlacUpdate } from '../flac/flac.js';
 import { buildId3Update } from '../id3v2/id3v2.js';
+import type { InternalPatch } from '../mapping/common.js';
 import { buildMp4Update } from '../mp4/mp4.js';
 import { buildOggUpdate } from '../ogg/ogg.js';
 import { buildWavUpdate } from '../wav/wav.js';
@@ -23,7 +24,11 @@ export interface WriteUpdate {
  * Prepare one ordered chunk plan for file and buffer writers on both platforms.
  * Container builders retain responsibility for layout, validation and metadata.
  */
-export async function buildUpdate(source: ByteSource, patch: TagPatch, options: WriteOptions): Promise<WriteUpdate> {
+export async function buildUpdate(
+  source: ByteSource,
+  patch: InternalPatch,
+  options: WriteOptions
+): Promise<WriteUpdate> {
   const format = await detectFormat(source);
   assertSupported(format);
   switch (format) {
