@@ -12,7 +12,7 @@ const textFields = {
   artist: 'TPE1',
   artists: 'TXXX:Artists',
   albumArtist: 'TPE2',
-  albumArtists: 'TPE2',
+  albumArtists: 'TXXX:ALBUMARTISTS',
   album: 'TALB',
   date: 'TDRC',
   originalDate: 'TDOR',
@@ -121,14 +121,18 @@ export function applyId3Patch(
       replace(COMMON_FIELDS[key].id3, values);
     }
   }
+  if (patch.artists !== undefined) {
+    replace('TXXX:DISCOGS_ARTISTS', null);
+    replace('TXXX:DISCOGS_ARTIST_NAME', null);
+  }
+  if (patch.albumArtists !== undefined) {
+    replace('TXXX:DISCOGS_ALBUM_ARTISTS', null);
+  }
   for (const [key, frame] of Object.entries(textFields)) {
     const value = patch[key as keyof typeof textFields];
     if (value !== undefined) {
       replace(frame, textValues(value as import('../core/types.js').TextPatch));
     }
-  }
-  if (patch.albumArtists !== undefined) {
-    replace('TXXX:ALBUMARTISTS', null);
   }
   if (patch.notes !== undefined) {
     replace('TXXX:NOTES', textValues(patch.notes));

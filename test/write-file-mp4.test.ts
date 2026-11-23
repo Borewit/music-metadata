@@ -476,7 +476,7 @@ describe('MP4 metadata', () => {
     }
   });
 
-  it('saves singular artist edits without deriving a list and gives edited lists precedence', async () => {
+  it('saves independent artist credits and lists without changing the live model', async () => {
     const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'editor-mp4-artists-'));
     try {
       const pathName = path.join(dir, 'track.m4a');
@@ -492,21 +492,21 @@ describe('MP4 metadata', () => {
       tags.artist = 'Solo';
       tags.albumArtist = 'Album solo';
       await file.save();
-      // A single credit replaces the list in the shared atom; it is not itself a list.
+      // A display-credit edit must not erase the separately stored individual names.
       const single = (await parseFile(pathName)).common;
       expect(single).toMatchObject({ artist: 'Solo', albumArtist: 'Album solo' });
-      expect(single.artists).toBeUndefined();
-      expect(single.albumArtists).toBeUndefined();
-      expect(tags.artists).toBeUndefined();
-      expect(tags.albumArtists).toBeUndefined();
+      expect(single.artists).toEqual(['Original']);
+      expect(single.albumArtists).toEqual(['Original album artist']);
+      expect(tags.artists).toEqual(single.artists);
+      expect(tags.albumArtists).toEqual(single.albumArtists);
       tags.artists = ['Solo', 'Guest'];
       tags.albumArtists = ['Ensemble', 'Guest'];
-      tags.artist = 'Conflicting singular';
+      tags.artist = 'Solo feat. Guest';
       await file.save();
       const saved = {
-        artist: 'Solo',
+        artist: 'Solo feat. Guest',
         artists: ['Solo', 'Guest'],
-        albumArtist: 'Ensemble',
+        albumArtist: 'Album solo',
         albumArtists: ['Ensemble', 'Guest']
       };
       expect((await parseFile(pathName)).common).toMatchObject(saved);
@@ -521,10 +521,10 @@ describe('MP4 metadata', () => {
       await file.save();
       const next = (await parseFile(pathName)).common;
       expect(next).toMatchObject({ artist: 'Next', albumArtist: 'Next album artist' });
-      expect(next.artists).toBeUndefined();
-      expect(next.albumArtists).toBeUndefined();
-      expect(tags.artists).toBeUndefined();
-      expect(tags.albumArtists).toBeUndefined();
+      expect(next.artists).toEqual(saved.artists);
+      expect(next.albumArtists).toEqual(saved.albumArtists);
+      expect(tags.artists).toEqual(saved.artists);
+      expect(tags.albumArtists).toEqual(saved.albumArtists);
     } finally {
       await fs.rm(dir, { recursive: true, force: true });
     }
@@ -537,6 +537,7 @@ describe('MP4 metadata', () => {
       await fs.writeFile(filePath, await fixture('aac-faststart'));
       const file = await MediaFile.open(filePath);
       const { common } = file.metadata;
+      common.artist = 'Submitted credit';
       common.artists = ['Submitted'];
       const pending = file.save();
       common.artist = 'Later credit';
@@ -544,8 +545,8 @@ describe('MP4 metadata', () => {
       await pending;
 
       const saved = (await parseFile(filePath)).common;
-      expect(saved.artist).toBe('Submitted');
-      expect(saved.artists).toBeUndefined();
+      expect(saved.artist).toBe('Submitted credit');
+      expect(saved.artists).toEqual(['Submitted']);
       expect(common.artist).toBe('Later credit');
       expect(common.artists).toEqual(['Submitted', 'Later guest']);
     } finally {

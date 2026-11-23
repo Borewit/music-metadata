@@ -719,16 +719,7 @@ describe('Writing common metadata from Picard fixtures', () => {
         }
       }
       const rewritten = await updateBuffer(changed, patch, options);
-      const expectedWritten = { ...expected };
-      // The ID3 and MP4 writers store album artists as display credits.
-      if (/\.(mp3|wav|aac|m4a|alac)$/.test(filename) && expected.albumArtists?.length === 1) {
-        delete expectedWritten.albumArtists;
-      }
-      // MP4 also represents the track artist list as display credits.
-      if ((filename.endsWith('.m4a') || filename.endsWith('.alac')) && expected.artists?.length === 1) {
-        delete expectedWritten.artists;
-      }
-      assert.deepEqual((await parseBuffer(rewritten)).common, expectedWritten);
+      assert.deepEqual((await parseBuffer(rewritten)).common, expected);
     });
   }
 });
@@ -1131,7 +1122,7 @@ describe('Additional Picard metadata through common', () => {
           })
         )
       ).common;
-      assert.strictEqual(pluralOnly.albumArtist, 'Third');
+      assert.strictEqual(pluralOnly.albumArtist, 'First & Second');
       assert.deepEqual(pluralOnly.albumArtists, ['Third', 'Fourth']);
     });
 
