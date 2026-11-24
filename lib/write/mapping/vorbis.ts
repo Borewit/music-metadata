@@ -1,3 +1,4 @@
+import { VorbisMovement } from '../../common/VorbisMovement.js';
 import { InvalidPatchError } from '../core/errors.js';
 import { lyricsToLrc, normalizeLyrics } from '../core/lyrics.js';
 import { normalizeComments, normalizeNumberPair, numberValue, textValues } from '../core/patch.js';
@@ -141,9 +142,17 @@ export function applyVorbisPatch(
 ): VorbisFields {
   const comments = fields.comments.map(comment => ({ ...comment }));
   for (const key of EXTRA_COMMON_FIELDS) {
-    if (patch[key] !== undefined) {
+    if (patch[key] !== undefined && key !== 'movement') {
       if (key === 'acoustid_fingerprint') {
         removeField(comments, 'ACOUSTID_ID_FINGERPRINT');
+      }
+      if (key === 'musicip_fingerprint') {
+        for (let index = comments.length - 1; index >= 0; index--) {
+          const comment = comments[index];
+          if (comment.key.toUpperCase() === 'FINGERPRINT' && comment.value.startsWith('MusicMagic Fingerprint')) {
+            comments.splice(index, 1);
+          }
+        }
       }
       setField(comments, COMMON_FIELDS[key].vorbis, commonText(patch[key], key));
     }
@@ -153,21 +162,29 @@ export function applyVorbisPatch(
     setField(comments, COMMON_FIELDS[key as keyof typeof COMMON_FIELDS].vorbis, value === null ? null : [value]);
   }
   if (patch['performer:instrument'] !== undefined) {
+    removeField(comments, 'PERFORMER');
     setField(comments, 'PERFORMER:INSTRUMENT', commonText(patch['performer:instrument'], 'performer:instrument'));
   }
-  if (patch.movementIndex !== undefined) {
-    const pair = normalizeNumberPair(patch.movementIndex, 'movementIndex');
-    if (pair === null) {
-      removeField(comments, 'MOVEMENTNUMBER');
-      removeField(comments, 'MOVEMENTTOTAL');
-    } else {
-      if (pair?.no !== undefined) {
-        setField(comments, 'MOVEMENTNUMBER', pair.no === null ? null : [String(pair.no)]);
-      }
-      if (pair?.of !== undefined) {
-        setField(comments, 'MOVEMENTTOTAL', pair.of === null ? null : [String(pair.of)]);
-      }
+  if (patch.movement !== undefined || patch.movementIndex !== undefined) {
+    // Canonicalize both Picard and legacy movement fields before applying a
+    // partial edit, so clearing a number cannot leave an alias behind.
+    const movement = new VorbisMovement();
+    for (const comment of comments) {
+      movement.add(comment.key, comment.value);
     }
+    const { name, index: existing } = movement.value;
+    removeField(comments, 'MOVEMENT');
+    removeField(comments, 'MOVEMENTNUMBER');
+    setField(
+      comments,
+      'MOVEMENTNAME',
+      patch.movement === undefined ? (name == null ? null : [name]) : commonText(patch.movement, 'movement')
+    );
+    const pair = normalizeNumberPair(patch.movementIndex, 'movementIndex');
+    const no = pair === null ? null : pair?.no === undefined ? existing.no : pair.no;
+    const of = pair === null ? null : pair?.of === undefined ? existing.of : pair.of;
+    setField(comments, 'MOVEMENT', no === null ? null : [String(no)]);
+    setField(comments, 'MOVEMENTTOTAL', of === null ? null : [String(of)]);
   }
   const lyrics = normalizeLyrics(patch.lyrics);
   if (lyrics !== undefined) {
@@ -193,15 +210,24 @@ export function applyVorbisPatch(
     if (values === undefined) {
       continue;
     }
+    if (mapping.patch === 'albumartists') {
+      removeField(comments, 'ALBUMARTISTS');
+    }
+    // Keep explicit display credits separate from individual artist lists,
+    // including when clearing the list in the same patch.
+    const field =
+      mapping.patch === 'artists' && patch.artist !== undefined
+        ? 'ARTISTS'
+        : mapping.patch === 'albumartists' && patch.albumartist !== undefined
+          ? 'ALBUMARTISTS'
+          : mapping.field;
     if (values === null) {
-      removeField(comments, mapping.field);
+      removeField(comments, field);
       continue;
     }
     if (!mapping.multiple && values.length > 1) {
       throw new InvalidPatchError(`${String(mapping.patch)} accepts a single value`);
     }
-    // Keep an explicit display artist separate from the individual artist list.
-    const field = mapping.patch === 'artists' && patch.artist !== undefined ? 'ARTISTS' : mapping.field;
     setField(comments, field, values);
   }
 

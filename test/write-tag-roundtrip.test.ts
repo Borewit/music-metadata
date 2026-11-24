@@ -19,12 +19,30 @@ const allAliases = [
   'replaygain_track_gain_ratio',
   'replaygain_track_peak_ratio'
 ] as const;
-const apeAliases = ['totaltracks', 'totaldiscs', 'replaygain_track_gain_ratio', 'replaygain_track_peak_ratio'] as const;
+const apeAliases = [
+  'totaltracks',
+  'totaldiscs',
+  'movementTotal',
+  'replaygain_track_gain_ratio',
+  'replaygain_track_peak_ratio'
+] as const;
+const asfAliases = apeAliases.filter(field => field !== 'movementTotal');
 
 const apeFields = [...new Set(Object.values(apev2TagMap).filter(field => field !== undefined))].map(String);
 const asfFields = [...new Set(Object.values(asfTagMap).filter(field => field !== undefined))].map(String);
 
 const mp4AdditionalFields = [
+  'directors',
+  'mbComposerId',
+  'mbOriginalArtistId',
+  'mbOriginalReleaseId',
+  'itunesCddb1',
+  'replayGainAlbumRange',
+  'replayGainTrackRange',
+  'replayGainReferenceLoudness',
+  'arranger',
+  'performer:instrument',
+
   'djmixer',
   'musicbrainz_trmid',
   'acoustid_id',
@@ -172,7 +190,7 @@ const cases: readonly FormatCase[] = [
   caseFor('wv', 'wavpack/unknown-count-multichannel.wv', 'audio/wavpack', [...apeFields, 'year'], [], apeAliases),
   caseFor('mpc', 'mpc/apev2-no-header.sv7.mpc', 'audio/musepack', [...apeFields, 'year'], [], apeAliases),
   caseFor('mpc', 'mpc/bach-goldberg-variatians-05.sv8.mpc', 'audio/musepack', [...apeFields, 'year'], [], apeAliases),
-  caseFor('asf', 'asf/13 Thirty Dirty Birds.wma', 'audio/asf', [...asfFields, 'year'], [], apeAliases)
+  caseFor('asf', 'asf/13 Thirty Dirty Birds.wma', 'audio/asf', [...asfFields, 'year'], [], asfAliases)
 ];
 
 const inputCache = new Map<string, Promise<Uint8Array>>();
@@ -223,7 +241,7 @@ function batchExpected(format: Format, field: Field): unknown {
   if (field === 'artist' && format === 'mp4') {
     return completePatch.artists[0];
   }
-  if (field === 'albumartist' && ['flac', 'mp3', 'aac', 'wav', 'mp4', 'ogg'].includes(format)) {
+  if (field === 'albumartist' && ['mp3', 'aac', 'wav', 'mp4'].includes(format)) {
     return completePatch.albumartists[0];
   }
   return normalizedExpected(field);

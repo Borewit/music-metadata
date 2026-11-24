@@ -13,7 +13,7 @@ import {
 import type { ByteSource } from '../core/source.shared.js';
 import type { TagPatch, WriteOptions } from '../core/types.js';
 import { applyId3Patch } from '../mapping/id3v2.js';
-import { decodeText, encodeFrame, type Frame, makeFrames, syncSafe } from './frames.js';
+import { decodeFrameData, decodeText, encodeFrame, type Frame, makeFrames, syncSafe } from './frames.js';
 
 const MAX_TAG_SIZE = 64 * 1024 * 1024;
 
@@ -199,10 +199,7 @@ export async function buildId3Update(source: ByteSource, patch: TagPatch, option
       if (description.length === 0) {
         return true;
       }
-      if (frame.flags & 0x4f) {
-        throw new UnsupportedFeatureError(`Cannot identify flagged ${id} frames safely`);
-      }
-      return decodeText(frame.data).split('\0')[0]?.toLowerCase() === description.join(':').toLowerCase();
+      return decodeText(decodeFrameData(frame)).split('\0')[0]?.toLowerCase() === description.join(':').toLowerCase();
     };
     const index = frames.findIndex(matches);
     const retained = frames.filter(frame => !matches(frame));

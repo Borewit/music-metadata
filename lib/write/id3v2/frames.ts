@@ -1,6 +1,7 @@
 import { textDecode, textEncode } from '@borewit/text-codec';
 import { TokenWriter } from 'strtok3';
 import { UINT16_BE, UINT32_BE } from 'token-types';
+import { ID3v2Parser } from '../../id3v2/ID3v2Parser.js';
 import { normalizePictureMimeType, pictureTypeToNumber } from '../../tokens/flac.js';
 import { UINT32SYNCSAFE } from '../../tokens/id3v2.js';
 import { InvalidFileError, InvalidPatchError, UnsupportedFeatureError } from '../core/errors.js';
@@ -25,6 +26,19 @@ export function encodeFrame(frame: Frame): Uint8Array {
   writer.writeToken(UINT16_BE, frame.flags);
   writer.writeBuffer(frame.data);
   return writer.toUint8Array();
+}
+
+/** Decode supported frame format flags without modifying preserved frame bytes. */
+export function decodeFrameData(frame: Frame): Uint8Array {
+  if (frame.flags & 0x4c) {
+    throw new UnsupportedFeatureError(`Cannot identify flagged ${frame.id} frames safely`);
+  }
+  const data = frame.flags & 2 ? ID3v2Parser.removeUnsyncBytes(Uint8Array.from(frame.data)) : frame.data;
+  if (frame.flags & 1) {
+    syncSafe(data, 0); // Validate the data length indicator before skipping it.
+    return data.subarray(4);
+  }
+  return data;
 }
 
 export function decodeText(data: Uint8Array): string {

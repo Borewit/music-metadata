@@ -671,6 +671,8 @@ export class FrameParser {
           [
             'ARTISTS',
             'MUSICBRAINZ ARTIST ID',
+            'MUSICBRAINZ COMPOSER ID',
+            'MUSICBRAINZ ORIGINAL ARTIST ID',
             'MUSICBRAINZ ALBUM ARTIST ID',
             'MUSICBRAINZ ALBUM TYPE',
             'ISRC'

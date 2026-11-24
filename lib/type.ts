@@ -279,6 +279,24 @@ export interface ICommonTagsResult {
   // International Standard Recording Code
   isrc?: string[];
   asin?: string;
+  /** MusicBrainz composer identifiers. */
+  mbComposerId?: string[];
+  /** MusicBrainz original artist identifiers. */
+  mbOriginalArtistId?: string[];
+  /** MusicBrainz original release identifier. */
+  mbOriginalReleaseId?: string;
+  /** Director credits. */
+  directors?: string[];
+  /** Original filename stored in the tags, not the current file path. */
+  originalFilename?: string;
+  /** iTunes CDDB metadata. */
+  itunesCddb1?: string;
+  /** Album loudness range, in dB (LU). */
+  replayGainAlbumRange?: number;
+  /** Track loudness range, in dB (LU). */
+  replayGainTrackRange?: number;
+  /** ReplayGain reference loudness, in dB SPL. */
+  replayGainReferenceLoudness?: number;
   musicbrainz_recordingid?: string;
   musicbrainz_trackid?: string;
   musicbrainz_albumid?: string;

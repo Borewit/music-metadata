@@ -326,6 +326,64 @@ describe('APEv2 writing', () => {
     await expect(updateBuffer(input, { native: { Locked: 'replace' } })).rejects.toThrow(UnsupportedFeatureError);
   });
 
+  for (const numberFirst of [false, true]) {
+    it(`preserves the last movement alias when clearing its total, number first: ${numberFirst}`, async () => {
+      const entries = [
+        ['MOVEMENT', '2/4'],
+        ['MOVEMENTNUMBER', '3/4']
+      ];
+      const input = await updateBuffer(ape, { native: Object.fromEntries(numberFirst ? entries.reverse() : entries) });
+      const before = (await parseBuffer(input)).common.movementIndex;
+      expect(before).toEqual(numberFirst ? { no: 2, of: 4 } : { no: 3, of: 4 });
+      const updated = await updateBuffer(input, { movementIndex: { of: null } });
+      expect((await parseBuffer(updated)).common.movementIndex).toEqual({ no: before.no, of: null });
+    });
+  }
+
+  for (const numberFirst of [false, true]) {
+    for (const secondValue of ['3', '3/6']) {
+      for (const dedicatedTotal of [undefined, '8']) {
+        it(`carries movement totals across aliases (${numberFirst}, ${secondValue}, ${dedicatedTotal})`, async () => {
+          const entries = [
+            ['MOVEMENT', '2/4'],
+            ['MOVEMENTNUMBER', secondValue]
+          ];
+          const native = Object.fromEntries(numberFirst ? entries.reverse() : entries);
+          if (dedicatedTotal !== undefined) {
+            native.MOVEMENTTOTAL = dedicatedTotal;
+          }
+          const input = await updateBuffer(ape, { title: 'Movement aliases', native });
+          const of = dedicatedTotal !== undefined ? 8 : numberFirst && secondValue.includes('/') ? 6 : 4;
+          const before = (await parseBuffer(input)).common.movementIndex;
+          expect(before).toEqual({ no: numberFirst ? 2 : 3, of });
+          const updated = await updateBuffer(input, { movementIndex: { no: 7 } });
+          expect((await parseBuffer(updated)).common.movementIndex).toEqual({ no: 7, of });
+          const cleared = await updateBuffer(input, { movementIndex: { of: null } });
+          expect((await parseBuffer(cleared)).common.movementIndex).toEqual({ no: before.no, of: null });
+        });
+      }
+    }
+  }
+
+  for (const locked of ['MOVEMENT', 'MOVEMENTTOTAL']) {
+    it(`does not touch omitted ${locked} in a partial movement patch`, async () => {
+      const input = Buffer.from(await updateBuffer(ape, { native: { MOVEMENT: '2', MOVEMENTTOTAL: '4' } }));
+      const item = layout(input).items.get(locked)!;
+      input.writeUInt32LE(1, item.byteOffset - input.byteOffset + 4);
+      expect(await updateBuffer(input, { movementIndex: {} })).toEqual(new Uint8Array(input));
+      const patch = locked === 'MOVEMENT' ? { of: 5 } : { no: 3 };
+      const updated = await updateBuffer(input, { movementIndex: patch });
+      expect((await parseBuffer(updated)).common.movementIndex).toEqual(
+        locked === 'MOVEMENT' ? { no: 2, of: 5 } : { no: 3, of: 4 }
+      );
+      expect(layout(updated).items.get(locked)).toEqual(layout(input).items.get(locked));
+      await expect(
+        updateBuffer(input, { movementIndex: locked === 'MOVEMENT' ? { no: 3 } : { of: 5 } })
+      ).rejects.toThrow('read-only');
+      await expect(updateBuffer(input, { movementIndex: null })).rejects.toThrow('read-only');
+    });
+  }
+
   it('respects read-only tag and cover flags while allowing untouched tags', async () => {
     const lockedTag = mutateEnvelopes(ape, 20, 0x80000001);
     // Header must additionally carry the header marker.
@@ -402,7 +460,8 @@ describe('APEv2 writing', () => {
     expect(movementIndex).toEqual({ no: null, of: null });
     const updated = await updateBuffer(input, { title: 'Edited', movementIndex });
     expect((await parseBuffer(updated)).common).toMatchObject({ title: 'Edited', movementIndex });
-    await expect(updateBuffer(input, { movementIndex: { no: 1 } })).rejects.toThrow(UnsupportedFeatureError);
+    const numbered = await updateBuffer(input, { movementIndex: { no: 1, of: 3 } });
+    expect((await parseBuffer(numbered)).common.movementIndex).toEqual({ no: 1, of: 3 });
   });
 
   it('rejects partial number-pair edits on binary native values', async () => {

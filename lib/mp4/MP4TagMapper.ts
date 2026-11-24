@@ -7,6 +7,14 @@ import type { ITag } from '../type.js';
  * Ref: https://github.com/sergiomb2/libmp4v2/wiki/iTunesMetadata
  */
 const mp4TagMap: INativeTagMap = {
+  '----:com.apple.iTunes:MusicBrainz Composer Id': 'mbComposerId',
+  '----:com.apple.iTunes:MusicBrainz Original Artist Id': 'mbOriginalArtistId',
+  '----:com.apple.iTunes:MusicBrainz Original Album Id': 'mbOriginalReleaseId',
+  '©dir': 'directors',
+  '----:com.apple.iTunes:iTunes_CDDB_1': 'itunesCddb1',
+  '----:com.apple.iTunes:REPLAYGAIN_ALBUM_RANGE': 'replayGainAlbumRange',
+  '----:com.apple.iTunes:REPLAYGAIN_TRACK_RANGE': 'replayGainTrackRange',
+  '----:com.apple.iTunes:REPLAYGAIN_REFERENCE_LOUDNESS': 'replayGainReferenceLoudness',
   'mdta:title': 'title',
   'mdta:album': 'album',
   'mdta:artist': 'artist',
@@ -56,8 +64,10 @@ const mp4TagMap: INativeTagMap = {
   soar: 'artistsort',
   soaa: 'albumartistsort',
   soco: 'composersort',
+  '----:com.apple.iTunes:ALBUMARTISTS': 'albumartists',
   '----:com.apple.iTunes:LYRICIST': 'lyricist',
   '----:com.apple.iTunes:CONDUCTOR': 'conductor',
+  '----:com.apple.iTunes:ARRANGER': 'arranger',
   '----:com.apple.iTunes:REMIXER': 'remixer',
   '----:com.apple.iTunes:ENGINEER': 'engineer',
   '----:com.apple.iTunes:PRODUCER': 'producer',
@@ -126,7 +136,7 @@ const mp4TagMap: INativeTagMap = {
   '----:com.apple.iTunes:ORIGINALDATE': 'originaldate',
   '----:com.apple.iTunes:ORIGINALYEAR': 'originalyear',
   '----:com.apple.iTunes:RELEASEDATE': 'releasedate',
-  // '----:com.apple.iTunes:PERFORMER': 'performer'
+  '----:com.apple.iTunes:PERFORMER': 'performer:instrument',
   desc: 'description',
   ldes: 'longDescription',
   '©mvn': 'movement',
@@ -150,6 +160,13 @@ export class MP4TagMapper extends CaseInsensitiveTagMap {
   }
 
   protected postMap(tag: ITag, _warnings: INativeMetadataCollector): void {
+    if (
+      tag.id.toUpperCase() === '----:COM.APPLE.ITUNES:FINGERPRINT' &&
+      typeof tag.value === 'string' &&
+      tag.value.startsWith('MusicMagic Fingerprint')
+    ) {
+      tag.value = tag.value.slice('MusicMagic Fingerprint'.length).trimStart();
+    }
     switch (tag.id) {
       case 'rate':
         tag.value = {

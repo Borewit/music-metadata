@@ -3,7 +3,7 @@ import { InvalidFileError, InvalidPatchError, UnsupportedFeatureError } from '..
 import { normalizeLyrics } from '../core/lyrics.js';
 import { normalizeComments, normalizeNumberPair, textValues, validatePictures } from '../core/patch.js';
 import type { TagPatch } from '../core/types.js';
-import { decodeText, type Frame } from '../id3v2/frames.js';
+import { decodeFrameData, decodeText, type Frame, makeFrames } from '../id3v2/frames.js';
 import { COMMON_FIELDS, commonText, EXTRA_COMMON_FIELDS, structuredText } from './common.js';
 
 const textFields = {
@@ -109,6 +109,9 @@ export function applyId3Patch(frames: Frame[], patch: TagPatch, replace: (key: s
         }
         continue;
       }
+      if (key === 'license') {
+        replace('TXXX:LICENSE', null);
+      }
       const values = commonText(patch[key], key);
       replace(COMMON_FIELDS[key].id3, values);
     }
@@ -119,6 +122,9 @@ export function applyId3Patch(frames: Frame[], patch: TagPatch, replace: (key: s
       replace(frame, textValues(value as import('../core/types.js').TextPatch));
     }
   }
+  if (patch.albumartists !== undefined) {
+    replace('TXXX:ALBUMARTISTS', null);
+  }
   if (patch.notes !== undefined) {
     replace('TXXX:NOTES', textValues(patch.notes));
   }
@@ -126,6 +132,8 @@ export function applyId3Patch(frames: Frame[], patch: TagPatch, replace: (key: s
     replace('TXXX:TECHNICIAN', textValues(patch.technician));
   }
   if (patch['performer:instrument'] !== undefined) {
+    replace('TMCL', null);
+    replace('TXXX:PERFORMER', null);
     replace('TXXX:PERFORMER:INSTRUMENT', commonText(patch['performer:instrument'], 'performer:instrument'));
   }
   for (const [key, value] of Object.entries(structuredText(patch))) {
@@ -176,7 +184,49 @@ export function applyId3Patch(frames: Frame[], patch: TagPatch, replace: (key: s
     replace(id, no == null && of == null ? null : `${no ?? ''}${of == null ? '' : `/${of}`}`);
   }
   if (patch.comment !== undefined) {
-    replace('COMM', normalizeComments(patch.comment));
+    const comments = normalizeComments(patch.comment);
+    const cddbComment = comments?.findLast(comment => comment.descriptor === 'iTunes_CDDB_1');
+    const retainCddb = patch.itunesCddb1 === undefined && !cddbComment;
+    if (patch.itunesCddb1 === undefined && cddbComment) {
+      replace('TXXX:iTunes_CDDB_1', cddbComment.text ?? '');
+    }
+    const retainedComments = frames.filter(frame => {
+      if (frame.id !== 'COMM') {
+        return false;
+      }
+      try {
+        return isCddbComment(frame) && retainCddb;
+      } catch (error) {
+        if (!(error instanceof InvalidFileError || error instanceof UnsupportedFeatureError)) {
+          throw error;
+        }
+        // An unidentifiable comment may contain unrelated metadata: preserve it.
+        return true;
+      }
+    });
+    replace('COMM', comments);
+    frames.push(...retainedComments);
+  }
+  if (patch.itunesCddb1 !== undefined) {
+    // Preserve Picard's described comment representation when present, and
+    // leave ordinary comments untouched. A clear removes both representations.
+    const values = commonText(patch.itunesCddb1, 'itunesCddb1');
+    for (let i = frames.length - 1; i >= 0; i--) {
+      const frame = frames[i];
+      if (frame.id !== 'COMM') {
+        continue;
+      }
+      if (isCddbComment(frame)) {
+        const comments = values?.length
+          ? makeFrames('COMM', {
+              language: textDecode(decodeFrameData(frame).subarray(1, 4), 'latin1'),
+              descriptor: 'iTunes_CDDB_1',
+              text: values[0]
+            })
+          : [];
+        frames.splice(i, 1, ...comments);
+      }
+    }
   }
   if (patch.lyrics !== undefined) {
     const lyrics = normalizeLyrics(patch.lyrics) ?? [];
@@ -266,4 +316,16 @@ export function applyId3Patch(frames: Frame[], patch: TagPatch, replace: (key: s
     }
     replace('TIPL', Object.keys(people).length ? people : null);
   }
+}
+
+/** Identify the described comment without interpreting its free-text payload. */
+function isCddbComment(frame: Frame): boolean {
+  const data = decodeFrameData(frame);
+  if (data.length < 4) {
+    throw new InvalidFileError('Malformed COMM frame');
+  }
+  const text = new Uint8Array(data.length - 3);
+  text[0] = data[0];
+  text.set(data.subarray(4), 1); // Skip the three-byte language code.
+  return decodeText(text).split('\0')[0] === 'iTunes_CDDB_1';
 }

@@ -5,6 +5,15 @@ import type { TagPatch } from '../core/types.js';
 
 /** Native names follow the reader mappings; unmapped fields use descriptive text fields. */
 export const COMMON_FIELDS = {
+  mbComposerId: { id3: 'TXXX:MusicBrainz Composer Id', vorbis: 'MUSICBRAINZ_COMPOSERID' },
+  mbOriginalArtistId: { id3: 'TXXX:MusicBrainz Original Artist Id', vorbis: 'MUSICBRAINZ_ORIGINALARTISTID' },
+  mbOriginalReleaseId: { id3: 'TXXX:MusicBrainz Original Album Id', vorbis: 'MUSICBRAINZ_ORIGINALALBUMID' },
+  directors: { id3: 'TXXX:DIRECTOR', vorbis: 'DIRECTOR' },
+  originalFilename: { id3: 'TOFN', vorbis: 'ORIGINALFILENAME' },
+  itunesCddb1: { id3: 'TXXX:iTunes_CDDB_1', vorbis: 'ITUNES_CDDB_1' },
+  replayGainAlbumRange: { id3: 'TXXX:REPLAYGAIN_ALBUM_RANGE', vorbis: 'REPLAYGAIN_ALBUM_RANGE' },
+  replayGainTrackRange: { id3: 'TXXX:REPLAYGAIN_TRACK_RANGE', vorbis: 'REPLAYGAIN_TRACK_RANGE' },
+  replayGainReferenceLoudness: { id3: 'TXXX:REPLAYGAIN_REFERENCE_LOUDNESS', vorbis: 'REPLAYGAIN_REFERENCE_LOUDNESS' },
   track: { id3: 'TRCK', vorbis: 'TRACKNUMBER' },
   disk: { id3: 'TPOS', vorbis: 'DISCNUMBER' },
   year: { id3: 'TDRC', vorbis: 'DATE' },
@@ -115,8 +124,8 @@ export const COMMON_FIELDS = {
   category: { id3: 'TCAT', vorbis: 'CATEGORY' },
   hdVideo: { id3: 'TXXX:HDVIDEO', vorbis: 'HDVIDEO' },
   keywords: { id3: 'TKWD', vorbis: 'KEYWORDS' },
-  movement: { id3: 'MVNM', vorbis: 'MOVEMENT' },
-  movementIndex: { id3: 'MVIN', vorbis: 'MOVEMENTNUMBER' },
+  movement: { id3: 'MVNM', vorbis: 'MOVEMENTNAME' },
+  movementIndex: { id3: 'MVIN', vorbis: 'MOVEMENT' },
   podcastId: { id3: 'TGID', vorbis: 'PODCASTID' },
   showMovement: { id3: 'TXXX:SHOWMOVEMENT', vorbis: 'SHOWMOVEMENT' },
   stik: { id3: 'TXXX:STIK', vorbis: 'STIK' },
@@ -125,6 +134,12 @@ export const COMMON_FIELDS = {
 
 export function normalizeCommonPatch(input: TagPatch): TagPatch {
   const patch = { ...input };
+  for (const key of ['replayGainTrackRange', 'replayGainAlbumRange'] as const) {
+    const value = patch[key];
+    if (value != null && (typeof value !== 'number' || !Number.isFinite(value) || value < 0)) {
+      throw new InvalidPatchError(`Invalid ${key}`);
+    }
+  }
   for (const key of [
     'replaygain_track_gain',
     'replaygain_track_peak',
@@ -192,6 +207,15 @@ export function commonText(value: unknown, field: string): string[] | null {
 }
 
 export const EXTRA_COMMON_FIELDS = [
+  'mbComposerId',
+  'mbOriginalArtistId',
+  'mbOriginalReleaseId',
+  'directors',
+  'originalFilename',
+  'itunesCddb1',
+  'replayGainAlbumRange',
+  'replayGainTrackRange',
+  'replayGainReferenceLoudness',
   'albumsort',
   'titlesort',
   'work',
