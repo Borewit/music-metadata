@@ -380,7 +380,7 @@ describe('shared byte plumbing', () => {
     'mp4/aac-faststart.m4a',
     'ogg/generated-vorbis.ogg',
     'ogg/generated-opus.opus',
-    'monkeysaudio-date.ape',
+    'ape/monkeysaudio-date.ape',
     'wavpack/unknown-count-multichannel.wv',
     'mpc/bach-goldberg-variatians-05.sv8.mpc'
   ]) {

@@ -168,7 +168,7 @@ const cases: readonly FormatCase[] = [
   caseFor('mp4', 'mp4/aac-faststart.m4a', 'audio/mp4', mp4Fields),
   caseFor('ogg', 'ogg/generated-vorbis.ogg', 'audio/ogg', allFields, ['publisher', 'description']),
   caseFor('ogg', 'ogg/generated-opus.opus', 'audio/ogg', allFields, ['publisher', 'description']),
-  caseFor('ape', 'monkeysaudio-date.ape', 'audio/ape', [...apeFields, 'year'], [], apeAliases),
+  caseFor('ape', 'ape/monkeysaudio-date.ape', 'audio/ape', [...apeFields, 'year'], [], apeAliases),
   caseFor('wv', 'wavpack/unknown-count-multichannel.wv', 'audio/wavpack', [...apeFields, 'year'], [], apeAliases),
   caseFor('mpc', 'mpc/apev2-no-header.sv7.mpc', 'audio/musepack', [...apeFields, 'year'], [], apeAliases),
   caseFor('mpc', 'mpc/bach-goldberg-variatians-05.sv8.mpc', 'audio/musepack', [...apeFields, 'year'], [], apeAliases),

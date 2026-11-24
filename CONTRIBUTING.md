@@ -34,6 +34,8 @@ Reuse an existing fixture when it represents the case being tested.
 - Use valid, decodable audio files and trim the audio portion to one second or less.
 - Use generated silence or tones, or audio permitted for redistribution, with any required attribution.
 - Keep fixtures as small as possible and omit metadata or artwork unrelated to the test.
+- Store audio fixtures under their format directory in `test/samples` (for example, `mp3`, `flac`, `ape`, `mp4`, or `ogg`), not directly in the sample root.
+- Keep feature-specific sets such as `rating` and `replay-gain` beneath the format directory, and keep companion artwork alongside its audio fixture.
 - Deliberately malformed or truncated fixtures are appropriate for tests of invalid input. Clearly identify
   the intended defect in the test and fixture name, and keep the sample minimal.
 

@@ -360,7 +360,7 @@ describe('ID3v2', () => {
 
   describe('Headers and unknown frames', () => {
     it('should be able to read id3v2 files with extended headers', () => {
-      const filename = 'id3v2-xheader.mp3';
+      const filename = 'mp3/id3v2-xheader.mp3';
       const filePath = path.join(samplePath, filename);
 
       return mm.parseFile(filePath, { duration: true }).then(metadata => {
@@ -438,7 +438,7 @@ describe('ID3v2', () => {
     });
 
     it('invalid "Date" frame should not cause crash', () => {
-      const filename = 'bug-id3v2-unknownframe.mp3';
+      const filename = 'mp3/bug-id3v2-unknownframe.mp3';
       const filePath = path.join(samplePath, filename);
 
       function checkCommon(common) {
@@ -818,7 +818,7 @@ describe('ID3v2', () => {
 
   describe('Text encodings', () => {
     it('decode id3v2-utf16', async () => {
-      const filename = 'id3v2-utf16.mp3';
+      const filename = 'mp3/id3v2-utf16.mp3';
       const filePath = path.join(samplePath, filename);
 
       const metadata = await mm.parseFile(filePath, { duration: true });
@@ -848,7 +848,7 @@ describe('ID3v2', () => {
     // silence. The comments cover $01 with/without BOM and $02, including both
     // empty and non-empty descriptions and terminated/unterminated comment text.
     it('decodes id3v2 UTF-16 text and COMM frames from a single MP3 fixture', async () => {
-      const filePath = path.join(samplePath, 'issue-2736-utf16.mp3');
+      const filePath = path.join(samplePath, 'mp3/issue-2736-utf16.mp3');
       const { native, common, format } = await mm.parseFile(filePath, { duration: true });
 
       const comments = [
@@ -882,7 +882,7 @@ describe('ID3v2', () => {
     });
 
     it('should read utf16bom (big endian) encoded metadata correctly', () => {
-      const filename = 'bug-utf16bom-encoding.mp3';
+      const filename = 'mp3/bug-utf16bom-encoding.mp3';
       const filePath = path.join(samplePath, filename);
 
       return mm.parseFile(filePath).then(result => {
@@ -898,7 +898,7 @@ describe('ID3v2', () => {
     });
 
     it('should be able to read metadata with unknown encoding', () => {
-      const filename = 'bug-unkown encoding.mp3';
+      const filename = 'mp3/bug-unkown encoding.mp3';
       const filePath = path.join(samplePath, filename);
 
       return mm.parseFile(filePath).then(result => {
@@ -916,7 +916,7 @@ describe('ID3v2', () => {
     });
 
     it('should decode non-ascii-characters', () => {
-      const filename = 'bug-non ascii chars.mp3';
+      const filename = 'mp3/bug-non ascii chars.mp3';
       const filePath = path.join(samplePath, filename);
 
       return mm.parseFile(filePath).then(result => {
@@ -929,7 +929,7 @@ describe('ID3v2', () => {
   describe('Lyrics', () => {
     describe('ID3v2.2 ULT lyrics mapping', () => {
       it('exposes the fixture lyrics as normalized common values while preserving native fields', async () => {
-        const { common, native } = await mm.parseFile(path.join(samplePath, 'id3v2.2.mp3'));
+        const { common, native } = await mm.parseFile(path.join(samplePath, 'mp3/id3v2.2.mp3'));
         const lyrics = native['ID3v2.2'].filter(tag => tag.id === 'ULT').map(tag => tag.value);
         assert.lengthOf(lyrics, 1);
         assert.deepEqual(common.lyrics, [
@@ -980,7 +980,7 @@ describe('ID3v2', () => {
     });
 
     it('should be able to read id3v2 files with lyrics', () => {
-      const filename = 'id3v2-lyrics.mp3';
+      const filename = 'mp3/id3v2-lyrics.mp3';
       const filePath = path.join(samplePath, filename);
 
       const expectedSyncText = [

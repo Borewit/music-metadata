@@ -308,7 +308,7 @@ describe('Parse Ogg', () => {
 
   describe('Parsing Ogg/Speex', () => {
     describe("decode: 'female_scrub.spx'", () => {
-      const filePath = path.join(samplePath, 'female_scrub.spx');
+      const filePath = path.join(samplePath, 'ogg/female_scrub.spx');
 
       function checkFormat(format: IFormat) {
         assert.strictEqual(format.container, 'Ogg', 'format.container');
@@ -704,7 +704,7 @@ describe('Parse Ogg', () => {
   });
 
   it('RATING mapping', async () => {
-    const filePath = path.join(samplePath, 'rating', 'testcase.opus');
+    const filePath = path.join(samplePath, 'ogg', 'rating', 'testcase.opus');
     const { common } = await mm.parseFile(filePath);
 
     assert.isDefined(common.rating, 'Expect rating property to be present');

@@ -75,8 +75,8 @@ describe('Discogs mappings', () => {
       });
     }
     for (const [name, mimeType] of [
-      ["Discogs - Beth Hart - Sinner's Prayer [id3v2.3].mp3", 'audio/mpeg'],
-      ["Discogs - Beth Hart - Sinner's Prayer [APEv2].flac", 'audio/flac']
+      ["mp3/Discogs - Beth Hart - Sinner's Prayer [id3v2.3].mp3", 'audio/mpeg'],
+      ["flac/Discogs - Beth Hart - Sinner's Prayer [APEv2].flac", 'audio/flac']
     ]) {
       for (const parser of Parsers) {
         it(`does not mix combined and individual names in ${name} (${parser.description})`, async context => {
@@ -164,7 +164,7 @@ describe('Discogs mappings', () => {
     }
 
     it('ID3v2.3/ID3v2.4', async () => {
-      const filename = "Discogs - Beth Hart - Sinner's Prayer [id3v2.3].mp3";
+      const filename = "mp3/Discogs - Beth Hart - Sinner's Prayer [id3v2.3].mp3";
       const filePath = path.join(samplePath, filename);
 
       // Run with default options
@@ -205,7 +205,7 @@ describe('Discogs mappings', () => {
     });
 
     it('Vorbis/FLAC', async () => {
-      const filename = "Discogs - Beth Hart - Sinner's Prayer [APEv2].flac";
+      const filename = "flac/Discogs - Beth Hart - Sinner's Prayer [APEv2].flac";
       const filePath = path.join(samplePath, filename);
 
       // Run with default options
@@ -285,7 +285,7 @@ describe('Discogs mappings', () => {
     }
 
     it('Vorbis/FLAC tags', async () => {
-      const filename = 'Discogs - Yasmin Levy - Mi Korasón.flac';
+      const filename = 'flac/Discogs - Yasmin Levy - Mi Korasón.flac';
 
       const metadata = await mm.parseFile(path.join(samplePath, filename));
 

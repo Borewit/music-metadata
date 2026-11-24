@@ -34,7 +34,7 @@ describe('Parse MPEG', () => {
   }
 
   describe('invalid VBRI recovery headers', () => {
-    const source = fs.readFileSync(path.join(samplePath, 'silence-2s-16000 [no-tags].CBR-128.mp3'));
+    const source = fs.readFileSync(path.join(samplePath, 'mp3/silence-2s-16000 [no-tags].CBR-128.mp3'));
     // Corrupt only a copy of a real MPEG audio fixture; leave its frame boundaries intact.
     const header = new MpegFrameHeader(source.subarray(0, 4));
     const declaredFrames = 10000;
@@ -109,7 +109,7 @@ describe('Parse MPEG', () => {
      *
      * Using CBR calculation: 23392.29375; same as Mutagen
      */
-    const filePath = path.join(samplePath, '1971 - 003 - Sweet - Co-Co - CannaPower.mp2');
+    const filePath = path.join(samplePath, 'mp3/layer2/1971 - 003 - Sweet - Co-Co - CannaPower.mp2');
 
     const { format } = await mm.parseFile(filePath, { duration: true });
 
@@ -154,7 +154,7 @@ describe('Parse MPEG', () => {
        * After id3v2.3, lots of 0 padding
        */
 
-      const filePath = path.join(samplePath, "04 - You Don't Know.mp3");
+      const filePath = path.join(samplePath, "mp3/04 - You Don't Know.mp3");
 
       function checkFormat(format: mm.IFormat) {
         t.deepEqual(format.tagTypes, ['ID3v2.3', 'ID3v1'], 'format.tagTypes');
@@ -224,7 +224,7 @@ describe('Parse MPEG', () => {
     it("should decode 07 - I'm Cool.mp3", async () => {
       // 'LAME3.91' found on position 81BCF=531407
 
-      const filePath = path.join(samplePath, "07 - I'm Cool.mp3");
+      const filePath = path.join(samplePath, "mp3/07 - I'm Cool.mp3");
 
       function checkFormat(format: mm.IFormat) {
         t.deepEqual(format.tagTypes, ['ID3v2.3', 'ID3v1'], 'format.type');
@@ -292,7 +292,7 @@ describe('Parse MPEG', () => {
        File is VBR. Average bitrate is 309 kbps.
        Exact length: 00:00
        ------------------------------------------------------------------------*/
-      const filePath = path.join(samplePath, 'outofbounds.mp3');
+      const filePath = path.join(samplePath, 'mp3/outofbounds.mp3');
 
       function checkFormat(format: mm.IFormat) {
         t.deepEqual(format.tagTypes, ['ID3v2.3', 'ID3v1'], 'format.type');
@@ -325,7 +325,7 @@ describe('Parse MPEG', () => {
     }
 
     it('should parse multiple tag headers: ID3v2.3, ID3v2.4 & ID3v1', async () => {
-      const metadata = await mm.parseFile(path.join(issueDir, 'id3-multi-02.mp3'));
+      const metadata = await mm.parseFile(path.join(issueDir, 'mp3/id3-multi-02.mp3'));
       checkFormat(metadata.format, 230.29551020408164);
     });
 
@@ -334,7 +334,7 @@ describe('Parse MPEG', () => {
      */
     it('should decode mp3_01 with 2x ID3v2.4 header', async () => {
       // ToDo: currently second ID3v2.4 is overwritten. Either make both headers accessible or generate warning
-      const metadata = await mm.parseFile(path.join(issueDir, 'id3-multi-01.mp3'));
+      const metadata = await mm.parseFile(path.join(issueDir, 'mp3/id3-multi-01.mp3'));
       checkFormat(metadata.format, 0.1306122448979592);
     });
   });
@@ -371,7 +371,7 @@ describe('Parse MPEG', () => {
     });
 
     it("from 'Yeahs-It's Blitz!.mp3'", async () => {
-      const metadata = await mm.parseFile(path.join(issueDir, "02-Yeahs-It's Blitz! 2.mp3"), {
+      const metadata = await mm.parseFile(path.join(issueDir, "mp3/02-Yeahs-It's Blitz! 2.mp3"), {
         duration: false
       });
       const idv23 = metadata.nativeTyped['ID3v2.3'];
@@ -380,7 +380,7 @@ describe('Parse MPEG', () => {
     });
 
     it("from 'id3v2-lyrics.mp3'", async () => {
-      const metadata = await mm.parseFile(path.join(issueDir, 'id3v2-lyrics.mp3'), { duration: false });
+      const metadata = await mm.parseFile(path.join(issueDir, 'mp3/id3v2-lyrics.mp3'), { duration: false });
       const idv23 = metadata.nativeTyped['ID3v2.3'];
       // Native rating value
       assert.deepEqual(idv23.POPM[0], { email: 'MusicBee', rating: 255, counter: 0 }, 'ID3v2.3 POPM');
@@ -389,7 +389,7 @@ describe('Parse MPEG', () => {
     });
 
     it('decode POPM without a counter field', async () => {
-      const filePath = path.join(issueDir, 'issue-100.mp3');
+      const filePath = path.join(issueDir, 'mp3/issue-100.mp3');
 
       const metadata = await mm.parseFile(filePath, { duration: true });
       const idv23 = metadata.nativeTyped['ID3v2.3'];
@@ -571,7 +571,7 @@ describe('Parse MPEG', () => {
       });
     });
     describe('VBR read from Xing header', () => {
-      const filePath = path.join(issueDir, 'id3v2-xheader.mp3');
+      const filePath = path.join(issueDir, 'mp3/id3v2-xheader.mp3');
 
       Parsers.forEach(parser => {
         it(parser.description, async context => {
@@ -649,7 +649,7 @@ describe('Parse MPEG', () => {
     });
 
     it('VBR: based on frame count if duration flag is set', async () => {
-      const filePath = path.join(issueDir, 'Dethklok-mergeTagHeaders.mp3');
+      const filePath = path.join(issueDir, 'mp3/Dethklok-mergeTagHeaders.mp3');
       // Wrap stream around buffer, to prevent the `stream.path` is provided
       const buffer = fs.readFileSync(filePath);
       const stream = new SourceStream(buffer);

@@ -91,7 +91,7 @@ describe('Parse FLAC Vorbis comment', () => {
   const flacFilePath = path.join(samplePath, 'flac');
 
   it('decodes STREAMINFO block sizes in samples at a nonzero offset', () => {
-    const data = fs.readFileSync(path.join(samplePath, "MusicBrainz - Beth Hart - Sinner's Prayer.flac"));
+    const data = fs.readFileSync(path.join(samplePath, "flac/MusicBrainz - Beth Hart - Sinner's Prayer.flac"));
     assert.equal(data.toString('ascii', 0, 4), 'fLaC');
     assert.equal(data[4] & 0x7f, 0, 'first metadata block is STREAMINFO');
     const info = BlockStreamInfo.get(data, 8);
@@ -129,7 +129,7 @@ describe('Parse FLAC Vorbis comment', () => {
       ['flac/date-precedence-alias.flac', '2009-10-05'],
       ['flac/date-precedence-empty.flac', '2009-10-05'],
       ['flac/date-precedence-duplicate.flac', '2010-02-03'],
-      ['Discogs - Yasmin Levy - Mi Korasón.flac', '2009-10-05']
+      ['flac/Discogs - Yasmin Levy - Mi Korasón.flac', '2009-10-05']
     ];
     for (const [name, date] of cases) {
       for (const parser of Parsers) {
@@ -210,7 +210,7 @@ describe('Parse FLAC Vorbis comment', () => {
       it(parser.description, async context => {
         const { format, common, native } = await parser.parse(
           () => context.skip(),
-          path.join(samplePath, 'flac.flac'),
+          path.join(samplePath, 'flac/flac.flac'),
           'audio/flac'
         );
         checkFormat(format);
@@ -221,7 +221,7 @@ describe('Parse FLAC Vorbis comment', () => {
   });
 
   it('should support multiple album artists (separate Vorbis tags)', async () => {
-    const filePath = path.join(samplePath, 'flac-multiple-album-artists-tags.flac');
+    const filePath = path.join(samplePath, 'flac/flac-multiple-album-artists-tags.flac');
     const { common } = await mm.parseFile(filePath);
 
     assert.strictEqual(common.albumartist, 'Album Artist One', 'common.albumartist');
@@ -229,7 +229,7 @@ describe('Parse FLAC Vorbis comment', () => {
   });
 
   describe('should be able to recognize a ID3v2 tag header prefixing a FLAC file', () => {
-    const filePath = path.join(samplePath, 'a kind of magic.flac');
+    const filePath = path.join(samplePath, 'flac/a kind of magic.flac');
 
     Parsers.forEach(parser => {
       it(parser.description, async context => {
@@ -244,7 +244,7 @@ describe('Parse FLAC Vorbis comment', () => {
   });
 
   describe('should be able to determine the bit-rate', () => {
-    const filePath = path.join(samplePath, '04 Long Drive.flac');
+    const filePath = path.join(samplePath, 'flac/04 Long Drive.flac');
 
     Parsers.forEach(parser => {
       it(parser.description, async context => {
@@ -278,7 +278,7 @@ describe('Parse FLAC Vorbis comment', () => {
    * Issue: https://github.com/Borewit/music-metadata/issues/266
    */
   it('Support Vorbis METADATA_BLOCK_PICTURE tags', async () => {
-    const filePath = path.join(samplePath, 'issue-266.flac');
+    const filePath = path.join(samplePath, 'flac/issue-266.flac');
 
     const metadata = await mm.parseFile(filePath);
     const { format, common } = metadata;
@@ -747,7 +747,7 @@ describe('Parse FLAC Vorbis comment', () => {
   });
 
   it('RATING mapping', async () => {
-    const filePath = path.join(samplePath, 'rating', 'testcase.flac');
+    const filePath = path.join(samplePath, 'flac', 'rating', 'testcase.flac');
     const { common } = await mm.parseFile(filePath);
 
     assert.isDefined(common.rating, 'Expect rating property to be present');
@@ -870,7 +870,7 @@ describe('Parse FLAC Vorbis comment', () => {
 
   describe('Concurrent picture parsing', () => {
     it('should handle concurrent parsing of pictures', () => {
-      const files = [path.join(samplePath, 'flac.flac'), path.join(samplePath, 'flac-bug.flac')];
+      const files = [path.join(samplePath, 'flac/flac.flac'), path.join(samplePath, 'flac/flac-bug.flac')];
 
       return Promise.all<void>(
         files.map(file => {
@@ -885,7 +885,7 @@ describe('Parse FLAC Vorbis comment', () => {
 
   describe('MusicBrainz/Picard tags', () => {
     it('MusicBrains/Picard tags in FLAC', async () => {
-      const filename = 'MusicBrainz-Picard-tags.flac';
+      const filename = 'flac/MusicBrainz-Picard-tags.flac';
       const filePath = path.join(samplePath, filename);
 
       function checkFormat(format) {
@@ -1034,7 +1034,7 @@ describe('Parse FLAC Vorbis comment', () => {
   });
 
   describe('ReplayGain tags', () => {
-    const filePath = path.join(samplePath, '04 Long Drive.flac');
+    const filePath = path.join(samplePath, 'flac/04 Long Drive.flac');
 
     it('should decode replaygain tags from FLAC/Vorbis', async () => {
       return mm.parseFile(filePath).then(metadata => {
@@ -1054,7 +1054,7 @@ describe('Parse FLAC Vorbis comment', () => {
 });
 
 describe('Public FLAC structural tokens', () => {
-  function readPictureBlock(data = fs.readFileSync(path.join(samplePath, 'flac.flac'))): Buffer {
+  function readPictureBlock(data = fs.readFileSync(path.join(samplePath, 'flac/flac.flac'))): Buffer {
     let offset = 4;
     while (offset < data.length) {
       const header = tokens.BlockHeader.get(data, offset);
@@ -1077,7 +1077,7 @@ describe('Public FLAC structural tokens', () => {
   });
 
   it('reads real FLAC block headers and rejects truncated ranges', () => {
-    const data = fs.readFileSync(path.join(samplePath, "MusicBrainz - Beth Hart - Sinner's Prayer.flac"));
+    const data = fs.readFileSync(path.join(samplePath, "flac/MusicBrainz - Beth Hart - Sinner's Prayer.flac"));
     assert.deepEqual(tokens.BlockHeader.get(data, 4), { lastBlock: false, type: 0, length: 34 });
     assert.throws(() => tokens.BlockHeader.get(new Uint8Array(3), 0), RangeError);
     assert.throws(
@@ -1125,7 +1125,7 @@ describe('Public FLAC structural tokens', () => {
 
   for (const parser of Parsers) {
     it(`reports a truncated native picture payload as a FLAC content error (${parser.description})`, async context => {
-      const data = fs.readFileSync(path.join(samplePath, 'flac.flac'));
+      const data = fs.readFileSync(path.join(samplePath, 'flac/flac.flac'));
       const picture = readPictureBlock(data);
       const propertiesOffset = 12 + picture.readUInt32BE(4) + picture.readUInt32BE(8 + picture.readUInt32BE(4));
       picture.writeUInt32BE(0xffffffff, propertiesOffset + 16);
@@ -1172,7 +1172,7 @@ describe('Public FLAC structural tokens', () => {
   });
 
   it('reports a missing native picture description-length prefix as a FLAC content error', async () => {
-    const data = fs.readFileSync(path.join(samplePath, 'flac.flac'));
+    const data = fs.readFileSync(path.join(samplePath, 'flac/flac.flac'));
     const picture = readPictureBlock(data);
     const blockOffset = picture.byteOffset - data.byteOffset - tokens.BlockHeader.len;
     data.writeUIntBE(32, blockOffset + 1, 3);

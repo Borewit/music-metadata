@@ -28,7 +28,7 @@ describe('MIME & extension mapping', () => {
   }
 
   it('should reject an unknown file', async () => {
-    await expect(mm.parseFile(path.join(samplePath, 'flac.flac.jpg'))).rejects.toThrowError({
+    await expect(mm.parseFile(path.join(samplePath, 'flac/flac.flac.jpg'))).rejects.toThrowError({
       asymmetricMatch: (error: Error) =>
         error instanceof UnsupportedFileTypeError &&
         expect.stringContaining('Guessed MIME-type not supported: image/jpeg: ').asymmetricMatch(error.message)
@@ -67,7 +67,9 @@ describe('MIME & extension mapping', () => {
 
   it('should be able to handle MIME-type parameter(s)', async () => {
     // Wrap stream around buffer, to prevent the `stream.path` is provided
-    const buffer = fs.readFileSync(path.join(samplePath, "MusicBrainz - Beth Hart - Sinner's Prayer [id3v2.3].wav"));
+    const buffer = fs.readFileSync(
+      path.join(samplePath, "wav/MusicBrainz - Beth Hart - Sinner's Prayer [id3v2.3].wav")
+    );
     const stream = new SourceStream(buffer);
     const metadata = await mm.parseStream(stream);
     assert.equal(metadata.format.container, 'WAVE');
@@ -93,7 +95,7 @@ describe('MIME & extension mapping', () => {
 
     it('should throw error on recognized MIME-type which is not supported', async () => {
       // Wrap stream around buffer, to prevent the `stream.path` is provided
-      const buffer = fs.readFileSync(path.join(samplePath, 'flac.flac.jpg'));
+      const buffer = fs.readFileSync(path.join(samplePath, 'flac/flac.flac.jpg'));
       const stream = new SourceStream(buffer);
 
       try {
@@ -140,11 +142,11 @@ describe('MIME & extension mapping', () => {
     });
 
     it('should recognize MP2', () => {
-      return testFileType('1971 - 003 - Sweet - Co-Co - CannaPower.mp2', 'MPEG');
+      return testFileType('mp3/layer2/1971 - 003 - Sweet - Co-Co - CannaPower.mp2', 'MPEG');
     });
 
     it('should recognize MP3', () => {
-      return testFileType('04-Strawberry.mp3', 'MPEG');
+      return testFileType('mp3/04-Strawberry.mp3', 'MPEG');
     });
 
     it('should recognize WMA', () => {
@@ -153,7 +155,7 @@ describe('MIME & extension mapping', () => {
     });
 
     it('should recognize MPEG-4 / m4a', () => {
-      return testFileType("MusicBrainz - Beth Hart - Sinner's Prayer.m4a", 'M4A/mp42/isom');
+      return testFileType("mp4/MusicBrainz - Beth Hart - Sinner's Prayer.m4a", 'M4A/mp42/isom');
     });
 
     it('should recognize MPEG-4 / m4b', () => {
@@ -165,7 +167,7 @@ describe('MIME & extension mapping', () => {
     });
 
     it('should recognize FLAC', () => {
-      return testFileType('flac.flac', 'FLAC');
+      return testFileType('flac/flac.flac', 'FLAC');
     });
 
     it('should recognize OGG', () => {
@@ -173,11 +175,11 @@ describe('MIME & extension mapping', () => {
     });
 
     it('should recognize WAV', () => {
-      return testFileType("MusicBrainz - Beth Hart - Sinner's Prayer [id3v2.3].wav", 'WAVE');
+      return testFileType("wav/MusicBrainz - Beth Hart - Sinner's Prayer [id3v2.3].wav", 'WAVE');
     });
 
     it('should recognize APE', () => {
-      return testFileType("MusicBrainz - Beth Hart - Sinner's Prayer.ape", "Monkey's Audio");
+      return testFileType("ape/MusicBrainz - Beth Hart - Sinner's Prayer.ape", "Monkey's Audio");
     });
 
     it('should recognize WMA (issue 57)', () => {

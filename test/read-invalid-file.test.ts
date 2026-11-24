@@ -24,7 +24,7 @@ describe('Errors in case a file cannot be parsed', () => {
   });
 
   it("should reject files that can't be parsed", async () => {
-    const filePath = path.join(samplePath, 'flac.flac.jpg');
+    const filePath = path.join(samplePath, 'flac/flac.flac.jpg');
 
     // Run with default options
     try {

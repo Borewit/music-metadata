@@ -22,7 +22,7 @@ interface IReplayGainSample {
 const samples: IReplayGainSample[] = [
   {
     description: 'album',
-    filename: 'id3v23-txxx-album.mp3',
+    filename: 'mp3/replay-gain/id3v23-txxx-album.mp3',
     container: 'MPEG',
     tagType: 'ID3v2.3',
     track: {
@@ -36,7 +36,7 @@ const samples: IReplayGainSample[] = [
   },
   {
     description: 'album-nopeak',
-    filename: 'id3v23-txxx-album-nopeak.mp3',
+    filename: 'mp3/replay-gain/id3v23-txxx-album-nopeak.mp3',
     container: 'MPEG',
     tagType: 'ID3v2.3',
     track: {
@@ -50,7 +50,7 @@ const samples: IReplayGainSample[] = [
   },
   {
     description: 'case sensitivity',
-    filename: 'id3v23-txxx-case.mp3',
+    filename: 'mp3/replay-gain/id3v23-txxx-case.mp3',
     container: 'MPEG',
     tagType: 'ID3v2.3',
     track: {
@@ -64,7 +64,7 @@ const samples: IReplayGainSample[] = [
   },
   {
     description: 'latin-1',
-    filename: 'id3v23-txxx-latin1.mp3',
+    filename: 'mp3/replay-gain/id3v23-txxx-latin1.mp3',
     container: 'MPEG',
     tagType: 'ID3v2.3',
     track: {
@@ -74,7 +74,7 @@ const samples: IReplayGainSample[] = [
   },
   {
     description: 'peak',
-    filename: 'id3v23-txxx-peak.mp3',
+    filename: 'mp3/replay-gain/id3v23-txxx-peak.mp3',
     container: 'MPEG',
     tagType: 'ID3v2.3',
     track: {
@@ -88,7 +88,7 @@ const samples: IReplayGainSample[] = [
   },
   {
     description: 'track',
-    filename: 'id3v23-txxx-track.mp3',
+    filename: 'mp3/replay-gain/id3v23-txxx-track.mp3',
     container: 'MPEG',
     tagType: 'ID3v2.3',
     track: {
@@ -102,7 +102,7 @@ const samples: IReplayGainSample[] = [
   },
   {
     description: 'track-nopeak',
-    filename: 'id3v23-txxx-track-nopeak.mp3',
+    filename: 'mp3/replay-gain/id3v23-txxx-track-nopeak.mp3',
     container: 'MPEG',
     tagType: 'ID3v2.3',
     track: {
@@ -116,7 +116,7 @@ const samples: IReplayGainSample[] = [
   },
   {
     description: 'track-only',
-    filename: 'id3v23-txxx-track-only.mp3',
+    filename: 'mp3/replay-gain/id3v23-txxx-track-only.mp3',
     container: 'MPEG',
     tagType: 'ID3v2.3',
     track: {
@@ -126,7 +126,7 @@ const samples: IReplayGainSample[] = [
   },
   {
     description: 'album',
-    filename: 'id3v24-txxx-album.mp3',
+    filename: 'mp3/replay-gain/id3v24-txxx-album.mp3',
     container: 'MPEG',
     tagType: 'ID3v2.4',
     track: {
@@ -140,7 +140,7 @@ const samples: IReplayGainSample[] = [
   },
   {
     description: 'track',
-    filename: 'id3v24-txxx-track.mp3',
+    filename: 'mp3/replay-gain/id3v24-txxx-track.mp3',
     container: 'MPEG',
     tagType: 'ID3v2.4',
     track: {
@@ -154,7 +154,7 @@ const samples: IReplayGainSample[] = [
   },
   {
     description: 'track-only',
-    filename: 'id3v24-txxx-track-only.mp3',
+    filename: 'mp3/replay-gain/id3v24-txxx-track-only.mp3',
     container: 'MPEG',
     tagType: 'ID3v2.4',
     track: {
@@ -164,7 +164,7 @@ const samples: IReplayGainSample[] = [
   },
   {
     description: 'utf8',
-    filename: 'id3v24-txxx-track-only.mp3',
+    filename: 'mp3/replay-gain/id3v24-txxx-track-only.mp3',
     container: 'MPEG',
     tagType: 'ID3v2.4',
     track: {
@@ -174,7 +174,7 @@ const samples: IReplayGainSample[] = [
   },
   {
     description: 'utf8',
-    filename: 'vorbis.flac',
+    filename: 'flac/replay-gain/vorbis.flac',
     container: 'FLAC',
     tagType: 'vorbis',
     track: {
@@ -192,11 +192,9 @@ const samples: IReplayGainSample[] = [
  * Samples provided by: https://github.com/kepstin/replaygain-test-vectors
  */
 describe('Test Replay-Gain', () => {
-  const pathGainSamples = path.join(samplePath, 'replay-gain');
-
   samples.forEach(sample => {
     it(`Test ${sample.description}, mapping from tag header: ${sample.tagType}`, async () => {
-      const filePath = path.join(pathGainSamples, sample.filename);
+      const filePath = path.join(samplePath, sample.filename);
 
       const metadata = await mm.parseFile(filePath);
       const { format, common } = metadata;

@@ -284,7 +284,7 @@ describe('Observer updates during asynchronous parsing', () => {
     }
   });
 
-  const flacFilePath = path.join(samplePath, 'flac.flac');
+  const flacFilePath = path.join(samplePath, 'flac/flac.flac');
 
   it('decode a FLAC audio file', async () => {
     const eventTags: IMetadataEventTag[] = [];

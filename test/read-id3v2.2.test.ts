@@ -16,7 +16,7 @@ describe('ID3v2Parser', () => {
   });
 
   it('should normalize ID3v2.2 comments correctly', async () => {
-    const filePath = path.join(samplePath, 'issue_66.mp3');
+    const filePath = path.join(samplePath, 'mp3/issue_66.mp3');
 
     const metadata = await mm.parseFile(filePath, { duration: true });
 
@@ -60,7 +60,7 @@ describe('ID3v2Parser', () => {
   });
 
   it("should decode file 'id3v2.2.mp3'", async () => {
-    const filename = 'id3v2.2.mp3';
+    const filename = 'mp3/id3v2.2.mp3';
     const filePath = path.join(samplePath, filename);
 
     const metadata = await mm.parseFile(filePath, { duration: true });
