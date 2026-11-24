@@ -142,6 +142,9 @@ export function applyVorbisPatch(
   const comments = fields.comments.map(comment => ({ ...comment }));
   for (const key of EXTRA_COMMON_FIELDS) {
     if (patch[key] !== undefined) {
+      if (key === 'acoustid_fingerprint') {
+        removeField(comments, 'ACOUSTID_ID_FINGERPRINT');
+      }
       setField(comments, COMMON_FIELDS[key].vorbis, commonText(patch[key], key));
     }
   }
