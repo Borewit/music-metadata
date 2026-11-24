@@ -4461,3 +4461,20 @@ describe('Parse MPEG-4', () => {
 
   // https://github.com/readest/readest/issues/6262
 });
+
+describe('Parse MP4 recording interrupted before its moov was written', () => {
+  it('reports the interrupted recording instead of a generic atom size error', async () => {
+    const data = await fs.promises.readFile(path.join(mp4Samples, 'luckynight-als.mp4')); // ftyp, mdat, moov
+    const interrupted = data.subarray(0, Math.floor(data.length / 2));
+    await rejects(mm.parseBuffer(interrupted, 'video/mp4'), /recording was probably interrupted/);
+  });
+
+  it('keeps the generic error when the moov was read before the truncated mdat', async () => {
+    const data = await fs.promises.readFile(path.join(mp4Samples, 'mp4-video.mp4')); // ftyp, moov, free, mdat
+    const cut = data.subarray(0, data.length - 1000);
+    await rejects(
+      mm.parseBuffer(cut, 'video/mp4'),
+      (error: Error) => !/recording was probably interrupted/.test(error.message)
+    );
+  });
+});

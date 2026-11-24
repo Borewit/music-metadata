@@ -264,6 +264,7 @@ export class MP4Parser extends BasicParser {
   private hasVideoTrack = false;
   private hasAudioTrack = false;
   private remainingAtoms = 0;
+  private rootMoovRead = false;
   private maxMetadataEntries = 0;
   private metadataKeys = new WeakMap<Atom, string[]>();
   private pendingTags: IMetadataTag[] = [];
@@ -286,8 +287,10 @@ export class MP4Parser extends BasicParser {
     let remainingFileSize = this.tokenizer.fileInfo.size ?? Number.POSITIVE_INFINITY;
 
     while (remainingFileSize > 0) {
+      let rootName: string | undefined;
       try {
         const token = await this.tokenizer.peekToken<AtomToken.IAtomHeader>(AtomToken.Header);
+        rootName = token.name;
         if (token.name === '\0\0\0\0') {
           const errMsg = `Error at offset=${this.tokenizer.position}: box.id=0`;
           debug(errMsg);
@@ -305,13 +308,33 @@ export class MP4Parser extends BasicParser {
         break;
       }
       const atomsBeforeRoot = this.remainingAtoms;
-      const rootAtom = await Atom.readAtom(
-        this.tokenizer,
-        (atom, remaining) => this.handleAtom(atom, remaining),
-        null,
-        remainingFileSize,
-        () => this.reserveAtom()
-      );
+      let rootAtom: Atom;
+      try {
+        rootAtom = await Atom.readAtom(
+          this.tokenizer,
+          (atom, remaining) => this.handleAtom(atom, remaining),
+          null,
+          remainingFileSize,
+          () => this.reserveAtom()
+        );
+      } catch (error) {
+        // Media data running past the end of the file with no moov read before it: the recording was cut off
+        // before its index (which follows the media data) was written
+        if (
+          rootName === 'mdat' &&
+          !this.rootMoovRead &&
+          error instanceof Mp4ContentError &&
+          error.message.startsWith('Atom size exceeds remaining bytes')
+        ) {
+          throw new Mp4ContentError(
+            `Truncated mdat atom and no moov: the recording was probably interrupted before its index was written (${error.message})`
+          );
+        }
+        throw error;
+      }
+      if (rootAtom.header.name === 'moov') {
+        this.rootMoovRead = true;
+      }
       // Release the root tree budget; each table is limited separately.
       this.remainingAtoms = atomsBeforeRoot;
       remainingFileSize = rootAtom.header.length === 0n ? 0 : remainingFileSize - Number(rootAtom.header.length);
