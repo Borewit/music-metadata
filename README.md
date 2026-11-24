@@ -619,7 +619,7 @@ See [Support for audio file types](#support-for-audio-file-types) for the suppor
   Maximum bytes buffered for a single metadata payload, accumulated Ogg packet, or tokenizer stream lookahead.
   Must be a positive safe integer. Parsing rejects payloads above this limit before allocating them.
   The parser configures this limit once on its `strtok3` tokenizers, including tokenizers for embedded tags.
-  The same limit applies to `file-type` read buffers when detecting the media format or a cover art MIME-type.
+  Media format detection inspects at most 4100 bytes, bounded by this limit; cover art MIME-type detection inspects the existing bytes without copying the image.
   Oversized tokenizer allocations or stream lookahead reject with `strtok3.BufferSizeError`.
   When using [`parseFromTokenizer()`](#parsefromtokenizer-function), also configure `maxBufferSize` on the supplied tokenizer at creation.
   Increase it for files with unusually large metadata or cover art, or lower it for constrained environments.

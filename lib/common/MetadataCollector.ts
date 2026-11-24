@@ -1,5 +1,4 @@
 import initDebug from 'debug';
-import { fileTypeFromBuffer } from 'file-type';
 import { normalizeLyricsTag, parseLyrics } from '../lrc/LyricsParser.js';
 import {
   type AnyTagValue,
@@ -15,10 +14,11 @@ import {
   type ITypedNativeTags,
   TrackTypeValueToKeyMap
 } from '../type.js';
-import { getMaxMemoryAllocation, getMaxMetadataEntries } from './Allocation.js';
+import { getMaxMetadataEntries } from './Allocation.js';
 import { CombinedTagMapper } from './CombinedTagMapper.js';
 import { CommonTagMapper } from './GenericTagMapper.js';
 import { type IGenericTag, isSingleton, isUnique, type TagType } from './GenericTagTypes.js';
+import { detectImageType } from './MediaFileType.js';
 import { normalizeBitrate } from './TrackInfo.js';
 import { toNativeTyped, toRatio } from './Util.js';
 
@@ -425,11 +425,9 @@ export class MetadataCollector implements INativeMetadataCollector {
   private async postFixPicture(picture: IPicture): Promise<IPicture | null> {
     if (picture.data && picture.data.length > 0) {
       if (!picture.format) {
-        const fileType = await fileTypeFromBuffer(Uint8Array.from(picture.data), {
-          maxBufferSize: getMaxMemoryAllocation(this.opts ?? {})
-        }); // ToDO: remove Buffer
-        if (fileType) {
-          picture.format = fileType.mime;
+        const mimeType = detectImageType(picture.data);
+        if (mimeType) {
+          picture.format = mimeType;
         } else {
           return null;
         }
