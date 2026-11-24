@@ -1,7 +1,4 @@
-import { fileTypeFromTokenizer } from 'file-type';
-import { EndOfStreamError, type ITokenizer } from 'strtok3';
-import AsfGuid from '../../asf/AsfGuid.js';
-import { decodeAscii } from './bytes.js';
+import { detectMediaType, getId3v2HeaderLength } from '../../common/MediaFileType.js';
 import type { ByteSource } from './source.shared.js';
 
 export type ContainerFormat =
@@ -18,71 +15,42 @@ export type ContainerFormat =
   | 'asf'
   | 'unknown';
 
-/** Detect audio containers using file-type without loading the entire file. */
+/** Detect containers with bounded reads, without closing or borrowing the source tokenizer. */
 export async function detectFormat(source: ByteSource): Promise<ContainerFormat> {
-  if (source.size >= 12) {
-    const header = await source.read(0, 12);
-    if (decodeAscii(header.subarray(0, 4)) === 'OggS') {
-      return 'ogg';
-    }
-    if (decodeAscii(header.subarray(0, 4)) === 'RIFF' && decodeAscii(header.subarray(8, 12)) === 'WAVE') {
-      return 'wav';
-    }
-  }
-  if (source.size >= 16 && AsfGuid.decode(await source.read(0, 16)) === AsfGuid.HeaderObject.str) {
-    return 'asf';
-  }
-  let extension: string | undefined;
-  try {
-    const tokenizer = source.tokenizer;
-    tokenizer.setPosition(0);
-    // file-type closes its input. Borrow the methods while retaining ownership
-    // of the source so the writer can continue reading the same open file.
-    const borrowed: ITokenizer = {
-      fileInfo: tokenizer.fileInfo,
-      get position() {
-        return tokenizer.position;
-      },
-      readBuffer: tokenizer.readBuffer.bind(tokenizer),
-      peekBuffer: tokenizer.peekBuffer.bind(tokenizer),
-      readToken: tokenizer.readToken.bind(tokenizer),
-      peekToken: tokenizer.peekToken.bind(tokenizer),
-      readNumber: tokenizer.readNumber.bind(tokenizer),
-      peekNumber: tokenizer.peekNumber.bind(tokenizer),
-      ignore: tokenizer.ignore.bind(tokenizer),
-      supportsRandomAccess: tokenizer.supportsRandomAccess.bind(tokenizer),
-      abort: tokenizer.abort.bind(tokenizer),
-      close: async () => {
-        /* The borrowed source remains owned by the caller. */
+  let offset = 0;
+  let hasId3 = false;
+  while (offset < source.size) {
+    const header = await source.read(offset, Math.min(64, source.size - offset));
+    if (header[0] === 0x49 && header[1] === 0x44 && header[2] === 0x33) {
+      hasId3 = true;
+      const length = getId3v2HeaderLength(header);
+      if (length === undefined || length >= source.size - offset) {
+        return 'id3'; // Let the ID3 writer validate incomplete or unsupported tags.
       }
-    };
-    extension = (await fileTypeFromTokenizer(borrowed))?.ext;
-  } catch (error) {
-    if (!(error instanceof EndOfStreamError)) {
-      throw error;
+      offset += length;
+      continue;
     }
-  }
-  if (extension === 'm4a' || extension === 'mp4' || extension === 'm4b') {
-    return 'mp4';
-  }
-  if (
-    extension === 'flac' ||
-    extension === 'mp3' ||
-    extension === 'aac' ||
-    extension === 'wav' ||
-    extension === 'ape' ||
-    extension === 'wv' ||
-    extension === 'mpc'
-  ) {
-    return extension;
-  }
-
-  // Route incomplete or unsupported ID3 input to the writer for validation.
-  // file-type can return undefined for truncated tags or an ID3v2.4 footer.
-  if (source.size >= 3) {
-    const signature = await source.read(0, 3);
-    if (signature[0] === 73 && signature[1] === 68 && signature[2] === 51) {
-      return 'id3';
+    const parserType = detectMediaType(header);
+    switch (parserType) {
+      case 'mpeg':
+        return 'mp3';
+      case 'adts':
+        return 'aac';
+      case 'riff':
+        return 'wav';
+      case 'apev2':
+        return 'ape';
+      case 'wavpack':
+        return 'wv';
+      case 'musepack':
+        return 'mpc';
+      case 'mp4':
+      case 'flac':
+      case 'ogg':
+      case 'asf':
+        return parserType;
+      default:
+        return hasId3 ? 'id3' : 'unknown';
     }
   }
   return 'unknown';

@@ -1,6 +1,5 @@
 import { parse as parseContentType } from 'content-type';
 import initDebug from 'debug';
-import { fileTypeFromBuffer } from 'file-type';
 import { type MediaType, parse as mimeTypeParse } from 'media-typer';
 import { type ITokenizer, isRandomAccessTokenizer } from 'strtok3';
 import { aiffParserLoader } from './aiff/AiffLoader.js';
@@ -8,6 +7,7 @@ import { apeParserLoader } from './apev2/Apev2Loader.js';
 import { asfParserLoader } from './asf/AsfLoader.js';
 import { cafParserLoader } from './caf/CafLoader.js';
 import { getMaxChapterCount, getMaxMemoryAllocation, getMaxMetadataEntries } from './common/Allocation.js';
+import { detectImageType, detectMediaType, mediaTypeProbeLength } from './common/MediaFileType.js';
 import { type INativeMetadataCollector, MetadataCollector } from './common/MetadataCollector.js';
 import { createAudioTrackInfo, finalizeContainerInfo } from './common/TrackInfo.js';
 import { scanAppendingHeaders } from './core.js';
@@ -112,17 +112,24 @@ export class ParserFactory {
       if (!parserLoader) {
         // Parser could not be determined on MIME-type or extension
         debug('Guess parser on content...');
-        const buf = new Uint8Array(4100);
-        await tokenizer.peekBuffer(buf, { mayBeLess: true });
+        const buf = new Uint8Array(Math.min(mediaTypeProbeLength, maxBufferSize));
+        const bytesRead = await tokenizer.peekBuffer(buf, { mayBeLess: true });
 
-        const guessedType = await fileTypeFromBuffer(buf, { mpegOffsetTolerance: 10, maxBufferSize });
-        if (!guessedType?.mime) {
+        const header = buf.subarray(0, bytesRead);
+        const guessedType = detectMediaType(header);
+        if (!guessedType) {
+          const imageMimeType = detectImageType(header);
+          if (imageMimeType) {
+            throw new UnsupportedFileTypeError(`Guessed MIME-type not supported: ${imageMimeType}`);
+          }
           throw new CouldNotDetermineFileTypeError('Failed to determine audio format');
         }
-        debug(`Guessed file type is mime=${guessedType.mime}, extension=${guessedType.ext}`);
-        parserLoader = this.findLoaderForContentType(guessedType.mime);
+        debug(`Guessed parser type is ${guessedType}`);
+        // MPEG audio and ADTS AAC share one parser implementation.
+        const parserType = guessedType === 'adts' ? 'mpeg' : guessedType;
+        parserLoader = this.parsers.find(parser => parser.parserType === parserType);
         if (!parserLoader) {
-          throw new UnsupportedFileTypeError(`Guessed MIME-type not supported: ${guessedType.mime}`);
+          throw new UnsupportedFileTypeError(`Guessed parser type not supported: ${guessedType}`);
         }
       }
     }

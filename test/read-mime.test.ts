@@ -150,7 +150,6 @@ describe('MIME & extension mapping', () => {
     });
 
     it('should recognize WMA', () => {
-      // file-type returns 'video/x-ms-wmv'
       return testFileType(path.join('asf', 'asf.wma'), 'ASF/audio');
     });
 

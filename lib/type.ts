@@ -1513,7 +1513,7 @@ export interface IOptions {
   /**
    * Maximum bytes buffered for a single metadata payload, accumulated Ogg packet, or tokenizer stream lookahead.
    * Defaults to 64 MiB (67108864 bytes). Must be a positive safe integer.
-   * Also caps file-type read buffers during media format and cover art MIME-type detection.
+   * Also caps the media format detection prefix (at most 4100 bytes). Cover art detection does not copy image data.
    * This is not a limit on total process memory or the size of skipped audio/video data.
    */
   maxMemoryAllocation?: number;

@@ -19,7 +19,7 @@ import { MetadataCollector } from '../lib/common/MetadataCollector.js';
 import { parseFromTokenizer } from '../lib/core.js';
 import { ChunkHeader64 } from '../lib/dsdiff/DsdiffToken.js';
 import * as mm from '../lib/index.js';
-import { UnexpectedFileContentError, UnsupportedFileTypeError } from '../lib/index.js';
+import { CouldNotDetermineFileTypeError, UnexpectedFileContentError, UnsupportedFileTypeError } from '../lib/index.js';
 import type { IPageHeader } from '../lib/ogg/OggToken.js';
 import { VorbisStream } from '../lib/ogg/vorbis/VorbisStream.js';
 import { dff, dffChunk } from './helpers/dsdiff-util.js';
@@ -426,36 +426,33 @@ describe('Shared metadata allocation limits', () => {
     });
   });
 
-  describe('file-type allocation cap', () => {
-    // PNG signature, IHDR with 13 bytes of data and a CRC, then an empty IDAT header.
-    const png = new Uint8Array(41);
-    png.set([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 13, 0x49, 0x48, 0x44, 0x52]);
-    png.set([0, 0, 0, 0, 0x49, 0x44, 0x41, 0x54], 33);
+  describe('local media detection allocations', () => {
+    const png = Uint8Array.of(0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a);
 
-    it('caps media format detection independently of a caller-supplied tokenizer', async () => {
-      // Leave the outer tokenizer uncapped to exercise file-type's own tokenizer.
-      await expect(parseFromTokenizer(fromBuffer(png), { maxMemoryAllocation: 2 })).rejects.toThrowError({
-        asymmetricMatch: (error: Error) =>
-          error instanceof BufferSizeError && expect.stringContaining('maxBufferSize 2').asymmetricMatch(error.message)
-      });
-      // Raising the cap permits detection; PNG is recognized but is not a supported media format.
-      await expect(parseFromTokenizer(fromBuffer(png), { maxMemoryAllocation: 4 })).rejects.toThrowError({
+    it('bounds media lookahead even for a caller-supplied tokenizer', async () => {
+      const tokenizer = fromBuffer(png);
+      const peek = tokenizer.peekBuffer.bind(tokenizer);
+      tokenizer.peekBuffer = async (buffer, options) => {
+        assert.isAtMost(buffer.length, 2);
+        return peek(buffer, options);
+      };
+      await expect(parseFromTokenizer(tokenizer, { maxMemoryAllocation: 2 })).rejects.toThrowError(
+        CouldNotDetermineFileTypeError
+      );
+      assert.strictEqual(tokenizer.position, 0);
+      await expect(parseFromTokenizer(fromBuffer(png), { maxMemoryAllocation: 8 })).rejects.toThrowError({
         asymmetricMatch: (error: Error) =>
           error instanceof UnsupportedFileTypeError &&
           expect.stringContaining('image/png').asymmetricMatch(error.message)
       });
     });
 
-    it('caps cover art detection and allows callers to raise the limit', async () => {
-      const limited = new MetadataCollector({ maxMemoryAllocation: 2 });
-      await expect(limited.addTag('ID3v2.3', 'APIC', { data: png, format: '' })).rejects.toThrowError({
-        asymmetricMatch: (error: Error) =>
-          error instanceof BufferSizeError && expect.stringContaining('maxBufferSize 2').asymmetricMatch(error.message)
-      });
-      for (const options of [undefined, { maxMemoryAllocation: 4 }]) {
+    it('detects cover art directly without allocating another image buffer', async () => {
+      for (const options of [undefined, { maxMemoryAllocation: 2 }]) {
         const metadata = new MetadataCollector(options);
         await metadata.addTag('ID3v2.3', 'APIC', { data: png, format: '' });
         assert.strictEqual(metadata.common.picture?.[0].format, 'image/png');
+        assert.strictEqual(metadata.common.picture?.[0].data, png);
       }
     });
   });

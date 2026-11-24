@@ -692,17 +692,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@tokenizer/inflate@npm:^0.6.0":
-  version: 0.6.0
-  resolution: "@tokenizer/inflate@npm:0.6.0"
-  dependencies:
-    debug: "npm:^4.4.3"
-    strtok3: "npm:^10.6.2"
-    token-types: "npm:^6.1.2"
-  checksum: 10c0/f663f4e3fd7d024a8ec036c4f5d43695ce940373c8f888b233a9d99a626bc9b5fe54edd2a2c67116bcc555184c895b338d043c67f03eb286442b4ceac340bab4
-  languageName: node
-  linkType: hard
-
 "@tokenizer/token@npm:^0.3.0":
   version: 0.3.0
   resolution: "@tokenizer/token@npm:0.3.0"
@@ -1575,18 +1564,6 @@ __metadata:
     picomatch:
       optional: true
   checksum: 10c0/e345083c4306b3aed6cb8ec551e26c36bab5c511e99ea4576a16750ddc8d3240e63826cc624f5ae17ad4dc82e68a253213b60d556c11bfad064b7607847ed07f
-  languageName: node
-  linkType: hard
-
-"file-type@npm:^22.3.0":
-  version: 22.3.0
-  resolution: "file-type@npm:22.3.0"
-  dependencies:
-    "@tokenizer/inflate": "npm:^0.6.0"
-    strtok3: "npm:^10.6.3"
-    token-types: "npm:^6.1.2"
-    uint8array-extras: "npm:^1.6.0"
-  checksum: 10c0/0b592d008da7acb89a79d91d90c9b07a367f3246da323c156180378a933f97045c27428047b167a8913d65818686181b7ca10781d5d9ef8d39c8f62dd765d484
   languageName: node
   linkType: hard
 
@@ -2505,7 +2482,6 @@ __metadata:
     content-type: "npm:^3.1.1"
     debug: "npm:^4.4.3"
     del-cli: "npm:^8.0.1"
-    file-type: "npm:^22.3.0"
     make-asynchronous: "npm:^2.1.0"
     media-typer: "npm:^2.0.0"
     mime: "npm:^4.1.2"
@@ -3360,7 +3336,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"strtok3@npm:^10.6.2, strtok3@npm:^10.6.3, strtok3@npm:^10.8.0":
+"strtok3@npm:^10.8.0":
   version: 10.8.0
   resolution: "strtok3@npm:10.8.0"
   dependencies:
