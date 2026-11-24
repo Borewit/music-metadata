@@ -101,7 +101,7 @@ Both work under ESM because the imported values are only used at call time.
 
 ## Dependencies
 
-The main binary-reading dependencies are shown below. `strtok3` selects its Node.js or runtime-neutral entry point through export conditions; its file-system support is only loaded in Node.js. `file-type` uses `strtok3/core` directly.
+The main binary-reading dependencies are shown below. `strtok3` selects its Node.js or runtime-neutral entry point through export conditions; its file-system support is only loaded in Node.js. Byte-array hex formatting and variable-length unsigned integer decoding use internal helpers.
 
 ```mermaid
 graph TD;
@@ -111,12 +111,6 @@ graph TD;
     S-. "Node.js" .->FS("node:fs/promises")
     MMP("music-metadata (core entry point)")-->S
     MMP-->TY(token-types)
-    MMP-->FT(file-type)
-    MMP-->UAE(uint8array-extras)
-    FT-->SC
-    FT-->TY
-    FT-->UAE
-    FT-->INF("@tokenizer/inflate")
     SC-->TO("@tokenizer/token")
     TY-->TO
     TY-->IE(ieee754)
@@ -134,9 +128,7 @@ Direct dependencies and their roles (see [package.json](../package.json) for ver
 | [strtok3](https://github.com/Borewit/strtok3) | Tokenizers for files, buffers, blobs and streams. |
 | [@tokenizer/token](https://github.com/Borewit/tokenizer-token) | Token interfaces shared by tokenizers and binary decoders. |
 | [token-types](https://github.com/Borewit/token-types) | Binary numeric and string tokens. |
-| [file-type](https://github.com/sindresorhus/file-type) | Media format sniffing and cover-art MIME detection. |
 | [@borewit/text-codec](https://github.com/Borewit/text-codec) | Metadata text encoding and decoding. |
-| [uint8array-extras](https://github.com/sindresorhus/uint8array-extras) | Byte-array utilities. |
 | [content-type](https://github.com/jshttp/content-type), [media-typer](https://github.com/jshttp/media-typer) | Content-Type and MIME parsing for loader selection. |
 | [debug](https://github.com/debug-js/debug) | Namespaced diagnostic logging. |
 | [win-guid](https://github.com/Borewit/win-guid) | Windows GUID decoding for ASF. |

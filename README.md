@@ -890,10 +890,11 @@ Use [`selectCover`](#selectcover-function) to choose a cover from multiple pictu
 
 To display a picture in an HTML `img` element:
 ```js
-import {uint8ArrayToBase64} from 'uint8array-extras';
-
-img.src = `data:${picture.format};base64,${uint8ArrayToBase64(picture.data)}`;
+const coverUrl = URL.createObjectURL(new Blob([picture.data], {type: picture.format}));
+img.src = coverUrl;
 ```
+
+Call `URL.revokeObjectURL(coverUrl)` when the picture is no longer needed.
 
 For the internal design and dependencies, see the [architecture guide](doc/architecture.md).
 

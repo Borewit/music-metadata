@@ -20,10 +20,55 @@ import type { ID3v2MajorVersion } from '../lib/id3v2/ID3v2Token.js';
 import * as mm from '../lib/index.js';
 import { parseFromTokenizer } from '../lib/index.js';
 import { LyricsContentError, parseLrc } from '../lib/lrc/LyricsParser.js';
+import { FieldDecodingError } from '../lib/ParseError.js';
 import { Parsers } from './helpers/metadata-parsers.js';
 import { samplePath } from './helpers/util.js';
 
 describe('ID3v2', () => {
+  describe('variable-length counters', () => {
+    for (const length of [4, 6, 7, 8]) {
+      const counter = new Uint8Array(length);
+      counter[length - 1] = 48;
+
+      for (const [major, tag] of [
+        [2, 'CNT'],
+        [3, 'PCNT'],
+        [4, 'PCNT']
+      ] as const) {
+        it(`decodes a ${length}-byte ${tag} in v2.${major}`, () => {
+          const parser = new FrameParser(major, { addWarning: () => assert.fail('Unexpected warning') });
+          assert.strictEqual(parser.readData(counter, tag, false), 48);
+        });
+      }
+
+      it(`decodes a ${length}-byte POPM counter after the email and rating`, () => {
+        const parser = new FrameParser(4, { addWarning: () => assert.fail('Unexpected warning') });
+        const data = Uint8Array.from([...Buffer.from('listener@example.org\0'), 128, ...counter]);
+        assert.deepEqual(parser.readData(data, 'POPM', false), {
+          email: 'listener@example.org',
+          rating: 128,
+          counter: 48
+        });
+      });
+    }
+
+    it('preserves an absent POPM counter', () => {
+      const parser = new FrameParser(4, { addWarning: () => assert.fail('Unexpected warning') });
+      assert.deepEqual(parser.readData(Uint8Array.of(0, 128), 'POPM', false), {
+        email: '',
+        rating: 128,
+        counter: undefined
+      });
+    });
+
+    it('rejects unsafe counters rather than returning rounded values', () => {
+      const parser = new FrameParser(4, { addWarning: () => assert.fail('Unexpected warning') });
+      const counter = Uint8Array.of(0x20, 0, 0, 0, 0, 0, 1);
+      assert.throws(() => parser.readData(counter, 'PCNT', false), FieldDecodingError);
+      assert.throws(() => parser.readData(Uint8Array.from([0, 128, ...counter]), 'POPM', false), FieldDecodingError);
+    });
+  });
+
   describe('Unterminated user-text descriptions', () => {
     for (const major of [3, 4]) {
       for (const parser of Parsers) {

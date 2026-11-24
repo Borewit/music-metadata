@@ -1,10 +1,10 @@
 import initDebug from 'debug';
 import { EndOfStreamError } from 'strtok3';
 import * as Token from 'token-types';
-import { uint8ArrayToHex } from 'uint8array-extras';
 import { tryParseApeHeader } from '../apev2/APEv2Parser.js';
 import { BasicParser } from '../common/BasicParser.js';
 import { FourCcToken } from '../common/FourCC.js';
+import { uint8ArrayToHex } from '../common/Util.js';
 import { makeUnexpectedFileContentError } from '../ParseError.js';
 import { BlockHeaderToken, type IBlockHeader, type IMetadataId, MetadataIdToken } from './WavPackToken.js';
 

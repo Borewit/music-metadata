@@ -1,5 +1,4 @@
 import { StringType } from 'token-types';
-import { getUintBE } from 'uint8array-extras';
 import { FieldDecodingError } from '../ParseError.js';
 import type { INativeTag, INativeTagDict, INativeTags, IRatio, ITag, ITypedNativeTags } from '../type.js';
 
@@ -239,14 +238,29 @@ export function toRatio(value: string): IRatio | undefined {
 
 /**
  * Decode a big-endian unsigned integer from a Uint8Array.
- * Supports dynamic length (1–8 bytes).
+ * Supports any nonempty byte length, provided the value is a safe integer.
+ * Rejects values above Number.MAX_SAFE_INTEGER rather than losing precision.
  */
 export function decodeUintBE(uint8Array: Uint8Array): number {
   if (uint8Array.length === 0) {
-    throw new Error('decodeUintBE: empty Uint8Array');
+    throw new FieldDecodingError('decodeUintBE: empty Uint8Array');
   }
 
-  const view = new DataView(uint8Array.buffer, uint8Array.byteOffset, uint8Array.byteLength);
+  let value = 0;
+  for (const byte of uint8Array) {
+    value = value * 256 + byte;
+    if (!Number.isSafeInteger(value)) {
+      throw new FieldDecodingError('decodeUintBE: value exceeds Number.MAX_SAFE_INTEGER');
+    }
+  }
+  return value;
+}
 
-  return getUintBE(view);
+/** Format bytes as lowercase hexadecimal, preserving leading zeroes. */
+export function uint8ArrayToHex(uint8Array: Uint8Array): string {
+  let hex = '';
+  for (const byte of uint8Array) {
+    hex += byte.toString(16).padStart(2, '0');
+  }
+  return hex;
 }

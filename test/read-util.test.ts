@@ -4,12 +4,73 @@ import { assert } from 'vitest';
 import { FourCcToken } from '../lib/common/FourCC.js';
 import * as util from '../lib/common/Util.js';
 import { dbToRatio, ratioToDb, toRatio } from '../lib/common/Util.js';
+import { FieldDecodingError } from '../lib/ParseError.js';
 
 import { closeReadStream } from './helpers/util.js';
 
 const t = assert;
 
 describe('shared utility functionality', () => {
+  describe('decodeUintBE', () => {
+    for (let length = 1; length <= 6; length++) {
+      it(`decodes ${length}-byte unsigned integers`, () => {
+        assert.strictEqual(util.decodeUintBE(new Uint8Array(length)), 0);
+        assert.strictEqual(util.decodeUintBE(new Uint8Array(length).fill(0xff)), 256 ** length - 1);
+        const bytes = Uint8Array.from([1, 2, 3, 4, 5, 6].slice(0, length));
+        const expected = Number(BigInt(`0x${'010203040506'.slice(0, length * 2)}`));
+        assert.strictEqual(util.decodeUintBE(bytes), expected);
+      });
+    }
+
+    for (const length of [7, 8, 9]) {
+      it(`decodes safe ${length}-byte integers with leading zeroes`, () => {
+        const bytes = new Uint8Array(length);
+        bytes.set([0x1f, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff], length - 7);
+        assert.strictEqual(util.decodeUintBE(bytes), Number.MAX_SAFE_INTEGER);
+        assert.strictEqual(util.decodeUintBE(new Uint8Array(length)), 0);
+      });
+
+      it(`rejects unsafe ${length}-byte integers`, () => {
+        const bytes = new Uint8Array(length);
+        bytes[length - 7] = 0x20;
+        for (const lowByte of [0, 1]) {
+          bytes[length - 1] = lowByte;
+          assert.throws(() => util.decodeUintBE(bytes), FieldDecodingError, 'Number.MAX_SAFE_INTEGER');
+        }
+        assert.throws(() => util.decodeUintBE(new Uint8Array(length).fill(0xff)), FieldDecodingError);
+      });
+    }
+
+    it('rejects empty input', () => {
+      assert.throws(() => util.decodeUintBE(new Uint8Array()), FieldDecodingError, 'empty Uint8Array');
+    });
+
+    it('reads only the subarray without modifying the backing bytes', () => {
+      const bytes = Uint8Array.from([0xff, 0x12, 0x34, 0x56, 0xff]);
+      assert.strictEqual(util.decodeUintBE(bytes.subarray(1, 4)), 0x123456);
+      assert.deepEqual([...bytes], [0xff, 0x12, 0x34, 0x56, 0xff]);
+    });
+  });
+
+  describe('uint8ArrayToHex', () => {
+    it('formats empty input as an empty string', () => {
+      assert.strictEqual(util.uint8ArrayToHex(new Uint8Array()), '');
+    });
+
+    it('formats every byte as two lowercase hexadecimal digits', () => {
+      const bytes = Uint8Array.from({ length: 256 }, (_, index) => index);
+      const digits = '0123456789abcdef';
+      const expected = [...digits].flatMap(high => [...digits].map(low => high + low)).join('');
+      assert.strictEqual(util.uint8ArrayToHex(bytes), expected);
+    });
+
+    it('formats only the subarray without modifying the backing bytes', () => {
+      const bytes = Uint8Array.from([0xff, 0, 0x0a, 0x80, 0xff, 0xff]);
+      assert.strictEqual(util.uint8ArrayToHex(bytes.subarray(1, 5)), '000a80ff');
+      assert.deepEqual([...bytes], [0xff, 0, 0x0a, 0x80, 0xff, 0xff]);
+    });
+  });
+
   it('awaits file stream closure before EOF and tolerates repeated cleanup', async () => {
     const stream = createReadStream(new URL('./samples/mp4/BabysSongbook_librivox.m4b', import.meta.url));
     await closeReadStream(stream);
