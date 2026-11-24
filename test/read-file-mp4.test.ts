@@ -1094,7 +1094,7 @@ describe('Parse MPEG-4', () => {
 
     // The stripped fixture is missing the last 16 bytes declared by moov/udta/meta.
     // Reject that truncation, then restore the tail to exercise its size-zero final box.
-    await rejects(mm.parseFile(filePath), /Atom size exceeds remaining bytes/);
+    await rejects(mm.parseFile(filePath), /exceeds remaining bytes/);
     const buffer = Buffer.concat([fs.readFileSync(filePath), Buffer.alloc(16)]);
     const { format, common } = await mm.parseBuffer(buffer, 'audio/mp4');
 
@@ -3160,7 +3160,7 @@ describe('Parse MPEG-4', () => {
 
       await rejects(
         mm.parseFile(filePath),
-        error => error instanceof Mp4ContentError && /Atom size exceeds remaining bytes/.test(error.message)
+        error => error instanceof Mp4ContentError && /exceeds remaining bytes/.test(error.message)
       );
     });
 
@@ -3200,11 +3200,17 @@ describe('Parse MPEG-4', () => {
         for (const name of ['mvhd', 'stsd', 'stsz', 'date', 'ftyp', 'chap']) {
           for (const size of [0xffffffffffffffffn, 0x20000000000000n, 0x10000000n]) {
             it(`rejects ${name} with extended size ${size} before allocation`, async () => {
-              await rejectBeforeAllocation(box(name, Buffer.alloc(0), size, true), /size exceeds|buffering limit/);
+              await rejectBeforeAllocation(
+                box(name, Buffer.alloc(0), size, true),
+                /exceeds remaining bytes|size exceeds|buffering limit/
+              );
             });
           }
           it(`rejects oversized normal ${name} before allocation`, async () => {
-            await rejectBeforeAllocation(box(name, Buffer.alloc(0), 0xffffffffn), /size exceeds|buffering limit/);
+            await rejectBeforeAllocation(
+              box(name, Buffer.alloc(0), 0xffffffffn),
+              /exceeds remaining bytes|size exceeds|buffering limit/
+            );
           });
         }
 
@@ -3223,7 +3229,7 @@ describe('Parse MPEG-4', () => {
           const parent = box('moov', box('date', Buffer.alloc(0), 32n));
           await rejectBeforeAllocation(
             Buffer.concat([parent, box('free', Buffer.alloc(32))]),
-            /size exceeds remaining/
+            /exceeds remaining bytes/
           );
         });
 
@@ -3240,7 +3246,10 @@ describe('Parse MPEG-4', () => {
 
         it('caps a metadata payload even inside a large declared container', async () => {
           const child = box('date', Buffer.alloc(0), 64n * 1024n * 1024n + 9n);
-          await rejectBeforeAllocation(box('moov', child, 0x10000000n), /size exceeds|buffering limit/);
+          await rejectBeforeAllocation(
+            box('moov', child, 0x10000000n),
+            /exceeds remaining bytes|size exceeds|buffering limit/
+          );
         });
       });
     }
@@ -3375,7 +3384,7 @@ describe('Parse MPEG-4', () => {
       await tokenizer.ignore(8);
       await rejects(
         Atom.readAtom(tokenizer, async () => assert.fail('Must not dispatch'), null, 100),
-        /size exceeds remaining/
+        /exceeds remaining bytes/
       );
     });
 
@@ -4460,4 +4469,22 @@ describe('Parse MPEG-4', () => {
   });
 
   // https://github.com/readest/readest/issues/6262
+});
+
+describe('Parse MP4 with an atom that runs past the end of the file', () => {
+  it('reports the atom name, offset and sizes', async () => {
+    // A 16-byte ftyp precedes an mdat declaring 32 bytes, with only 12 available.
+    const truncated = Buffer.alloc(28);
+    truncated.writeUInt32BE(16, 0);
+    truncated.write('ftyp', 4);
+    truncated.write('isom', 8);
+    truncated.writeUInt32BE(32, 16);
+    truncated.write('mdat', 20);
+    await rejects(
+      mm.parseBuffer(truncated, 'video/mp4'),
+      error =>
+        error instanceof Mp4ContentError &&
+        error.message === "Atom 'mdat' at offset 16 exceeds remaining bytes: 32 > 12"
+    );
+  });
 });
