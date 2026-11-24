@@ -4473,13 +4473,18 @@ describe('Parse MPEG-4', () => {
 
 describe('Parse MP4 with an atom that runs past the end of the file', () => {
   it('reports the atom name, offset and sizes', async () => {
-    const data = await fs.promises.readFile(path.join(mp4Samples, 'luckynight-als.mp4')); // ftyp, mdat, moov
-    const truncated = data.subarray(0, Math.floor(data.length / 2));
+    // A 16-byte ftyp precedes an mdat declaring 32 bytes, with only 12 available.
+    const truncated = Buffer.alloc(28);
+    truncated.writeUInt32BE(16, 0);
+    truncated.write('ftyp', 4);
+    truncated.write('isom', 8);
+    truncated.writeUInt32BE(32, 16);
+    truncated.write('mdat', 20);
     await rejects(
       mm.parseBuffer(truncated, 'video/mp4'),
       error =>
         error instanceof Mp4ContentError &&
-        /^Atom 'mdat' at offset \d+ exceeds remaining bytes: \d+ > \d+$/.test(error.message)
+        error.message === "Atom 'mdat' at offset 16 exceeds remaining bytes: 32 > 12"
     );
   });
 });
