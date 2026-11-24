@@ -1,0 +1,95 @@
+name: Stage to npm
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version increment'
+        required: true
+        default: patch
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+
+permissions:
+  contents: read
+
+concurrency:
+  group: npm-publish
+  cancel-in-progress: false
+
+jobs:
+  stage:
+    if: github.repository == 'Borewit/music-metadata' && github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+    environment: npm
+    permissions:
+      contents: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24.x
+          # No registry-url or NODE_AUTH_TOKEN: npm authenticates through OIDC.
+
+      - name: Install publishing tools
+        run: |
+          npm install --global 'npm@^11.15.0' corepack
+          corepack enable
+
+      - name: Check branch
+        run: |
+          test "$(git ls-remote origin refs/heads/master | cut -f1)" = "$GITHUB_SHA" || {
+            echo 'master has moved. Start a new workflow run on master.' >&2
+            exit 1
+          }
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Bump version and create local release commit and tag
+        id: release
+        env:
+          VERSION_INCREMENT: ${{ inputs.version }}
+        run: |
+          case "$VERSION_INCREMENT" in
+            patch|minor|major) ;;
+            *) echo 'Choose patch, minor or major.' >&2; exit 1 ;;
+          esac
+          git config user.name Borewit
+          git config user.email Borewit@users.noreply.github.com
+          npm version "$VERSION_INCREMENT" --message 'chore: release v%s'
+          echo "tag=v$(node -p 'require("./package.json").version')" >> "$GITHUB_OUTPUT"
+
+      - name: Test package
+        run: yarn test
+
+      - name: Compile production package
+        run: yarn compile-src:prod
+
+      - name: Check release is ready to stage
+        run: |
+          git diff --exit-code
+          git diff --cached --exit-code
+          test "$(git ls-remote origin refs/heads/master | cut -f1)" = "$GITHUB_SHA" || {
+            echo 'master has moved. Start a new workflow run on master.' >&2
+            exit 1
+          }
+
+      - name: Stage to npm with OIDC
+        id: stage
+        # Already tested and compiled above; do not run the redundant prepublishOnly build.
+        run: npm stage publish --ignore-scripts --access public --provenance --registry=https://registry.npmjs.org
+
+      - name: Push release commit and tag atomically
+        # Staging succeeded; public npm availability still requires maintainer approval.
+        if: ${{ success() && steps.stage.outcome == 'success' }}
+        env:
+          RELEASE_TAG: ${{ steps.release.outputs.tag }}
+        run: git push --atomic origin HEAD:refs/heads/master "refs/tags/$RELEASE_TAG"
