@@ -59,9 +59,9 @@ describe('format.trackInfo', () => {
 
   describe('Single audio streams', () => {
     const samples = [
-      'id3v2.4.mp3',
-      "MusicBrainz - Beth Hart - Sinner's Prayer.flac",
-      "MusicBrainz - Beth Hart - Sinner's Prayer.ape",
+      'mp3/id3v2.4.mp3',
+      "flac/MusicBrainz - Beth Hart - Sinner's Prayer.flac",
+      "ape/MusicBrainz - Beth Hart - Sinner's Prayer.ape",
       'wav/alaw.wav',
       'aiff/M1F1-int8-AFsp.aif',
       "wavpack/MusicBrainz - Beth Hart - Sinner's Prayer.wv",
@@ -90,7 +90,7 @@ describe('format.trackInfo', () => {
     }
 
     it('returns identical tracks from file, buffer and stream APIs', async () => {
-      const file = path.join(samplePath, 'id3v2.4.mp3');
+      const file = path.join(samplePath, 'mp3/id3v2.4.mp3');
       const buffer = await readFile(file);
       const options = { duration: true };
       const fileMetadata = await mm.parseFile(file, options);

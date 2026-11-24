@@ -53,7 +53,7 @@ describe('APEv2 tags', () => {
       it(parser.description, async context => {
         const { format, common, native, quality } = await parser.parse(
           () => context.skip(),
-          path.join(samplePath, 'monkeysaudio-date.ape'),
+          path.join(samplePath, 'ape/monkeysaudio-date.ape'),
           'audio/ape'
         );
 

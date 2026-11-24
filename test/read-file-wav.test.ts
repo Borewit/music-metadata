@@ -53,7 +53,7 @@ describe('Parse RIFF/WAVE audio format', () => {
    * This file has been fixed with Mp3Tag to have a valid ID3v2.3 tag
    */
   it('should parse LIST-INFO (EXIF)', async () => {
-    const filename = "MusicBrainz - Beth Hart - Sinner's Prayer [id3v2.3].wav";
+    const filename = "wav/MusicBrainz - Beth Hart - Sinner's Prayer [id3v2.3].wav";
     const filePath = path.join(samplePath, filename);
 
     function checkFormat(format: IFormat) {
@@ -85,7 +85,7 @@ describe('Parse RIFF/WAVE audio format', () => {
 
   // Issue https://github.com/Borewit/music-metadata/issues/75
   it('should be able to handle complex nested chunk structures', async () => {
-    const filePath = path.join(samplePath, 'issue_75.wav');
+    const filePath = path.join(samplePath, 'wav/issue_75.wav');
 
     const metadata = await mm.parseFile(filePath);
     assert.deepEqual(metadata.format.container, 'WAVE', 'format.container');
@@ -94,7 +94,7 @@ describe('Parse RIFF/WAVE audio format', () => {
 
   it('should map RIFF tags to common', async () => {
     // Metadata edited with Adobe Audition CC 2018.1
-    const filePath = path.join(samplePath, 'riff_adobe_audition.wav');
+    const filePath = path.join(samplePath, 'wav/riff_adobe_audition.wav');
 
     const metadata = await mm.parseFile(filePath);
     const format = metadata.format;
@@ -141,7 +141,7 @@ describe('Parse RIFF/WAVE audio format', () => {
   });
 
   it('should handle be able to handle odd chunk & padding', async () => {
-    const filePath = path.join(samplePath, 'issue-161.wav');
+    const filePath = path.join(samplePath, 'wav/issue-161.wav');
 
     const metadata = await mm.parseFile(filePath, { duration: true });
     const format = metadata.format;
@@ -196,8 +196,8 @@ describe('Parse RIFF/WAVE audio format', () => {
       }
     }
     for (const [name, copyright] of [
-      ['riff_adobe_audition.wav', 'Copyright 2018'],
-      ['issue-161.wav', '2018']
+      ['wav/riff_adobe_audition.wav', 'Copyright 2018'],
+      ['wav/issue-161.wav', '2018']
     ]) {
       for (const parser of Parsers) {
         it(`maps existing ${name} (${parser.description})`, async context => {
@@ -338,7 +338,7 @@ describe('Parse RIFF/WAVE audio format', () => {
 
   describe('non-PCM', () => {
     it('should parse Microsoft 4-bit ADPCM encoded', () => {
-      const filePath = path.join(samplePath, 'issue-92.wav');
+      const filePath = path.join(samplePath, 'wav/issue-92.wav');
 
       return mm.parseFile(filePath, { duration: true }).then(metadata => {
         const format = metadata.format;

@@ -2,7 +2,7 @@ import https from 'node:https';
 import { inspect } from 'node:util';
 import { parseStream } from '../../lib/index.js';  // music-metadata
 
-const audioUrl = 'https://github.com/Borewit/music-metadata/raw/master/test/samples/MusicBrainz%20-%20Beth%20Hart%20-%20Sinner\'s%20Prayer%20%5Bid3v2.3%5D.V2.mp3';
+const audioUrl = 'https://github.com/Borewit/music-metadata/raw/master/test/samples/mp3/MusicBrainz%20-%20Beth%20Hart%20-%20Sinner\'s%20Prayer%20%5Bid3v2.3%5D.V2.mp3';
 
 function httpGet (url) {
   return new Promise((resolve, reject) => {

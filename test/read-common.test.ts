@@ -84,7 +84,7 @@ describe('GenericTagMap', () => {
     });
 
     it('parse RIFF tags', async () => {
-      const filePath = path.join(samplePath, 'issue-89 no-artist.aiff');
+      const filePath = path.join(samplePath, 'aiff/issue-89 no-artist.aiff');
 
       const metadata = await mm.parseFile(filePath, { duration: true });
       assert.deepEqual(
@@ -103,11 +103,11 @@ describe('GenericTagMap', () => {
 
 describe('typed native formats from playable fixtures', () => {
   const fixtures: { file: string; format: TagType; id: string; value: unknown }[] = [
-    { file: 'flac.flac', format: 'vorbis', id: 'TITLE', value: 'Brian Eno' },
-    { file: 'monkeysaudio.ape', format: 'APEv2', id: 'Artist', value: 'Audioslave' },
+    { file: 'flac/flac.flac', format: 'vorbis', id: 'TITLE', value: 'Brian Eno' },
+    { file: 'ape/monkeysaudio.ape', format: 'APEv2', id: 'Artist', value: 'Audioslave' },
     { file: 'asf/compilation-bool.wma', format: 'asf', id: 'WM/IsCompilation', value: true },
     { file: 'mp4/id4.m4a', format: 'iTunes', id: 'tmpo', value: 0 },
-    { file: 'riff_adobe_audition.wav', format: 'exif', id: 'IART', value: 'Wolfgang Amadeus Mozart' },
+    { file: 'wav/riff_adobe_audition.wav', format: 'exif', id: 'IART', value: 'Wolfgang Amadeus Mozart' },
     {
       file: 'matroska/02 - Poxfil - Solid Ground (5 sec).mka',
       format: 'matroska',
@@ -227,7 +227,7 @@ describe('nativeTyped dictionary view', () => {
   });
 
   it('returns the typed view from buffer, stream, web stream, blob and tokenizer parsing', async () => {
-    const data = await readFile(path.join(samplePath, 'flac.flac'));
+    const data = await readFile(path.join(samplePath, 'flac/flac.flac'));
     const results = [
       await mm.parseBuffer(data),
       await mm.parseStream(Readable.from([data], { objectMode: false })),
@@ -415,17 +415,17 @@ describe('function selectCover()', () => {
   });
 
   const multiCoverFiles = [
-    "MusicBrainz - Beth Hart - Sinner's Prayer [id3v2.3].V2.mp3",
-    "MusicBrainz - Beth Hart - Sinner's Prayer [id3v2.3].wav",
-    "MusicBrainz - Beth Hart - Sinner's Prayer [id3v2.4].V2.mp3",
-    "MusicBrainz - Beth Hart - Sinner's Prayer [id3v2.4].aiff",
-    "MusicBrainz - Beth Hart - Sinner's Prayer.ape",
-    "MusicBrainz - Beth Hart - Sinner's Prayer.flac",
-    "MusicBrainz - Beth Hart - Sinner's Prayer.m4a",
-    "MusicBrainz - Beth Hart - Sinner's Prayer.ogg",
-    'id3v2.4.mp3',
-    'issue-266.flac',
-    'monkeysaudio.ape'
+    "mp3/MusicBrainz - Beth Hart - Sinner's Prayer [id3v2.3].V2.mp3",
+    "wav/MusicBrainz - Beth Hart - Sinner's Prayer [id3v2.3].wav",
+    "mp3/MusicBrainz - Beth Hart - Sinner's Prayer [id3v2.4].V2.mp3",
+    "aiff/MusicBrainz - Beth Hart - Sinner's Prayer [id3v2.4].aiff",
+    "ape/MusicBrainz - Beth Hart - Sinner's Prayer.ape",
+    "flac/MusicBrainz - Beth Hart - Sinner's Prayer.flac",
+    "mp4/MusicBrainz - Beth Hart - Sinner's Prayer.m4a",
+    "ogg/MusicBrainz - Beth Hart - Sinner's Prayer.ogg",
+    'mp3/id3v2.4.mp3',
+    'flac/issue-266.flac',
+    'ape/monkeysaudio.ape'
   ];
 
   it('Should pick the front cover', async () => {

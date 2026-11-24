@@ -4,9 +4,9 @@ import * as mm from '../lib/index.js';
 import { samplePath } from './helpers/util.js';
 
 describe('Parser options', () => {
-  const file_ape = path.join(samplePath, 'monkeysaudio.ape');
-  const file_flac = path.join(samplePath, "MusicBrainz - Beth Hart - Sinner's Prayer.flac");
-  const file_id3v22 = path.join(samplePath, 'id3v2.2.mp3');
+  const file_ape = path.join(samplePath, 'ape/monkeysaudio.ape');
+  const file_flac = path.join(samplePath, "flac/MusicBrainz - Beth Hart - Sinner's Prayer.flac");
+  const file_id3v22 = path.join(samplePath, 'mp3/id3v2.2.mp3');
   const file_m4a = path.join(samplePath, 'mp4', 'id4.m4a');
   const file_ogg = path.join(samplePath, 'ogg', 'nirvana-2sec.vorbis.ogg');
 

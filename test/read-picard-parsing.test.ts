@@ -274,7 +274,7 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
     }
 
     it('should map FLAC/Vorbis', async () => {
-      const filename = "MusicBrainz - Beth Hart - Sinner's Prayer.flac";
+      const filename = "flac/MusicBrainz - Beth Hart - Sinner's Prayer.flac";
 
       function checkFormat(format) {
         assert.strictEqual(format.container, 'FLAC', 'format.container');
@@ -296,7 +296,7 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
     });
 
     it('should map ogg/Vorbis', async () => {
-      const filePath = path.join(samplePath, "MusicBrainz - Beth Hart - Sinner's Prayer.ogg");
+      const filePath = path.join(samplePath, "ogg/MusicBrainz - Beth Hart - Sinner's Prayer.ogg");
 
       // Parse ogg/Vorbis file
       const metadata = await parseFile(filePath);
@@ -392,7 +392,7 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
     }
 
     it("should map Monkey's Audio / APEv2", async () => {
-      const filePath = path.join(samplePath, "MusicBrainz - Beth Hart - Sinner's Prayer.ape");
+      const filePath = path.join(samplePath, "ape/MusicBrainz - Beth Hart - Sinner's Prayer.ape");
 
       function checkFormat(format) {
         assert.strictEqual(format.duration, 2.1229931972789116, 'format.duration = 2.123 seconds');
@@ -525,7 +525,7 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
     }
 
     it('MP3 / ID3v2.3', () => {
-      const filePath = path.join(samplePath, "MusicBrainz - Beth Hart - Sinner's Prayer [id3v2.3].V2.mp3");
+      const filePath = path.join(samplePath, "mp3/MusicBrainz - Beth Hart - Sinner's Prayer [id3v2.3].V2.mp3");
 
       function checkFormat(format) {
         assert.deepEqual(format.tagTypes, ['ID3v2.3'], 'format.tagTypes');
@@ -554,7 +554,7 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
      * This file has been fixed with Mp3Tag to have a valid ID3v2.3 tag
      */
     it('should map RIFF/WAVE/PCM / ID3v2.3', () => {
-      const filePath = path.join(samplePath, "MusicBrainz - Beth Hart - Sinner's Prayer [id3v2.3].wav");
+      const filePath = path.join(samplePath, "wav/MusicBrainz - Beth Hart - Sinner's Prayer [id3v2.3].wav");
 
       function checkFormat(format: IFormat) {
         assert.strictEqual(format.container, 'WAVE', 'format.container');
@@ -677,7 +677,7 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
     }
 
     it('should map MP3/ID3v2.4 header', async () => {
-      const filePath = path.join(samplePath, "MusicBrainz - Beth Hart - Sinner's Prayer [id3v2.4].V2.mp3");
+      const filePath = path.join(samplePath, "mp3/MusicBrainz - Beth Hart - Sinner's Prayer [id3v2.4].V2.mp3");
 
       function checkFormat(format: IFormat) {
         assert.deepEqual(format.tagTypes, ['ID3v2.4'], 'format.tagTypes');
@@ -703,7 +703,7 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
     });
 
     it('should parse AIFF/ID3v2.4 audio file', async () => {
-      const filePath = path.join(samplePath, "MusicBrainz - Beth Hart - Sinner's Prayer [id3v2.4].aiff");
+      const filePath = path.join(samplePath, "aiff/MusicBrainz - Beth Hart - Sinner's Prayer [id3v2.4].aiff");
 
       function checkFormat(format: IFormat) {
         assert.strictEqual(format.container, 'AIFF', "format.container = 'AIFF'");
@@ -730,7 +730,7 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
   });
 
   it('should map M4A / (Apple) iTunes header', async () => {
-    const filePath = path.join(samplePath, "MusicBrainz - Beth Hart - Sinner's Prayer.m4a");
+    const filePath = path.join(samplePath, "mp4/MusicBrainz - Beth Hart - Sinner's Prayer.m4a");
 
     function checkFormat(format: IFormat) {
       assert.deepEqual(format.tagTypes, ['iTunes'], 'format.tagTypes');
@@ -805,7 +805,7 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
   });
 
   it('should map WMA/ASF header', async () => {
-    const filePath = path.join(samplePath, "MusicBrainz - Beth Hart - Sinner's Prayer.wma");
+    const filePath = path.join(samplePath, "asf/MusicBrainz - Beth Hart - Sinner's Prayer.wma");
 
     function checkFormat(format: IFormat) {
       assert.deepEqual(format.tagTypes, ['asf'], 'format.tagTypes = asf');
@@ -882,7 +882,11 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
         let common: ICommonTagsResult;
 
         beforeAll(async () => {
-          const filePath = path.join(samplePath, `MusicBrainz - Beth Hart - Sinner's Prayer [id3v${version}].V2.mp3`);
+          const filePath = path.join(
+            samplePath,
+            'mp3',
+            `MusicBrainz - Beth Hart - Sinner's Prayer [id3v${version}].V2.mp3`
+          );
           const metadata = await parseFile(filePath);
           assert.include(metadata.format.tagTypes, `ID3v${version}`);
           common = metadata.common;
@@ -909,11 +913,11 @@ describe("Parsing of metadata saved by 'Picard' in audio files", () => {
       ['arranger', ['Jeff Bova']]
     ];
     const fixtures = [
-      ['ID3v2.3 / IPLS', "MusicBrainz - Beth Hart - Sinner's Prayer [id3v2.3].V2.mp3"],
-      ['ID3v2.4 / TIPL', "MusicBrainz - Beth Hart - Sinner's Prayer [id3v2.4].V2.mp3"],
-      ['FLAC / Vorbis', "MusicBrainz - Beth Hart - Sinner's Prayer.flac"],
-      ['Ogg / Vorbis', "MusicBrainz - Beth Hart - Sinner's Prayer.ogg"],
-      ["Monkey's Audio / APEv2", "MusicBrainz - Beth Hart - Sinner's Prayer.ape"],
+      ['ID3v2.3 / IPLS', "mp3/MusicBrainz - Beth Hart - Sinner's Prayer [id3v2.3].V2.mp3"],
+      ['ID3v2.4 / TIPL', "mp3/MusicBrainz - Beth Hart - Sinner's Prayer [id3v2.4].V2.mp3"],
+      ['FLAC / Vorbis', "flac/MusicBrainz - Beth Hart - Sinner's Prayer.flac"],
+      ['Ogg / Vorbis', "ogg/MusicBrainz - Beth Hart - Sinner's Prayer.ogg"],
+      ["Monkey's Audio / APEv2", "ape/MusicBrainz - Beth Hart - Sinner's Prayer.ape"],
       ['WavPack / APEv2', "wavpack/MusicBrainz - Beth Hart - Sinner's Prayer.wv"]
     ];
 

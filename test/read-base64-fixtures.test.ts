@@ -9,14 +9,14 @@ import { samplePath } from './helpers/util.js';
 
 const fixtures = [
   {
-    file: "MusicBrainz - Beth Hart - Sinner's Prayer.ogg",
+    file: "ogg/MusicBrainz - Beth Hart - Sinner's Prayer.ogg",
     hashes: [
       '3e4d47098a5ae2eacec77219a698d63d70e9f8cd6e042cb551723dbc79b31d85',
       'a30697084e0bdab8c3d420f0d192beb8abd72fbbff64f65f8d7001cf75a1c903'
     ]
   },
   {
-    file: 'issue-266.flac',
+    file: 'flac/issue-266.flac',
     hashes: ['e49f4daf5eaf036f11f9dae40859a56536573c2f809604ed61bfcd4dc3ccbd56']
   },
   {

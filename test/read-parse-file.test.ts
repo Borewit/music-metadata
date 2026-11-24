@@ -22,7 +22,7 @@ describe('parseFile filesystem objects', () => {
   });
 
   it('parses regular files', async () => {
-    const metadata = await parseFile(path.join(samplePath, 'flac.flac'));
+    const metadata = await parseFile(path.join(samplePath, 'flac/flac.flac'));
     assert.equal(metadata.format.container, 'FLAC');
   });
 
@@ -39,7 +39,7 @@ describe('parseFile filesystem objects', () => {
       context.skip();
     }
     const linkPath = path.join(directory, 'link.flac');
-    await fs.symlink(path.join(samplePath, 'flac.flac'), linkPath);
+    await fs.symlink(path.join(samplePath, 'flac/flac.flac'), linkPath);
     const metadata = await parseFile(linkPath);
     assert.equal(metadata.format.container, 'FLAC');
   });
@@ -88,7 +88,7 @@ describe('parseFile filesystem objects', () => {
           new URL('../lib/index.js', import.meta.url).href,
           fifoPath,
           path.join(directory, 'audio.flac'),
-          path.join(samplePath, 'flac.flac'),
+          path.join(samplePath, 'flac/flac.flac'),
           replaceBeforeOpen
         ],
         { timeout: 5000, baseUrl: import.meta.url }

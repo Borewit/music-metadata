@@ -236,7 +236,7 @@ describe('Parse MP3 files', () => {
   });
 
   it('should handle audio-frame-header-bug', async () => {
-    const filePath = path.join(samplePath, 'audio-frame-header-bug.mp3');
+    const filePath = path.join(samplePath, 'mp3/audio-frame-header-bug.mp3');
 
     const result = await mm.parseFile(filePath, { duration: true });
     assert.approximately(result.format.duration!, durationSleepAwayMp3, 1 / 10);
@@ -358,7 +358,7 @@ describe('Parse MP3 files', () => {
   });
 
   describe('should handle incomplete MP3 file', () => {
-    const filePath = path.join(samplePath, 'incomplete.mp3');
+    const filePath = path.join(samplePath, 'mp3/incomplete.mp3');
 
     function checkFormat(format: mm.IFormat) {
       assert.deepEqual(format.tagTypes, ['ID3v2.3', 'ID3v1'], 'format.tagTypes');
@@ -426,7 +426,7 @@ describe('Parse MP3 files', () => {
        Calculated: 16462080
        --------------------------------------------------------*/
 
-      const filePath = path.join(samplePath, 'regress-GH-56.mp3');
+      const filePath = path.join(samplePath, 'mp3/regress-GH-56.mp3');
 
       Parsers.forEach(parser => {
         it(parser.description, async context => {
@@ -473,7 +473,7 @@ describe('Parse MP3 files', () => {
          * File is CBR. Bitrate of each frame is 256 kbps.
          * Exact length: 00:01
          */
-        const filePath = path.join(samplePath, 'id3v2-duration-allframes.mp3');
+        const filePath = path.join(samplePath, 'mp3/id3v2-duration-allframes.mp3');
 
         function checkFormat(format) {
           assert.deepEqual(format.tagTypes, ['ID3v2.3'], 'format.tagTypes');
@@ -520,7 +520,7 @@ describe('Parse MP3 files', () => {
     });
 
     it('should be able to parse APEv2 header', async () => {
-      const filePath = path.join(samplePath, 'issue_56.mp3');
+      const filePath = path.join(samplePath, 'mp3/issue_56.mp3');
 
       const metadata = await mm.parseFile(filePath);
       assert.strictEqual(metadata.format.container, 'MPEG');

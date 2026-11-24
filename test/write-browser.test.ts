@@ -190,7 +190,7 @@ describe('Node/browser writer parity', () => {
 
 describe('browser APEv2 writing', () => {
   for (const fixture of [
-    'monkeysaudio-date.ape',
+    'ape/monkeysaudio-date.ape',
     'wavpack/unknown-count-multichannel.wv',
     'mpc/apev2-no-header.sv7.mpc',
     'mpc/bach-goldberg-variatians-05.sv8.mpc'

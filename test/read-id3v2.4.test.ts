@@ -6,7 +6,7 @@ import { samplePath } from './helpers/util.js';
 
 describe('Decode MP3/ID3v2.4', () => {
   it('should decode id3v2.4', () => {
-    const filename = 'id3v2.4.mp3';
+    const filename = 'mp3/id3v2.4.mp3';
     const filePath = path.join(samplePath, filename);
 
     return mm.parseFile(filePath, { duration: true }).then(metadata => {
@@ -69,7 +69,7 @@ describe('Decode MP3/ID3v2.4', () => {
   });
 
   it('should respect skipCovers-flag', () => {
-    const filename = 'id3v2.4.mp3';
+    const filename = 'mp3/id3v2.4.mp3';
     const filePath = path.join(samplePath, filename);
 
     return mm.parseFile(filePath, { duration: true, skipCovers: true }).then(result => {
@@ -113,7 +113,7 @@ describe('Decode MP3/ID3v2.4', () => {
   });
 
   it('should support multiple album artists (TPE2)', async () => {
-    const filePath = path.join(samplePath, 'id3v2.4-with-multiple-album-artists-null-separated.mp3');
+    const filePath = path.join(samplePath, 'mp3/id3v2.4-with-multiple-album-artists-null-separated.mp3');
     const { common } = await mm.parseFile(filePath);
 
     assert.strictEqual(common.albumartist, 'ArtistOne', 'common.albumartist');
@@ -123,7 +123,7 @@ describe('Decode MP3/ID3v2.4', () => {
   // https://id3.org/id3v2.4.0-frame
   it('4.8. Unsynchronised lyrics/text transcription', async () => {
     const { common, native } = await mm.parseFile(
-      path.join(samplePath, "MusicBrainz - Beth Hart - Sinner's Prayer [id3v2.4].V2.mp3")
+      path.join(samplePath, "mp3/MusicBrainz - Beth Hart - Sinner's Prayer [id3v2.4].V2.mp3")
     );
     const lyrics =
       'Lord, have mercy, Lord, have mercy on me\nLord, have mercy, Lord, have mercy on me\n' +
@@ -218,7 +218,7 @@ describe('Decode MP3/ID3v2.4', () => {
       // Fixture: valid MP3 with an ID3v2.4 tag whose frame sizes are plain 32-bit integers.
       // TIT2 has 200 payload bytes (0x000000C8: a size byte with its most significant bit set),
       // TALB has 256 (0x00000100: read as synchsafe it is 128, which ends inside the album text).
-      const filePath = path.join(samplePath, 'id3v2.4-itunes-plain-frame-size.mp3');
+      const filePath = path.join(samplePath, 'mp3/id3v2.4-itunes-plain-frame-size.mp3');
       const { common, quality } = await mm.parseFile(filePath);
       assert.strictEqual(
         common.title,
@@ -263,7 +263,7 @@ describe('Decode MP3/ID3v2.4', () => {
 
   describe('MusicBrainz tags', () => {
     it('should MusicBrainz tags with id3v2.4', async () => {
-      const filename = 'id3v2.4-musicbrainz.mp3';
+      const filename = 'mp3/id3v2.4-musicbrainz.mp3';
       const filePath = path.join(samplePath, filename);
 
       const metadata = await mm.parseFile(filePath, { duration: true });

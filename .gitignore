@@ -12,7 +12,7 @@ test/samples/originals
 test/_test-issues.ts
 coverage/
 .nyc_output/
-test/samples/zeroes.flac
+test/samples/flac/zeroes.flac
 
 #IntelliJ IDEA:
 .idea

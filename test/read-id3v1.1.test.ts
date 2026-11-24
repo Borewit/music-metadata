@@ -6,7 +6,7 @@ import { Parsers } from './helpers/metadata-parsers.js';
 import { samplePath } from './helpers/util.js';
 
 describe('Parsing MPEG / ID3v1', () => {
-  const fileBloodSugar = path.join(samplePath, 'id3v1_Blood_Sugar.mp3');
+  const fileBloodSugar = path.join(samplePath, 'mp3/id3v1_Blood_Sugar.mp3');
 
   describe('should be able to read an ID3v1 tag', () => {
     function checkFormat(format: mm.IFormat) {
@@ -45,7 +45,7 @@ describe('Parsing MPEG / ID3v1', () => {
   });
 
   describe('it should skip id3v1 header if options.skipPostHeaders is set', () => {
-    const filePath = path.join(samplePath, "07 - I'm Cool.mp3");
+    const filePath = path.join(samplePath, "mp3/07 - I'm Cool.mp3");
     Parsers.forEach(parser => {
       it(parser.description, async context => {
         const { format } = await parser.parse(() => context.skip(), filePath, 'audio/mpeg', { skipPostHeaders: true });
@@ -55,7 +55,7 @@ describe('Parsing MPEG / ID3v1', () => {
   });
 
   describe('should handle MP3 without any tags', () => {
-    const filePath = path.join(samplePath, 'silence-2s-16000 [no-tags].CBR-128.mp3');
+    const filePath = path.join(samplePath, 'mp3/silence-2s-16000 [no-tags].CBR-128.mp3');
 
     function checkFormat(format: mm.IFormat) {
       assert.deepEqual(format.tagTypes, [], 'format.tagTypes');
@@ -80,7 +80,7 @@ describe('Parsing MPEG / ID3v1', () => {
     /**
      * Kept 25 frames from original MP3; concatenated copied last 128 bytes to restore ID3v1.0 header
      */
-    const filePath = path.join(samplePath, 'Luomo - Tessio (Spektre Remix) ID3v10.mp3');
+    const filePath = path.join(samplePath, 'mp3/Luomo - Tessio (Spektre Remix) ID3v10.mp3');
 
     function checkFormat(format: mm.IFormat) {
       assert.strictEqual(format.duration, 33.38448979591837, 'format.duration (checked with foobar)');
@@ -118,7 +118,7 @@ describe('Parsing MPEG / ID3v1', () => {
    * Related issue: https://github.com/Borewit/music-metadata/issues/69
    */
   describe('should respect null terminated tag values correctly', () => {
-    const filePath = path.join(samplePath, 'issue_69.mp3');
+    const filePath = path.join(samplePath, 'mp3/issue_69.mp3');
 
     Parsers.forEach(parser => {
       it(parser.description, async context => {
@@ -136,7 +136,7 @@ describe('Parsing MPEG / ID3v1', () => {
   it('should not interpret the last byte of a full ID3v1.0 comment as a track number', async () => {
     // Untagged silence sample with an ID3v1.0 tag appended: comment
     // "abcdefghijklmnopqrstuvwxyzABrs", genre Rock. The trailing 's' is not track 115.
-    const filePath = path.join(samplePath, 'issue-2717-id3v1-full-comment.mp3');
+    const filePath = path.join(samplePath, 'mp3/issue-2717-id3v1-full-comment.mp3');
     const { format, common, native } = await mm.parseFile(filePath);
 
     assert.deepEqual(format.tagTypes, ['ID3v1']);

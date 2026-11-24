@@ -15,7 +15,7 @@ import { samplePath } from './helpers/util.js';
 
 describe('APEv2 writing', () => {
   const fixtures = [
-    ['ape', 'monkeysaudio-date.ape'],
+    ['ape', 'ape/monkeysaudio-date.ape'],
     ['wv', 'wavpack/unknown-count-multichannel.wv'],
     ['mpc', 'mpc/apev2-no-header.sv7.mpc'],
     ['mpc', 'mpc/bach-goldberg-variatians-05.sv8.mpc']
@@ -23,8 +23,8 @@ describe('APEv2 writing', () => {
   let ape: Buffer;
   let covers: Buffer;
   beforeAll(async () => {
-    ape = await readFile(path.join(samplePath, 'monkeysaudio-date.ape'));
-    covers = await readFile(path.join(samplePath, 'monkeysaudio.ape'));
+    ape = await readFile(path.join(samplePath, 'ape/monkeysaudio-date.ape'));
+    covers = await readFile(path.join(samplePath, 'ape/monkeysaudio.ape'));
   });
 
   function layout(bytes: Uint8Array) {

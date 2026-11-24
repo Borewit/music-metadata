@@ -43,7 +43,7 @@ describe("Parse APE (Monkey's Audio)", () => {
     it(parser.description, async context => {
       const { format, common, native } = await parser.parse(
         () => context.skip(),
-        path.join(samplePath, 'monkeysaudio.ape'),
+        path.join(samplePath, 'ape/monkeysaudio.ape'),
         'audio/ape'
       );
       checkFormat(format);

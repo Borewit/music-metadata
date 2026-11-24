@@ -12,14 +12,14 @@ describe('Merge tag headers', () => {
    * Has an empty ID3v2.3 tag and a ID3v1 tag.
    */
   it('should ignore empty tag headers', async () => {
-    const metadata = await mm.parseFile(path.join(issueDir, 'issue_77_empty_tag.mp3'));
+    const metadata = await mm.parseFile(path.join(issueDir, 'mp3/issue_77_empty_tag.mp3'));
     assert.strictEqual(metadata.common.title, 'Like Spinning Plates (Live)');
     assert.strictEqual(metadata.common.album, 'I Might Be Wrong');
     assert.strictEqual(metadata.common.artist, 'Radiohead');
   });
 
   describe('mergeTagHeaders option', () => {
-    const testSample = path.join(issueDir, 'Dethklok-mergeTagHeaders.mp3');
+    const testSample = path.join(issueDir, 'mp3/Dethklok-mergeTagHeaders.mp3');
     /**
      * About the sample:
      * - Has ID3v1 and ID3v2.4 tag headers.

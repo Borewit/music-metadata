@@ -1111,7 +1111,7 @@ describe('Parse MPEG-4', () => {
   });
 
   it('moov.udta.meta.ilst.rate mapping', async () => {
-    const filePath = path.join(samplePath, 'rating', 'testcase.m4a');
+    const filePath = path.join(samplePath, 'mp4', 'rating', 'testcase.m4a');
     const { format, common } = await mm.parseFile(filePath);
 
     assert.deepEqual(format.hasAudio, true, 'format.hasAudio');
