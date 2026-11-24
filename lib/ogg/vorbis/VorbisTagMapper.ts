@@ -112,6 +112,7 @@ const vorbisTagMap: INativeTagMap = {
   MUSICBRAINZ_TRMID: 'musicbrainz_trmid',
   MUSICBRAINZ_DISCID: 'musicbrainz_discid',
   ACOUSTID_ID: 'acoustid_id',
+  ACOUSTID_FINGERPRINT: 'acoustid_fingerprint',
   ACOUSTID_ID_FINGERPRINT: 'acoustid_fingerprint',
   MUSICIP_PUID: 'musicip_puid',
   // 'FINGERPRINT=MusicMagic Fingerprint {fingerprint}': 'musicip_fingerprint', // ToDo

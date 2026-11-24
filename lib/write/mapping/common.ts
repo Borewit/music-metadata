@@ -86,7 +86,7 @@ export const COMMON_FIELDS = {
   musicbrainz_trmid: { id3: 'TXXX:MusicBrainz TRM Id', vorbis: 'MUSICBRAINZ_TRMID' },
   musicbrainz_discid: { id3: 'TXXX:MusicBrainz Disc Id', vorbis: 'MUSICBRAINZ_DISCID' },
   acoustid_id: { id3: 'TXXX:ACOUSTID_ID', vorbis: 'ACOUSTID_ID' },
-  acoustid_fingerprint: { id3: 'TXXX:Acoustid Fingerprint', vorbis: 'ACOUSTID_ID_FINGERPRINT' },
+  acoustid_fingerprint: { id3: 'TXXX:Acoustid Fingerprint', vorbis: 'ACOUSTID_FINGERPRINT' },
   musicip_puid: { id3: 'TXXX:MusicIP PUID', vorbis: 'MUSICIP_PUID' },
   musicip_fingerprint: { id3: 'TXXX:MusicMagic Fingerprint', vorbis: 'MUSICIP_FINGERPRINT' },
   website: { id3: 'WOAR', vorbis: 'WEBSITE' },

@@ -24,6 +24,43 @@ afterEach(async () => {
 });
 
 describe('FLAC writing', () => {
+  describe('AcoustID fingerprint fields', () => {
+    async function sample(): Promise<Uint8Array> {
+      // 0.1 seconds of generated silence, tagged independently with Mutagen.
+      return new Uint8Array(await readFile(new URL('./samples/flac/acoustid-fingerprint.flac', import.meta.url)));
+    }
+
+    for (const spelling of ['standard', 'legacy', 'both']) {
+      it.each(['AQABAA', null])(`updates or deletes ${spelling} fingerprint fields (%s)`, async value => {
+        const original = await sample();
+        const input = await updateBuffer(original, {
+          native: {
+            ACOUSTID_FINGERPRINT: spelling === 'legacy' ? null : 'AQAAAA',
+            acoustid_id_fingerprint: spelling === 'standard' ? null : 'AQAAAA'
+          }
+        });
+        const output = await updateBuffer(input, { acoustid_fingerprint: value });
+        const result = await readTags(output);
+        expect(vorbisValues(result, 'ACOUSTID_FINGERPRINT')).toEqual(value === null ? [] : [value]);
+        expect(vorbisValues(result, 'ACOUSTID_ID_FINGERPRINT')).toEqual([]);
+        expect(result.common.acoustid_fingerprint).toBe(value ?? undefined);
+        expect(result.common.acoustid_id).toBe('12345678-1234-4234-8234-1234567890ab');
+        expect(extractAudio(output)).toEqual(extractAudio(original));
+      });
+    }
+
+    it('preserves a legacy fingerprint when editing another field', async () => {
+      const input = await updateBuffer(await sample(), {
+        native: { ACOUSTID_FINGERPRINT: null, acoustid_id_fingerprint: 'AQAAAA' }
+      });
+      const result = await readTags(await updateBuffer(input, { title: 'Changed title' }));
+      expect(vorbisValues(result, 'ACOUSTID_ID_FINGERPRINT')).toEqual(['AQAAAA']);
+      expect(vorbisValues(result, 'ACOUSTID_FINGERPRINT')).toEqual([]);
+      expect(result.common.acoustid_fingerprint).toBe('AQAAAA');
+      expect(result.common.title).toBe('Changed title');
+    });
+  });
+
   it('adds a Vorbis Comment block when the file has none', async () => {
     const audio = makeAudio(2048);
     const input = makeFlac({ withVorbisComment: false, audio });

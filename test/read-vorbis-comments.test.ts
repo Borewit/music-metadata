@@ -192,6 +192,16 @@ describe('Shared Vorbis comment decoding', () => {
         }
       });
 
+      // Picard Tag Mapping: AcoustID Fingerprint uses ACOUSTID_FINGERPRINT.
+      for (const key of ['ACOUSTID_FINGERPRINT', 'acoustid_fingerprint', 'ACOUSTID_ID_FINGERPRINT']) {
+        it(`maps the AcoustID fingerprint field ${key}`, async () => {
+          const { metadata, parse } = setup();
+          await parse(commentList('Vendor', [`${key}=AQAAAA`, 'ACOUSTID_ID=keep-id']));
+          assert.strictEqual(metadata.common.acoustid_fingerprint, 'AQAAAA');
+          assert.strictEqual(metadata.common.acoustid_id, 'keep-id');
+        });
+      }
+
       for (const vendor of ['', 'Vendor']) {
         it(`accepts an empty list with vendor=${JSON.stringify(vendor)}`, async () => {
           const { metadata, parse } = setup();
