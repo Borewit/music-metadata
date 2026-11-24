@@ -162,7 +162,6 @@
     "media-typer": "^2.0.0",
     "strtok3": "^10.8.0",
     "token-types": "^6.1.2",
-    "uint8array-extras": "^1.6.0",
     "win-guid": "^0.2.1"
   },
   "devDependencies": {
