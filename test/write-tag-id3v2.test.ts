@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest';
 import type { TagPatch } from '../lib/index.js';
 import { MediaFile, parseBuffer, parseFile, updateBuffer, updateFile } from '../lib/index.js';
 import { UINT32SYNCSAFE } from '../lib/tokens/id3v2.js';
-import { encodeFrame, makeFrames, syncSafe } from '../lib/write/id3v2/frames.js';
+import { encodeFrame, type Frame, makeFrames, syncSafe } from '../lib/write/id3v2/frames.js';
 
 const sample = path.join(
   import.meta.dirname,
@@ -44,6 +44,116 @@ async function withCopy(verify: (target: string) => Promise<void>) {
     expect(await readFile(sample)).toEqual(input);
   } finally {
     await rm(directory, { recursive: true, force: true });
+  }
+}
+
+function withFrameFlags(frame: Frame, flags: number): Uint8Array {
+  let data = Buffer.from(frame.data);
+  if (flags & 1) {
+    const length = Buffer.alloc(4);
+    UINT32SYNCSAFE.put(length, 0, data.length);
+    data = Buffer.concat([length, data]);
+  }
+  if (flags & 2) {
+    data = Buffer.from(
+      [...data].flatMap((byte, index) =>
+        byte === 0xff && (index === data.length - 1 || data[index + 1] === 0 || data[index + 1] >= 0xe0)
+          ? [byte, 0]
+          : [byte]
+      )
+    );
+  }
+  return encodeFrame({ ...frame, flags, data });
+}
+
+for (const flags of [1, 2, 3]) {
+  it(`cleans up ID3 aliases without losing unrelated TXXX data with flags ${flags}`, async () => {
+    const unrelated = withFrameFlags({ id: 'TXXX', flags: 0, data: Buffer.from('\0NOTES\0ÿà', 'latin1') }, flags);
+    const source = tag(
+      Buffer.concat([
+        unrelated,
+        withFrameFlags(makeFrames('TXXX:LICENSE', 'Old license')[0], flags),
+        withFrameFlags(makeFrames('TXXX:ALBUMARTISTS', 'Old artist')[0], flags)
+      ])
+    );
+    const output = await updateBuffer(source, { license: 'New license', albumartists: ['New artist'] });
+    expect(output.subarray(10, 10 + unrelated.length)).toEqual(unrelated);
+    const { common } = await parseBuffer(output);
+    expect(common.license).toBe('New license');
+    expect(common.albumartists).toEqual(['New artist']);
+    expect(common.notes).toEqual(['ÿà']);
+  });
+
+  it(`preserves and edits CDDB comments with supported ID3 flags ${flags}`, async () => {
+    const cddb = withFrameFlags({ id: 'COMM', flags: 0, data: Buffer.from('\0engiTunes_CDDB_1\0ÿà', 'latin1') }, flags);
+    const ordinary = withFrameFlags(makeFrames('COMM', { language: 'eng', text: 'Old comment' })[0], flags);
+    const source = tag(Buffer.concat([cddb, ordinary]));
+    const output = await updateBuffer(source, { comment: 'New comment' });
+    const common = (await parseBuffer(output)).common;
+    expect(common.itunesCddb1).toBe('ÿà');
+    expect(common.comment).toContainEqual({ descriptor: '', language: 'eng', text: 'New comment' });
+    expect(Buffer.from(output).includes(Buffer.from(cddb))).toBe(true);
+    const edited = (await parseBuffer(await updateBuffer(source, { itunesCddb1: 'Updated CDDB' }))).common;
+    expect(edited.itunesCddb1).toBe('Updated CDDB');
+    expect(edited.comment).toContainEqual({ descriptor: 'iTunes_CDDB_1', language: 'eng', text: 'Updated CDDB' });
+  });
+}
+
+for (const itunesCddb1 of [undefined, 'Explicit CDDB', null]) {
+  it(`synchronizes described CDDB comments with TXXX unless explicitly overridden: ${itunesCddb1}`, async () => {
+    const descriptor = 'iTunes_CDDB_1';
+    const source = tag(
+      Buffer.concat([
+        ...makeFrames(`TXXX:${descriptor}`, 'Old CDDB').map(encodeFrame),
+        ...makeFrames('COMM', { descriptor, language: 'eng', text: 'Old CDDB' }).map(encodeFrame)
+      ])
+    );
+    const output = await updateBuffer(source, {
+      comment: [{ descriptor, language: 'eng', text: 'New CDDB' }, { text: 'Ordinary comment' }],
+      itunesCddb1
+    });
+    const expected = itunesCddb1 === undefined ? 'New CDDB' : (itunesCddb1 ?? undefined);
+    const { common } = await parseBuffer(output);
+    expect(common.itunesCddb1).toBe(expected);
+    expect(common.comment).toEqual([
+      ...(expected === undefined ? [] : [{ descriptor, language: 'eng', text: expected }]),
+      { descriptor: '', language: 'eng', text: 'Ordinary comment' }
+    ]);
+    // Read the TXXX representation independently, without a COMM value masking it.
+    const withoutComments = await updateBuffer(output, { native: { COMM: null } });
+    expect((await parseBuffer(withoutComments)).common.itunesCddb1).toBe(expected);
+  });
+}
+
+for (const frame of [
+  { id: 'COMM', flags: 0x04, data: Uint8Array.of(1, 2, 3) },
+  { id: 'COMM', flags: 0x08, data: Uint8Array.of(1, 2, 3) },
+  { id: 'COMM', flags: 0x40, data: Uint8Array.of(1, 2, 3) },
+  { id: 'COMM', flags: 0x01, data: Uint8Array.of(0xff, 0, 0, 0) },
+  { id: 'COMM', flags: 0, data: Uint8Array.of(3) },
+  { id: 'COMM', flags: 0, data: Uint8Array.of(4, 101, 110, 103, 0) }
+]) {
+  for (const comment of [null, 'New comment']) {
+    it(`preserves unidentifiable COMM ${frame.flags}/${frame.data} when setting comments to ${comment}`, async () => {
+      const unknown = encodeFrame(frame);
+      const cddb = { descriptor: 'iTunes_CDDB_1', language: 'eng', text: 'CDDB data' };
+      const source = tag(
+        Buffer.concat([unknown, ...makeFrames('COMM', [cddb, { text: 'Old comment' }]).map(encodeFrame)])
+      );
+      const output = await updateBuffer(source, { comment });
+      expect(Buffer.from(output).includes(Buffer.from(unknown))).toBe(true);
+      // Remove the intentionally undecodable frame before inspecting the common tags.
+      const bytes = Buffer.from(output);
+      const offset = bytes.indexOf(Buffer.from(unknown));
+      const readable = tag(
+        Buffer.concat([bytes.subarray(10, offset), bytes.subarray(offset + unknown.length, audioOffset(bytes))])
+      );
+      const { common } = await parseBuffer(readable);
+      expect(common.itunesCddb1).toBe(cddb.text);
+      expect(common.comment).toEqual(
+        comment === null ? [cddb] : [{ descriptor: '', language: 'eng', text: comment }, cddb]
+      );
+    });
   }
 }
 

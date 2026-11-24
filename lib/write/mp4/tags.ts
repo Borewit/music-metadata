@@ -38,6 +38,7 @@ const textAtoms: Record<string, string> = {
   longDescription: 'ldes',
   work: '©wrk',
   movement: '©mvn',
+  directors: '©dir',
   encodedby: '©too',
   grouping: '©grp',
   albumsort: 'soal',
@@ -47,6 +48,15 @@ const textAtoms: Record<string, string> = {
   composersort: 'soco'
 };
 const freeform: Record<string, string> = {
+  mbComposerId: 'MusicBrainz Composer Id',
+  mbOriginalArtistId: 'MusicBrainz Original Artist Id',
+  mbOriginalReleaseId: 'MusicBrainz Original Album Id',
+  itunesCddb1: 'iTunes_CDDB_1',
+  replayGainAlbumRange: 'REPLAYGAIN_ALBUM_RANGE',
+  replayGainTrackRange: 'REPLAYGAIN_TRACK_RANGE',
+  replayGainReferenceLoudness: 'REPLAYGAIN_REFERENCE_LOUDNESS',
+  arranger: 'ARRANGER',
+  'performer:instrument': 'PERFORMER',
   lyricist: 'LYRICIST',
   conductor: 'CONDUCTOR',
   remixer: 'REMIXER',
@@ -213,6 +223,11 @@ export function editItems(
       (field === 'albumartist' && entries.albumartists !== undefined)
     ) {
       continue;
+    }
+    if (field === 'artists' || field === 'albumartists') {
+      // Picard can store an explicit list alongside the display atom. Do not
+      // let that stale list override a common plural edit.
+      replace(`----:com.apple.iTunes:${field.toUpperCase()}`, null);
     }
     // Full dates take precedence over a year alias.
     if (field === 'year' && entries.date !== undefined) {

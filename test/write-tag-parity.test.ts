@@ -50,7 +50,7 @@ describe('music-metadata read-back', () => {
     // Preserve the display artist independently of the individual artist list.
     expect(common.artist).toBe('Display artist');
     expect(common.artists).toEqual(['Artist A', 'Artist B']);
-    expect(common.albumartist).toBe('Album Artist A');
+    expect(common.albumartist).toBe('Display album artist');
     expect(common.albumartists).toEqual(['Album Artist A', 'Album Artist B']);
     expect(common.album).toBe('Parity album');
     expect(common.date).toBe('2025-06-01');

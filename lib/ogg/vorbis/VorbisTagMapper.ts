@@ -13,6 +13,15 @@ import type { IRating, ITag } from '../../type.js';
  * independent of the underlying format
  */
 const vorbisTagMap: INativeTagMap = {
+  MUSICBRAINZ_COMPOSERID: 'mbComposerId',
+  MUSICBRAINZ_ORIGINALARTISTID: 'mbOriginalArtistId',
+  MUSICBRAINZ_ORIGINALALBUMID: 'mbOriginalReleaseId',
+  DIRECTOR: 'directors',
+  ORIGINALFILENAME: 'originalFilename',
+  ITUNES_CDDB_1: 'itunesCddb1',
+  REPLAYGAIN_ALBUM_RANGE: 'replayGainAlbumRange',
+  REPLAYGAIN_TRACK_RANGE: 'replayGainTrackRange',
+  REPLAYGAIN_REFERENCE_LOUDNESS: 'replayGainReferenceLoudness',
   TECHNICIAN: 'technician',
   LONGDESCRIPTION: 'longDescription',
   TVSHOW: 'tvShow',
@@ -33,6 +42,7 @@ const vorbisTagMap: INativeTagMap = {
   CATEGORY: 'category',
   HDVIDEO: 'hdVideo',
   KEYWORDS: 'keywords',
+  MOVEMENTNAME: 'movement',
   MOVEMENT: 'movement',
   MOVEMENTNUMBER: 'movementIndex',
   MOVEMENTTOTAL: 'movementTotal',
@@ -43,6 +53,7 @@ const vorbisTagMap: INativeTagMap = {
   TITLE: 'title',
   ARTIST: 'artist',
   ARTISTS: 'artists',
+  ALBUMARTISTS: 'albumartists',
   ALBUMARTIST: 'albumartist',
   'ALBUM ARTIST': 'albumartist',
   ALBUM: 'album',
@@ -68,7 +79,7 @@ const vorbisTagMap: INativeTagMap = {
   LYRICIST: 'lyricist',
   WRITER: 'writer',
   CONDUCTOR: 'conductor',
-  // 'PERFORMER=artist (instrument)': 'performer:instrument', // ToDo
+  PERFORMER: 'performer:instrument',
   REMIXER: 'remixer',
   ARRANGER: 'arranger',
   ENGINEER: 'engineer',
@@ -115,7 +126,7 @@ const vorbisTagMap: INativeTagMap = {
   ACOUSTID_FINGERPRINT: 'acoustid_fingerprint',
   ACOUSTID_ID_FINGERPRINT: 'acoustid_fingerprint',
   MUSICIP_PUID: 'musicip_puid',
-  // 'FINGERPRINT=MusicMagic Fingerprint {fingerprint}': 'musicip_fingerprint', // ToDo
+  FINGERPRINT: 'musicip_fingerprint',
   WEBSITE: 'website',
   NOTES: 'notes',
   TOTALTRACKS: 'totaltracks',
@@ -166,6 +177,12 @@ export class VorbisTagMapper extends CommonTagMapper {
   }
 
   public override mapGenericTag(tag: ITag, warnings: IWarningCollector): IGenericTag | null {
+    if (
+      tag.id === 'FINGERPRINT' &&
+      (typeof tag.value !== 'string' || !tag.value.startsWith('MusicMagic Fingerprint'))
+    ) {
+      return null;
+    }
     if (tag.id === 'DATE') {
       if (typeof tag.value !== 'string' || tag.value.trim().length === 0) {
         return null;
@@ -178,6 +195,9 @@ export class VorbisTagMapper extends CommonTagMapper {
   }
 
   protected postMap(tag: ITag): void {
+    if (tag.id === 'FINGERPRINT') {
+      tag.value = (tag.value as string).slice('MusicMagic Fingerprint'.length).trimStart();
+    }
     if (tag.id === 'RATING') {
       // The way Winamp 5.666 assigns rating
       tag.value = VorbisTagMapper.toRating(undefined, tag.value as string, 100);

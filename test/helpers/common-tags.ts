@@ -2,6 +2,15 @@ import type { ICommonTagsResult, TagPatch } from '../../lib/index.js';
 
 // Adding a common field upstream makes this fixture fail compilation until a value is tested.
 export const fullCommon = {
+  mbComposerId: ['Example A', 'Example B'],
+  mbOriginalArtistId: ['Example A', 'Example B'],
+  mbOriginalReleaseId: 'Example',
+  directors: ['Example A', 'Example B'],
+  originalFilename: 'Example',
+  itunesCddb1: 'Example',
+  replayGainAlbumRange: 8.5,
+  replayGainTrackRange: 8.5,
+  replayGainReferenceLoudness: 8.5,
   track: {
     no: 2,
     of: 12

@@ -31,6 +31,26 @@ it('reads back the written initial key', async () => {
   expect((await parseBuffer(updated)).common.key).toBe('F#m');
 });
 
+for (const field of ['replayGainTrackRange', 'replayGainAlbumRange'] as const) {
+  it.each([-1, -0.5, Number.NaN, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY])(
+    `rejects invalid ${field}: %s`,
+    async value => {
+      await expect(updateBuffer(await fixture('alac'), { [field]: value })).rejects.toBeInstanceOf(InvalidPatchError);
+    }
+  );
+
+  it.each([0, 7.5])(`preserves valid ${field}: %s and allows removal`, async value => {
+    const output = await updateBuffer(await fixture('alac'), { [field]: value, replayGainReferenceLoudness: -18 });
+    const { common } = await parseBuffer(output);
+    expect(common[field]).toBe(value);
+    expect(common.replayGainReferenceLoudness).toBe(-18);
+    const unchanged = await updateBuffer(output, { [field]: undefined, title: 'Updated title' });
+    expect((await parseBuffer(unchanged)).common[field]).toBe(value);
+    const cleared = await updateBuffer(output, { [field]: null });
+    expect((await parseBuffer(cleared)).common[field]).toBeUndefined();
+  });
+}
+
 interface Atom {
   type: string;
   start: number;

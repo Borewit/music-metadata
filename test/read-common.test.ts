@@ -16,6 +16,14 @@ import { samplePath } from './helpers/util.js';
 describe('GenericTagMap', () => {
   const combinedTagMapper = new CombinedTagMapper();
 
+  it('documents every common tag used by the documentation generator', async () => {
+    const descriptions = JSON.parse(await readFile(new URL('../doc-gen/common.json', import.meta.url), 'utf8'));
+    for (const key of commonTagsKeys) {
+      assert.isString(descriptions[key]?.description, `Missing documentation for ${key}`);
+      assert.isNotEmpty(descriptions[key].description.trim(), `Empty documentation for ${key}`);
+    }
+  });
+
   describe('optional native tag lookups', () => {
     const warnings = { addWarning: () => assert.fail('Tag lookup should not emit warnings') };
     for (const Mapper of [CommonTagMapper, CaseInsensitiveTagMap]) {

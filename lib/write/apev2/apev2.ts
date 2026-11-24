@@ -25,6 +25,7 @@ for (const [key, field] of Object.entries(apev2TagMap)) {
 }
 const normalizedAliases = new Set([
   'year',
+  'movementTotal',
   'totaltracks',
   'totaldiscs',
   'replaygain_track_gain_ratio',
@@ -244,13 +245,45 @@ function applyPatch(items: Map<string, Item>, patch: TagPatch): boolean {
       changed = true;
     }
   };
+  if (patch.movementIndex !== undefined) {
+    const pair = normalizeNumberPair(patch.movementIndex, 'movementIndex');
+    if (pair !== undefined && (pair === null || pair.no !== undefined || pair.of !== undefined)) {
+      const keys = aliases.get('movementIndex') ?? ['MOVEMENT', 'MOVEMENTNUMBER'];
+      // Like the reader, retain the last number and first non-null embedded total.
+      const previous = [...items.values()].filter(item => keys.includes(item.key.toUpperCase()));
+      const total = items.get('MOVEMENTTOTAL');
+      if (
+        pair &&
+        (pair.no === undefined || pair.of === undefined) &&
+        [...previous, total].some(item => item && (item.flags & 6) !== 0)
+      ) {
+        throw new UnsupportedFeatureError('Cannot merge movementIndex with a non-text APEv2 item');
+      }
+      let existing: { no: number | null; of: number | null } = { no: null, of: null };
+      for (const item of previous) {
+        const pair = CommonTagMapper.normalizeTrack(decodeUtf8(itemBytes(item)).split('\0')[0]);
+        existing = { no: pair.no, of: existing.of ?? pair.of };
+      }
+      const embeddedTotal = existing.of;
+      if (total) {
+        existing.of = CommonTagMapper.toIntOrNull(decodeUtf8(itemBytes(total)));
+      }
+      const no = pair?.no !== undefined ? pair.no : existing.no;
+      const of = pair?.of !== undefined ? pair.of : existing.of;
+      if (pair === null || pair.no !== undefined || (pair.of === null && embeddedTotal !== null)) {
+        replace(keys, textItem('MOVEMENT', pair === null || no === null ? null : [String(no)]));
+      }
+      if (pair === null || pair.of !== undefined || (!total && embeddedTotal !== null && pair.no !== undefined)) {
+        replace(['MOVEMENTTOTAL'], textItem('MOVEMENTTOTAL', pair === null || of === null ? null : [String(of)]));
+      }
+    }
+  }
   const structured = structuredText(patch);
   for (const [field, value] of Object.entries(patch)) {
     if (value === undefined || field === 'native' || normalizedAliases.has(field)) {
       continue;
     }
-    // The reader supplies this empty pair even when the format has no movement tag.
-    if (field === 'movementIndex' && patch.movementIndex?.no === null && patch.movementIndex.of === null) {
+    if (field === 'movementIndex') {
       continue;
     }
     const keys = aliases.get(field);

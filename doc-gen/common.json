@@ -224,6 +224,33 @@
   "gapless": {
     "description": "Gapless album indicator ([MP4](http://help.mp3tag.de/main_tags.html))"
   },
+  "mbComposerId": {
+    "description": "MusicBrainz composer identifiers."
+  },
+  "mbOriginalArtistId": {
+    "description": "MusicBrainz original artist identifiers."
+  },
+  "mbOriginalReleaseId": {
+    "description": "MusicBrainz original release identifier."
+  },
+  "directors": {
+    "description": "Director credits."
+  },
+  "originalFilename": {
+    "description": "Original filename stored in the tags, not the current file path."
+  },
+  "itunesCddb1": {
+    "description": "iTunes CDDB metadata."
+  },
+  "replayGainAlbumRange": {
+    "description": "Album loudness range, in dB (LU)."
+  },
+  "replayGainTrackRange": {
+    "description": "Track loudness range, in dB (LU)."
+  },
+  "replayGainReferenceLoudness": {
+    "description": "ReplayGain reference loudness, in dB SPL."
+  },
   "musicbrainz_recordingid": {
     "description": "Release [recording](https://musicbrainz.org/doc/Recording) [MBID](https://musicbrainz.org/doc/MusicBrainz_Identifier)"
   },
@@ -330,7 +357,7 @@
     "description": "Movement"
   },
   "movementIndex": {
-    "description": "Movement Index/Total, e.g. `{no: 1, of: 4}`"
+    "description": "Movement Index/Total, e.g. `{no: 1, of: 4}`. Vorbis: numeric MOVEMENT (also standalone), or MOVEMENTNUMBER; legacy MOVEMENT remains a name where applicable."
   },
   "podcastId": {
     "description": "Podcast Identifier"

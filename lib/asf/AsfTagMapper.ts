@@ -9,6 +9,17 @@ import type { IRating, ITag } from '../type.js';
  * See http://msdn.microsoft.com/en-us/library/ms867702.aspx
  */
 export const asfTagMap: INativeTagMap = {
+  'MusicBrainz/Composer Id': 'mbComposerId',
+  'MusicBrainz/Original Artist Id': 'mbOriginalArtistId',
+  'MusicBrainz/Original Album Id': 'mbOriginalReleaseId',
+  'WM/Director': 'directors',
+  'WM/OriginalFilename': 'originalFilename',
+  REPLAYGAIN_ALBUM_RANGE: 'replayGainAlbumRange',
+  replaygain_album_range: 'replayGainAlbumRange',
+  REPLAYGAIN_TRACK_RANGE: 'replayGainTrackRange',
+  replaygain_track_range: 'replayGainTrackRange',
+  REPLAYGAIN_REFERENCE_LOUDNESS: 'replayGainReferenceLoudness',
+  replaygain_reference_loudness: 'replayGainReferenceLoudness',
   Title: 'title',
   Author: 'artist',
   'WM/AlbumArtist': 'albumartist',
@@ -23,6 +34,7 @@ export const asfTagMap: INativeTagMap = {
   'WM/PartOfSet': 'disk',
   'WM/Genre': 'genre',
   'WM/Composer': 'composer',
+  'WM/Lyrics_Synchronised': 'lyrics',
   'WM/Lyrics': 'lyrics',
   'WM/AlbumSortOrder': 'albumsort',
   'WM/TitleSortOrder': 'titlesort',
@@ -103,7 +115,7 @@ export class AsfTagMapper extends CommonTagMapper {
   }
 
   protected postMap(tag: ITag, warnings: IWarningCollector): void {
-    if (this.getCommonName(tag.id)?.startsWith('replaygain_')) {
+    if (/^replaygain_(track|album)_(gain|peak)$/.test(this.getCommonName(tag.id) ?? '')) {
       const value =
         typeof tag.value === 'string'
           ? tag.value.trim().match(/^([+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:e[+-]?\d+)?)\s*(dB)?$/i)
@@ -119,6 +131,12 @@ export class AsfTagMapper extends CommonTagMapper {
       }
     }
 
+    // Picard writes synchronized lyrics as text. Binary ASF lyric payloads
+    // need their own decoder and must not be treated as an ILyricsTag object.
+    if (tag.id === 'WM/Lyrics_Synchronised' && typeof tag.value !== 'string') {
+      warnings.addWarning('Unsupported binary ASF synchronized lyrics');
+      tag.id = '';
+    }
     switch (tag.id) {
       case 'POPULARIMETER': {
         // popm-style attribute, written by e.g. foobar2000; value is "email|rating|counter"

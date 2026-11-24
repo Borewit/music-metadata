@@ -21,6 +21,7 @@ import { CommonTagMapper } from './GenericTagMapper.js';
 import { type IGenericTag, isSingleton, isUnique, type TagType } from './GenericTagTypes.js';
 import { normalizeBitrate } from './TrackInfo.js';
 import { toNativeTyped, toRatio } from './Util.js';
+import { VorbisMovement } from './VorbisMovement.js';
 
 const debug = initDebug('music-metadata:collector');
 
@@ -96,6 +97,8 @@ export class MetadataCollector implements INativeMetadataCollector {
   };
 
   public readonly native: INativeTags = {};
+
+  private readonly vorbisMovement = new VorbisMovement();
 
   public get nativeTyped(): ITypedNativeTags {
     return toNativeTyped(this.native);
@@ -303,6 +306,25 @@ export class MetadataCollector implements INativeMetadataCollector {
         break;
       }
 
+      case 'replayGainAlbumRange':
+      case 'replayGainTrackRange':
+      case 'replayGainReferenceLoudness': {
+        const unit = tag.id === 'replayGainReferenceLoudness' ? 'dB' : '(?:dB|LU)';
+        const match =
+          typeof tag.value === 'string'
+            ? tag.value
+                .trim()
+                .match(new RegExp(`^([+-]?(?:\\d+(?:\\.\\d*)?|\\.\\d+)(?:e[+-]?\\d+)?)\\s*(?:${unit})?$`, 'i'))
+            : null;
+        const value = typeof tag.value === 'number' ? tag.value : match ? Number(match[1]) : Number.NaN;
+        if (!Number.isFinite(value) || (tag.id !== 'replayGainReferenceLoudness' && value < 0)) {
+          this.addWarning(`Invalid ReplayGain value for ${tagType}.${tag.id}`);
+          return;
+        }
+        tag.value = value;
+        break;
+      }
+
       case 'replaygain_album_minmax':
       case 'replaygain_track_minmax':
         tag.value = (tag.value as string).split(',', 2).map(v => Number.parseInt(v, 10));
@@ -336,6 +358,9 @@ export class MetadataCollector implements INativeMetadataCollector {
       case 'comment':
         if (typeof tag.value === 'string') {
           tag.value = { text: tag.value };
+        }
+        if ((tag.value as IComment).descriptor === 'iTunes_CDDB_1') {
+          this.setGenericTag(tagType, { id: 'itunesCddb1', value: (tag.value as IComment).text ?? '' });
         }
         if ((tag.value as IComment).descriptor === 'iTunPGAP') {
           this.setGenericTag(tagType, { id: 'gapless', value: (tag.value as IComment).text === '1' });
@@ -453,7 +478,7 @@ export class MetadataCollector implements INativeMetadataCollector {
     if (
       ((tagType === 'ID3v2.2' && tagId === 'IPL') ||
         (tagType === 'ID3v2.3' && tagId === 'IPLS') ||
-        (tagType === 'ID3v2.4' && tagId === 'TIPL')) &&
+        (tagType === 'ID3v2.4' && (tagId === 'TIPL' || tagId === 'TMCL'))) &&
       value !== null &&
       typeof value === 'object'
     ) {
@@ -461,11 +486,32 @@ export class MetadataCollector implements INativeMetadataCollector {
         if (Array.isArray(people)) {
           for (const person of people) {
             if (typeof person === 'string' && person.length > 0) {
-              await this.toCommon(tagType, `${tagId}:${role}`, person);
+              const credit = this.tagMapper.mapTag(tagType, { id: `${tagId}:${role}`, value: person }, this);
+              if (credit) {
+                await this.postMap(tagType, credit);
+              } else if (tagId !== 'TIPL') {
+                // In ID3v2.3, IPLS combines production roles and instrument
+                // credits. In ID3v2.4, TMCL contains only musician credits.
+                await this.postMap(tagType, {
+                  id: 'performer:instrument',
+                  value: role && role.toLowerCase() !== 'performer' ? `${person} (${role})` : person
+                });
+              }
             }
           }
         }
       }
+      return;
+    }
+
+    if (tagType === 'vorbis' && this.vorbisMovement.add(tagId, String(value))) {
+      const movement = this.vorbisMovement.value;
+      if (movement.name !== undefined) {
+        await this.postMap(tagType, { id: 'movement', value: movement.name });
+      }
+      // Selection already resolves embedded versus dedicated totals.
+      this.common.movementIndex.of = movement.index.of;
+      await this.postMap(tagType, { id: 'movementIndex', value: String(movement.index.no ?? '') });
       return;
     }
 

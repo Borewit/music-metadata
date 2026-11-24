@@ -11,6 +11,15 @@ import type { ICustomDataTag, IIdentifierTag, IPopularimeter } from './FramePars
  * ID3v2.3/ID3v2.4 tag mappings
  */
 export const id3v24TagMap: INativeTagMap = {
+  'TXXX:MusicBrainz Composer Id': 'mbComposerId',
+  'TXXX:MusicBrainz Original Artist Id': 'mbOriginalArtistId',
+  'TXXX:MusicBrainz Original Album Id': 'mbOriginalReleaseId',
+  'TXXX:DIRECTOR': 'directors',
+  TOFN: 'originalFilename',
+  'TXXX:iTunes_CDDB_1': 'itunesCddb1',
+  'TXXX:REPLAYGAIN_ALBUM_RANGE': 'replayGainAlbumRange',
+  'TXXX:REPLAYGAIN_TRACK_RANGE': 'replayGainTrackRange',
+  'TXXX:REPLAYGAIN_REFERENCE_LOUDNESS': 'replayGainReferenceLoudness',
   'TXXX:WORK': 'work',
   'TXXX:TECHNICIAN': 'technician',
   'TXXX:LONGDESCRIPTION': 'longDescription',
@@ -21,6 +30,7 @@ export const id3v24TagMap: INativeTagMap = {
   'TXXX:TVEPISODEID': 'tvEpisodeId',
   'TXXX:TVNETWORK': 'tvNetwork',
   'TXXX:GAPLESS': 'gapless',
+  'TXXX:PERFORMER': 'performer:instrument',
   'TXXX:PERFORMER:INSTRUMENT': 'performer:instrument',
   'TXXX:NOTES': 'notes',
   'TXXX:HDVIDEO': 'hdVideo',
@@ -51,7 +61,6 @@ export const id3v24TagMap: INativeTagMap = {
   TEXT: 'lyricist',
   'TXXX:Writer': 'writer',
   TPE3: 'conductor',
-  // 'IPLS:instrument': 'performer:instrument', // ToDo
   TPE4: 'remixer',
   'IPLS:arranger': 'arranger',
   'IPLS:engineer': 'engineer',
@@ -80,6 +89,8 @@ export const id3v24TagMap: INativeTagMap = {
   'TXXX:SCRIPT': 'script',
   TLAN: 'language',
   TCOP: 'copyright',
+  'TXXX:LICENSE': 'license',
+  'TXXX:ALBUMARTISTS': 'albumartists',
   WCOP: 'license',
   TENC: 'encodedby',
   TSSE: 'encodersettings',
@@ -109,7 +120,6 @@ export const id3v24TagMap: INativeTagMap = {
   TDRC: 'date', // date YYYY-MM-DD
   TYER: 'year',
   TDOR: 'originaldate',
-  // 'TMCL:instrument': 'performer:instrument',
   'TIPL:arranger': 'arranger',
   'TIPL:engineer': 'engineer',
   'TIPL:producer': 'producer',
