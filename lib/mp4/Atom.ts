@@ -46,7 +46,9 @@ export class Atom {
     }
     const length = header.length === 0n ? remaining : Number(header.length);
     if (length > remaining) {
-      throw new Mp4ContentError(`Atom size exceeds remaining bytes: ${header.length} > ${remaining}`);
+      throw new Mp4ContentError(
+        `Atom '${header.name}' at offset ${offset} exceeds remaining bytes: ${header.length} > ${remaining}`
+      );
     }
     const payloadLength = length - headerLength;
     reserveAtom();

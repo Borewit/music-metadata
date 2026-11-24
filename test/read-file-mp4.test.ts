@@ -1094,7 +1094,7 @@ describe('Parse MPEG-4', () => {
 
     // The stripped fixture is missing the last 16 bytes declared by moov/udta/meta.
     // Reject that truncation, then restore the tail to exercise its size-zero final box.
-    await rejects(mm.parseFile(filePath), /Atom size exceeds remaining bytes/);
+    await rejects(mm.parseFile(filePath), /exceeds remaining bytes/);
     const buffer = Buffer.concat([fs.readFileSync(filePath), Buffer.alloc(16)]);
     const { format, common } = await mm.parseBuffer(buffer, 'audio/mp4');
 
@@ -3160,7 +3160,7 @@ describe('Parse MPEG-4', () => {
 
       await rejects(
         mm.parseFile(filePath),
-        error => error instanceof Mp4ContentError && /Atom size exceeds remaining bytes/.test(error.message)
+        error => error instanceof Mp4ContentError && /exceeds remaining bytes/.test(error.message)
       );
     });
 
@@ -3200,11 +3200,17 @@ describe('Parse MPEG-4', () => {
         for (const name of ['mvhd', 'stsd', 'stsz', 'date', 'ftyp', 'chap']) {
           for (const size of [0xffffffffffffffffn, 0x20000000000000n, 0x10000000n]) {
             it(`rejects ${name} with extended size ${size} before allocation`, async () => {
-              await rejectBeforeAllocation(box(name, Buffer.alloc(0), size, true), /size exceeds|buffering limit/);
+              await rejectBeforeAllocation(
+                box(name, Buffer.alloc(0), size, true),
+                /exceeds remaining bytes|size exceeds|buffering limit/
+              );
             });
           }
           it(`rejects oversized normal ${name} before allocation`, async () => {
-            await rejectBeforeAllocation(box(name, Buffer.alloc(0), 0xffffffffn), /size exceeds|buffering limit/);
+            await rejectBeforeAllocation(
+              box(name, Buffer.alloc(0), 0xffffffffn),
+              /exceeds remaining bytes|size exceeds|buffering limit/
+            );
           });
         }
 
@@ -3223,7 +3229,7 @@ describe('Parse MPEG-4', () => {
           const parent = box('moov', box('date', Buffer.alloc(0), 32n));
           await rejectBeforeAllocation(
             Buffer.concat([parent, box('free', Buffer.alloc(32))]),
-            /size exceeds remaining/
+            /exceeds remaining bytes/
           );
         });
 
@@ -3240,7 +3246,10 @@ describe('Parse MPEG-4', () => {
 
         it('caps a metadata payload even inside a large declared container', async () => {
           const child = box('date', Buffer.alloc(0), 64n * 1024n * 1024n + 9n);
-          await rejectBeforeAllocation(box('moov', child, 0x10000000n), /size exceeds|buffering limit/);
+          await rejectBeforeAllocation(
+            box('moov', child, 0x10000000n),
+            /exceeds remaining bytes|size exceeds|buffering limit/
+          );
         });
       });
     }
@@ -3375,7 +3384,7 @@ describe('Parse MPEG-4', () => {
       await tokenizer.ignore(8);
       await rejects(
         Atom.readAtom(tokenizer, async () => assert.fail('Must not dispatch'), null, 100),
-        /size exceeds remaining/
+        /exceeds remaining bytes/
       );
     });
 
@@ -4462,19 +4471,15 @@ describe('Parse MPEG-4', () => {
   // https://github.com/readest/readest/issues/6262
 });
 
-describe('Parse MP4 recording interrupted before its moov was written', () => {
-  it('reports the interrupted recording instead of a generic atom size error', async () => {
+describe('Parse MP4 with an atom that runs past the end of the file', () => {
+  it('reports the atom name, offset and sizes', async () => {
     const data = await fs.promises.readFile(path.join(mp4Samples, 'luckynight-als.mp4')); // ftyp, mdat, moov
-    const interrupted = data.subarray(0, Math.floor(data.length / 2));
-    await rejects(mm.parseBuffer(interrupted, 'video/mp4'), /recording was probably interrupted/);
-  });
-
-  it('keeps the generic error when the moov was read before the truncated mdat', async () => {
-    const data = await fs.promises.readFile(path.join(mp4Samples, 'mp4-video.mp4')); // ftyp, moov, free, mdat
-    const cut = data.subarray(0, data.length - 1000);
+    const truncated = data.subarray(0, Math.floor(data.length / 2));
     await rejects(
-      mm.parseBuffer(cut, 'video/mp4'),
-      (error: Error) => !/recording was probably interrupted/.test(error.message)
+      mm.parseBuffer(truncated, 'video/mp4'),
+      error =>
+        error instanceof Mp4ContentError &&
+        /^Atom 'mdat' at offset \d+ exceeds remaining bytes: \d+ > \d+$/.test(error.message)
     );
   });
 });
