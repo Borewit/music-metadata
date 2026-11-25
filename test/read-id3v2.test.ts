@@ -1,7 +1,6 @@
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { Readable } from 'node:stream';
-import { UINT32SYNCSAFE as publicSyncSafe } from 'music-metadata/tokens/id3v2';
 import { EndOfStreamError, fromBlob, fromBuffer, fromStream, fromWebStream } from 'strtok3';
 import { UINT8 } from 'token-types';
 import { assert, expect } from 'vitest';
@@ -21,6 +20,7 @@ import * as mm from '../lib/index.js';
 import { parseFromTokenizer } from '../lib/index.js';
 import { LyricsContentError, parseLrc } from '../lib/lrc/LyricsParser.js';
 import { FieldDecodingError } from '../lib/ParseError.js';
+import { UINT32SYNCSAFE as syncSafeToken } from '../lib/tokens/id3v2.js';
 import { Parsers } from './helpers/metadata-parsers.js';
 import { samplePath } from './helpers/util.js';
 
@@ -1505,11 +1505,11 @@ describe('Public ID3 structural tokens', () => {
   it('rejects invalid sync-safe offsets and non-integer values without changing the buffer', () => {
     const data = new Uint8Array(6).fill(0xaa);
     for (const offset of [-1, 0.5, Number.NaN, Number.POSITIVE_INFINITY, 2 ** 53, 3]) {
-      assert.throws(() => publicSyncSafe.get(data, offset), RangeError);
-      assert.throws(() => publicSyncSafe.put(data, offset, 0), RangeError);
+      assert.throws(() => syncSafeToken.get(data, offset), RangeError);
+      assert.throws(() => syncSafeToken.put(data, offset, 0), RangeError);
     }
     for (const value of [-1, 0.5, Number.NaN, Number.POSITIVE_INFINITY, 0x10000000]) {
-      assert.throws(() => publicSyncSafe.put(data, 1, value), RangeError);
+      assert.throws(() => syncSafeToken.put(data, 1, value), RangeError);
     }
     assert.deepEqual(data, new Uint8Array(6).fill(0xaa));
   });
@@ -1519,14 +1519,14 @@ describe('Public ID3 structural tokens', () => {
       const data = new Uint8Array(6);
       data[0] = 0xaa;
       data[5] = 0x55;
-      assert.equal(publicSyncSafe.put(data, 1, value), 5);
-      assert.equal(publicSyncSafe.get(data, 1), value);
+      assert.equal(syncSafeToken.put(data, 1, value), 5);
+      assert.equal(syncSafeToken.get(data, 1), value);
       assert.isTrue(data.subarray(1, 5).every(byte => (byte & 128) === 0));
       assert.equal(data[0], 0xaa);
       assert.equal(data[5], 0x55);
     }
-    assert.throws(() => publicSyncSafe.get(new Uint8Array(3), 0), RangeError);
-    assert.throws(() => publicSyncSafe.put(new Uint8Array(4), 0, -1), RangeError);
-    assert.throws(() => publicSyncSafe.put(new Uint8Array(4), 0, 0x10000000), RangeError);
+    assert.throws(() => syncSafeToken.get(new Uint8Array(3), 0), RangeError);
+    assert.throws(() => syncSafeToken.put(new Uint8Array(4), 0, -1), RangeError);
+    assert.throws(() => syncSafeToken.put(new Uint8Array(4), 0, 0x10000000), RangeError);
   });
 });

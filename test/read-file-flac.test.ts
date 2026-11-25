@@ -4,8 +4,6 @@ import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { Readable } from 'node:stream';
-import * as tokens from 'music-metadata/tokens';
-import * as flacTokens from 'music-metadata/tokens/flac';
 import { fromBuffer, fromStream } from 'strtok3';
 import { assert, expect } from 'vitest';
 import {
@@ -17,6 +15,8 @@ import {
 import * as mm from '../lib/index.js';
 import { LyricsContentType, TimestampFormat, UnexpectedFileContentError } from '../lib/index.js';
 import { type IVorbisPicture, VorbisPictureToken } from '../lib/ogg/vorbis/Vorbis.js';
+import * as flacTokens from '../lib/tokens/flac.js';
+import * as tokens from '../lib/tokens/index.js';
 import { makeFlac } from './helpers/flac.js';
 import { Parsers } from './helpers/metadata-parsers.js';
 import { samplePath } from './helpers/util.js';
