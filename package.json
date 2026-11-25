@@ -179,7 +179,7 @@
     "tsx": "^4.23.15",
     "typescript": "^7.0.2",
     "vite": "^8.0.0",
-    "vitest": "5.1.0"
+    "vitest": "5.1.1"
   },
   "engines": {
     "node": ">=22"
