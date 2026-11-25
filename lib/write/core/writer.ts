@@ -95,7 +95,8 @@ export async function writeChunks(
 
   let handle: Awaited<ReturnType<typeof fs.open>> | undefined;
   try {
-    handle = await fs.open(temporaryPath, 'wx', mode ?? 0o666);
+    // Keep staged data private until the ownership check has passed.
+    handle = await fs.open(temporaryPath, 'wx', mode === undefined ? 0o666 : mode & 0o600);
     for (const chunk of chunks) {
       if (chunk instanceof Uint8Array) {
         await writeAll(handle, chunk);
@@ -112,13 +113,26 @@ export async function writeChunks(
       }
     }
     await handle.sync();
+    const staged = await handle.stat();
     await handle.close();
     handle = undefined;
 
-    // Preserve the destination's ownership before replacement; fail before
-    // the rename if it cannot be preserved.
-    if (uid !== undefined && gid !== undefined) {
-      await fs.chown(temporaryPath, uid, gid);
+    // Shared folders and NAS mounts may allow writing but not changing ownership.
+    // Group mode bits can represent an ACL mask. Require that mask and other access to be clear.
+    if (uid !== undefined && gid !== undefined && (staged.uid !== uid || staged.gid !== gid)) {
+      try {
+        await fs.chown(temporaryPath, uid, gid);
+      } catch (error) {
+        const savedMode = mode ?? 0;
+        const hasGroupOrOtherAccess = (savedMode & 0o2077) !== 0;
+        if (
+          staged.uid !== uid ||
+          hasGroupOrOtherAccess ||
+          !['EPERM', 'EACCES', 'ENOSYS', 'ENOTSUP', 'EOPNOTSUPP'].some(code => isErrorCode(error, code))
+        ) {
+          throw error;
+        }
+      }
     }
 
     // Apply the saved mode after ownership changes so its permission bits
