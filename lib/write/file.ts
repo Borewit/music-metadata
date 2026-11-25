@@ -82,7 +82,7 @@ export async function writeFileTags(
   const source = await openSource(filePath);
   try {
     const update = await buildUpdate(source, normalized, options);
-    const result = await writeChunks(filePath, update.chunks, {
+    const result = await writeChunks(filePath, source, update.chunks, {
       atomic: options.atomic ?? true,
       stageToFile: update.stageToFile,
       backup: options.backup ?? false,

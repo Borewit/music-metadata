@@ -2,6 +2,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import type { WriteChunk } from './chunks.js';
 import { WriteError } from './errors.js';
+import type { ByteSource } from './source.shared.js';
 
 export type { WriteChunk } from './chunks.js';
 
@@ -31,10 +32,15 @@ export interface AtomicWriteResult {
  */
 export async function writeChunks(
   filePath: string,
+  source: ByteSource,
   chunks: readonly WriteChunk[],
   options: AtomicWriteOptions
 ): Promise<AtomicWriteResult> {
   const totalBytes = chunks.reduce((sum, chunk) => sum + chunk.length, 0);
+
+  if (totalBytes === source.size && (await matchesSource(source, chunks))) {
+    return { bytesWritten: 0, atomic: false };
+  }
 
   if (options.dryRun) {
     return { bytesWritten: totalBytes, atomic: options.atomic };
@@ -145,6 +151,27 @@ export async function writeChunks(
     }
     throw new WriteError(`Failed to write '${filePath}'`, { cause: error });
   }
+}
+
+async function matchesSource(source: ByteSource, chunks: readonly WriteChunk[]): Promise<boolean> {
+  let offset = 0;
+  for (const chunk of chunks) {
+    // An unchanged source range is already at its output position, including the usual audio payload.
+    if (chunk instanceof Uint8Array || chunk.source !== source || chunk.offset !== offset) {
+      for (let start = 0; start < chunk.length; start += COPY_CHUNK_SIZE) {
+        const length = Math.min(COPY_CHUNK_SIZE, chunk.length - start);
+        const planned =
+          chunk instanceof Uint8Array
+            ? chunk.subarray(start, start + length)
+            : await chunk.source.read(chunk.offset + start, length);
+        if (Buffer.compare(planned, await source.read(offset + start, length)) !== 0) {
+          return false;
+        }
+      }
+    }
+    offset += chunk.length;
+  }
+  return true;
 }
 
 async function backupFile(filePath: string): Promise<void> {

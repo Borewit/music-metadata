@@ -104,6 +104,36 @@ const chunkHeads = (bytes: Uint8Array) =>
   offsets(bytes).map(offset => Buffer.from(bytes.subarray(offset, offset + 16)));
 
 describe('MP4 metadata', () => {
+  it.each([true, false])('skips byte-identical updates and preserves hard links (atomic=%s)', async atomic => {
+    const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'mp4-noop-'));
+    const file = path.join(dir, 'track.m4a');
+    try {
+      await fs.writeFile(file, await fixture('aac-faststart'));
+      const patch = { title: 'First', native: { '----:com.apple.iTunes:PRIVATE': 'ID' } };
+      await updateFile(file, patch);
+      await fs.link(file, path.join(dir, 'linked.m4a'));
+      const before = await fs.stat(file, { bigint: true });
+      for (const requested of [{}, patch]) {
+        for (const dryRun of [true, false]) {
+          expect(await updateFile(file, requested, { atomic, dryRun, backup: true })).toMatchObject({
+            bytesWritten: 0,
+            atomic: false
+          });
+        }
+      }
+      const after = await fs.stat(file, { bigint: true });
+      expect(after.ino).toBe(before.ino);
+      expect(after.mtimeNs).toBe(before.mtimeNs);
+      expect(await fs.readdir(dir)).not.toContain('track.m4a.bak');
+
+      // A same-length change must still be committed.
+      expect((await updateFile(file, { title: 'Other' }, { atomic })).bytesWritten).toBe(Number(before.size));
+      expect((await readTags(file)).common.title).toBe('Other');
+    } finally {
+      await fs.rm(dir, { recursive: true, force: true });
+    }
+  });
+
   for (const name of ['aac-faststart', 'alac']) {
     it(`round-trips ${name}, relocating offsets and preserving encoded samples`, async () => {
       const input = await fixture(name);
@@ -304,6 +334,10 @@ describe('MP4 metadata', () => {
         await updateFile(file, { title: 'X' }, { atomic: false });
         expect((await readTags(file)).common.title).toBe('X');
         expect(Buffer.from(mdat(await fs.readFile(file))).equals(Buffer.from(mdat(input)))).toBe(true);
+        const readsBeforeRetry = largeReads;
+        expect((await updateFile(file, { title: 'X' }, { atomic: false, backup: true })).bytesWritten).toBe(0);
+        expect(largeReads).toBe(readsBeforeRetry);
+        expect((await fs.readFile(`${file}.bak`)).equals(input)).toBe(true);
         expect((await fs.readdir(dir)).sort()).toEqual(['track.m4a', 'track.m4a.bak']);
       }
       expect(largeReads).toBeGreaterThanOrEqual(2);

@@ -1001,6 +1001,8 @@ For MP3 and ADTS AAC,
 File updates use atomic
 replacement by default.
 Options include `backup`, `dryRun` and `atomic`.
+When the planned output is byte-identical, the writer leaves the file and any existing backup untouched.
+Both a write and a dry run then return `bytesWritten: 0` and `atomic: false`.
 `updateBuffer` returns a new `Uint8Array` without modifying its input; the browser
 entry point also accepts a `Blob`.
 `updateFile` is available only in Node.js.
