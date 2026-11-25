@@ -7,6 +7,7 @@ import {
   type IPicture,
   parseBlob,
   parseBuffer,
+  updateFile,
   updateBuffer as updateNodeBuffer
 } from '../lib/index.js';
 import { syncSafe } from '../lib/write/id3v2/frames.js';
@@ -49,9 +50,12 @@ async function loadMp3(): Promise<Uint8Array> {
 }
 
 describe('browser root entry', () => {
-  it('exports buffer writing without Node file writing', () => {
+  it('exports buffer writing without Node file writing, with an explicit Node entry', async () => {
     expect(browserRoot.updateBuffer).toBeTypeOf('function');
     expect(browserRoot).not.toHaveProperty('updateFile');
+    const nodeRoot = await import('music-metadata/node');
+    expect(nodeRoot.updateFile).toBe(updateFile);
+    expect(nodeRoot.updateBuffer).toBe(updateNodeBuffer);
   });
   it('round-trips tags from a Blob input', async () => {
     const flac = makeFlac({ comments: [{ key: 'TITLE', value: 'Original' }] });

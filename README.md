@@ -1191,11 +1191,16 @@ Sequential examples:
 
 ### Using music-metadata with TypeScript and module-resolution set to bundler.
 
-If the TypeScript compiler option [`moduleResolution`](https://www.typescriptlang.org/tsconfig/#moduleResolution)
-is set to `"bundler"`, it does not select the `"node"` export condition, so
-[Node.js-specific functions](#nodejs-specific-functions) may fail to import.
-This can affect Next.js projects;
-see [issue #2370](https://github.com/Borewit/music-metadata/issues/2370) for a workaround.
+With TypeScript's [`"bundler"` module resolution](https://www.typescriptlang.org/tsconfig/#moduleResolution),
+the package root resolves to the cross-platform API by default. In server-side code,
+import Node.js-specific functions from `music-metadata/node`:
+
+```ts
+import { parseFile, updateFile } from 'music-metadata/node';
+```
+
+For browser code, keep importing cross-platform functions such as `parseBlob` and
+`updateBuffer` from `music-metadata`.
 
 ## Licence
 
