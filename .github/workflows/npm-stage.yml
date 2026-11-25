@@ -87,6 +87,15 @@ jobs:
         # Already tested and compiled above; do not run the redundant prepublishOnly build.
         run: npm stage publish --ignore-scripts --access public --provenance --registry=https://registry.npmjs.org
 
+      - name: Stage summary
+        if: ${{ success() }}
+        run: |
+          {
+            echo '### npm staging'
+            echo ''
+            echo 'Review and approve the package in [staged packages](https://www.npmjs.com/settings/borewit/staged-packages).'
+          } >> "$GITHUB_STEP_SUMMARY"
+
       - name: Push release commit and tag atomically
         # Staging succeeded; public npm availability still requires maintainer approval.
         if: ${{ success() && steps.stage.outcome == 'success' }}
