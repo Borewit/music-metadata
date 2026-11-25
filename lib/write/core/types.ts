@@ -266,7 +266,7 @@ export interface WriteOptions {
    */
   atomic?: boolean;
   /**
-   * Keep a backup of the original file. Defaults to `false`.
+   * Keep a backup before changing the original file. Defaults to `false`.
    */
   backup?: boolean;
   /**
@@ -282,11 +282,11 @@ export interface WriteOptions {
 export interface WriteResult {
   /** Container format that was written. */
   format: 'flac' | 'mp3' | 'aac' | 'wav' | 'mp4' | 'ogg' | 'ape' | 'wv' | 'mpc' | 'asf';
-  /** Total number of bytes in the resulting file. */
+  /** Bytes written (or planned for a dry run). Zero when the planned output matches the file. */
   bytesWritten: number;
   /** Padding bytes in the resulting metadata section. */
   paddingBytes: number;
-  /** Whether an atomic rename was performed. */
+  /** Whether an atomic rename was performed or planned for a dry run. */
   atomic: boolean;
 }
 
