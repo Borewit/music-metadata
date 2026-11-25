@@ -12,6 +12,14 @@ import { TokenizerSource } from '../lib/write/core/source.shared.js';
 
 const original = Buffer.from([255, 251, 144, 196, ...new Uint8Array(413)]);
 
+function mockDestinationOwnership(target: string, ownership: { uid?: number; gid?: number; mode?: number }) {
+  const stat = fs.stat.bind(fs);
+  vi.spyOn(fs, 'stat').mockImplementation(async (...args) => {
+    const result = await stat(...args);
+    return args[0] === target ? Object.assign(result, ownership) : result;
+  });
+}
+
 // Real files and real partial writes: only the selected operation is substituted.
 describe('atomic write failure safety', () => {
   for (const failure of [
@@ -19,8 +27,10 @@ describe('atomic write failure safety', () => {
     'write',
     'zero write',
     'sync',
+    'staged stat',
     'close',
     'chmod',
+    'chown',
     'backup',
     'backup ENOENT',
     'release',
@@ -83,6 +93,9 @@ describe('atomic write failure safety', () => {
         if (failure === 'sync') {
           vi.spyOn(handle, 'sync').mockRejectedValue(injected);
         }
+        if (failure === 'staged stat' && args[1] === 'wx') {
+          vi.spyOn(handle, 'stat').mockRejectedValue(injected);
+        }
         vi.spyOn(handle, 'close').mockImplementation(async () => {
           closes++;
           if (failure === 'close' && closes === 1) {
@@ -93,6 +106,11 @@ describe('atomic write failure safety', () => {
         });
         return handle;
       });
+      if (failure === 'chown') {
+        const { uid } = await fs.stat(target);
+        mockDestinationOwnership(await fs.realpath(target), { uid: uid + 1 });
+        vi.spyOn(fs, 'chown').mockRejectedValue(injected);
+      }
       if (failure === 'chmod') {
         vi.spyOn(fs, 'chmod').mockRejectedValue(injected);
       }
@@ -140,6 +158,105 @@ describe('atomic write failure safety', () => {
       }
     });
   }
+
+  it.each(['matching', 'uid', 'gid', 'uid and gid'] as const)(
+    'only changes staged ownership when needed: %s',
+    async difference => {
+      const directory = await fs.mkdtemp(path.join(tmpdir(), 'atomic-ownership-check-'));
+      const target = path.join(directory, 'audio.mp3');
+      await fs.writeFile(target, original);
+      const { uid, gid } = await fs.stat(target);
+      const wanted = {
+        uid: uid + (difference.includes('uid') ? 1 : 0),
+        gid: gid + (difference.includes('gid') ? 1 : 0)
+      };
+      mockDestinationOwnership(await fs.realpath(target), wanted);
+      const chown = vi.spyOn(fs, 'chown').mockResolvedValue(undefined);
+      try {
+        await updateFile(target, { title: 'Ownership check' });
+        expect(chown).toHaveBeenCalledTimes(difference === 'matching' ? 0 : 1);
+        if (difference !== 'matching') {
+          expect(chown).toHaveBeenCalledWith(expect.any(String), wanted.uid, wanted.gid);
+        }
+        const output = await fs.readFile(target);
+        expect((await parseBuffer(output)).common.title).toBe('Ownership check');
+        expect(output.subarray(-original.length)).toEqual(original);
+        expect(await fs.readdir(directory)).toEqual(['audio.mp3']);
+      } finally {
+        vi.restoreAllMocks();
+        await fs.rm(directory, { recursive: true, force: true });
+      }
+    }
+  );
+
+  it.each([
+    { field: 'uid', mode: 0o600 },
+    { field: 'gid', mode: 0o640 },
+    { field: 'gid', mode: 0o644 }
+  ] as const)(
+    'keeps the original file when denied chown cannot safely restore $field at mode $mode',
+    async ({ field, mode }) => {
+      const directory = await fs.mkdtemp(path.join(tmpdir(), 'atomic-ownership-denied-'));
+      const target = path.join(directory, 'audio.mp3');
+      try {
+        await fs.writeFile(target, original);
+        const before = await fs.stat(target);
+        mockDestinationOwnership(await fs.realpath(target), {
+          [field]: before[field] + 1,
+          mode: (before.mode & ~0o7777) | mode
+        });
+        const denied = Object.assign(new Error('Ownership denied'), { code: 'EPERM' });
+        const chown = vi.spyOn(fs, 'chown').mockRejectedValue(denied);
+
+        await expect(updateFile(target, { title: 'Denied ownership' }, { backup: true })).rejects.toMatchObject({
+          cause: denied
+        });
+        expect(chown).toHaveBeenCalledTimes(1);
+        vi.restoreAllMocks();
+        expect(await fs.readFile(target)).toEqual(original);
+        const after = await fs.stat(target);
+        expect({ ino: after.ino, uid: after.uid, gid: after.gid, mode: after.mode }).toEqual({
+          ino: before.ino,
+          uid: before.uid,
+          gid: before.gid,
+          mode: before.mode
+        });
+        expect(await fs.readdir(directory)).toEqual(['audio.mp3']);
+      } finally {
+        vi.restoreAllMocks();
+        await fs.rm(directory, { recursive: true, force: true });
+      }
+    }
+  );
+
+  it.each(['EPERM', 'EACCES', 'ENOSYS', 'ENOTSUP', 'EOPNOTSUPP'])(
+    'commits with the staged ownership when chown reports %s',
+    async code => {
+      const directory = await fs.mkdtemp(path.join(tmpdir(), 'atomic-ownership-'));
+      const target = path.join(directory, 'audio.mp3');
+      await fs.writeFile(target, original);
+      await fs.chmod(target, 0o600);
+      const { gid, mode } = await fs.stat(target);
+      mockDestinationOwnership(await fs.realpath(target), { gid: gid + 1, mode: (mode & ~0o7777) | 0o600 });
+      const chown = vi
+        .spyOn(fs, 'chown')
+        .mockRejectedValue(Object.assign(new Error('Ownership unavailable'), { code }));
+      try {
+        await updateFile(target, { title: 'Shared folder' }, { backup: true });
+        expect(chown).toHaveBeenCalledTimes(1);
+        const output = await fs.readFile(target);
+        expect(output.subarray(-original.length)).toEqual(original);
+        expect((await parseBuffer(output)).common.title).toBe('Shared folder');
+        vi.restoreAllMocks();
+        expect((await fs.stat(target)).mode & 0o7777).toBe(mode & 0o7777);
+        expect(await fs.readFile(`${target}.bak`)).toEqual(original);
+        expect((await fs.readdir(directory)).sort()).toEqual(['audio.mp3', 'audio.mp3.bak']);
+      } finally {
+        vi.restoreAllMocks();
+        await fs.rm(directory, { recursive: true, force: true });
+      }
+    }
+  );
 
   it('commits without a backup when only the backup source stat reports ENOENT', async () => {
     const directory = await fs.mkdtemp(path.join(tmpdir(), 'atomic-backup-stat-'));
