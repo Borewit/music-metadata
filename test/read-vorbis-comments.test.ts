@@ -1,11 +1,5 @@
 import { rejects } from 'node:assert/strict';
 import { runInNewContext } from 'node:vm';
-import {
-  DEFAULT_MAX_COMMENT_COUNT,
-  parseVorbisComment,
-  VorbisDecoder as StructuralVorbisDecoder,
-  VorbisCommentError
-} from 'music-metadata/tokens/vorbis';
 import { fromBuffer } from 'strtok3';
 import { assert, vi } from 'vitest';
 import { decodeBase64 } from '../lib/common/Base64.js';
@@ -18,6 +12,12 @@ import { SpeexStream } from '../lib/ogg/speex/SpeexStream.js';
 import { VorbisPictureToken } from '../lib/ogg/vorbis/Vorbis.js';
 import { VorbisDecoder } from '../lib/ogg/vorbis/VorbisDecoder.js';
 import { VorbisStream } from '../lib/ogg/vorbis/VorbisStream.js';
+import {
+  DEFAULT_MAX_COMMENT_COUNT,
+  parseVorbisComment,
+  VorbisDecoder as StructuralVorbisDecoder,
+  VorbisCommentError
+} from '../lib/tokens/vorbis.js';
 import type { IOptions } from '../lib/type.js';
 
 function uint32(value: number): Buffer {

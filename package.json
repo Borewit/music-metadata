@@ -23,11 +23,7 @@
       "node": "./lib/index.js",
       "default": "./lib/core.js"
     },
-    "./node": "./lib/index.js",
-    "./tokens": "./lib/tokens/index.js",
-    "./tokens/flac": "./lib/tokens/flac.js",
-    "./tokens/id3v2": "./lib/tokens/id3v2.js",
-    "./tokens/vorbis": "./lib/tokens/vorbis.js"
+    "./node": "./lib/index.js"
   },
   "types": "lib/index.d.ts",
   "files": [
