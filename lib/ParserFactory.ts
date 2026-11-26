@@ -123,12 +123,13 @@ export class ParserFactory {
         const header = buf.subarray(0, bytesRead);
         let guessedType = detectMediaType(header);
         if (isRandomAccessTokenizer(tokenizer)) {
-          // While the ID3v2 tags run past the probe, look at what follows them, as the writer detection does.
+          // Look past the leading ID3v2 tags, as the writer detection does; a tag can end close to the
+          // probe end and leave only part of the next signature or ID3 header.
           let offset = 0;
           let window = header;
           while (guessedType === 'mpeg') {
             const id3Length = getLeadingId3v2Length(window);
-            if (id3Length === 0 || id3Length < window.length) {
+            if (id3Length === 0) {
               break;
             }
             offset += id3Length;

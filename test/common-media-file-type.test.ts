@@ -224,6 +224,26 @@ describe('Local media signature detection', () => {
     expect((await parseBuffer(input)).format.container).toBe('FLAC');
   });
 
+  it('probes again when a complete tag leaves only part of the signature in the window', async () => {
+    const padding = 8192;
+    // The second probe holds the whole 4098 byte second tag and only "fL" of "fLaC".
+    const second = 4088;
+    const input = makeFlac({
+      id3Prefix: Buffer.concat([id3(padding), new Uint8Array(padding), id3(second), new Uint8Array(second)])
+    });
+    expect((await parseBuffer(input)).format.container).toBe('FLAC');
+  });
+
+  it('probes again when the next ID3 header is split across the probe boundary', async () => {
+    // A 4095 byte tag leaves only 5 bytes of the next 10 byte header in the window.
+    const first = 4085;
+    const padding = 8192;
+    const input = makeFlac({
+      id3Prefix: Buffer.concat([id3(first), new Uint8Array(first), id3(padding), new Uint8Array(padding)])
+    });
+    expect((await parseBuffer(input)).format.container).toBe('FLAC');
+  });
+
   it('parses FLAC after an ID3v2.4 tag with a footer', async () => {
     const padding = 8192;
     const input = makeFlac({ id3Prefix: Buffer.concat([id3(padding, true), new Uint8Array(padding + 10)]) });
