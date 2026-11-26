@@ -132,7 +132,7 @@ export async function parseBuffer(
  */
 export function parseFromTokenizer(tokenizer: ITokenizer, options?: IOptions): Promise<IAudioMetadata> {
   const parserFactory = new ParserFactory();
-  return parserFactory.parse(tokenizer, undefined, options);
+  return parserFactory.parse(tokenizer, options);
 }
 
 /**

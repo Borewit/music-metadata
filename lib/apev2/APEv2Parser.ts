@@ -5,6 +5,7 @@ import * as strtok3 from 'strtok3';
 import { StringType } from 'token-types';
 import { getMaxMetadataEntries, getTokenizerOptions, readBuffer } from '../common/Allocation.js';
 import { BasicParser } from '../common/BasicParser.js';
+import { apeTagPreamble } from '../common/MediaFileType.js';
 import type { INativeMetadataCollector } from '../common/MetadataCollector.js';
 import * as util from '../common/Util.js';
 import { makeUnexpectedFileContentError } from '../ParseError.js';
@@ -30,8 +31,6 @@ interface IApeInfo {
   header?: IHeader;
   footer?: IFooter;
 }
-
-const preamble = 'APETAGEX';
 
 export class ApeContentError extends makeUnexpectedFileContentError('APEv2') {}
 
@@ -94,7 +93,7 @@ export class APEv2Parser extends BasicParser {
     options: IOptions
   ): Promise<void> {
     const footer = TagFooter.get(buffer, buffer.length - TagFooter.len);
-    if (footer.ID !== preamble) {
+    if (footer.ID !== apeTagPreamble) {
       throw new ApeContentError('Unexpected APEv2 Footer ID preamble value');
     }
     const apeParser = new APEv2Parser(metadata, strtok3.fromBuffer(buffer, getTokenizerOptions(options)), options);
@@ -113,7 +112,7 @@ export class APEv2Parser extends BasicParser {
     }
 
     const footer = await this.tokenizer.peekToken<IFooter>(TagFooter);
-    if (footer.ID === preamble) {
+    if (footer.ID === apeTagPreamble) {
       await this.tokenizer.ignore(TagFooter.len);
       return this.parseTags(footer);
     }
@@ -271,5 +270,44 @@ export class APEv2Parser extends BasicParser {
         this.ape.descriptor.apeFrameDataBytes +
         this.ape.descriptor.terminatingDataBytes
     };
+  }
+}
+
+export class APEv2TagParser extends APEv2Parser {
+  public override async parse(): Promise<void> {
+    const header = await this.tokenizer.readToken(TagFooter);
+    if (
+      header.ID !== apeTagPreamble ||
+      header.version !== 2000 ||
+      !header.flags.isHeader ||
+      header.size < TagFooter.len
+    ) {
+      throw new ApeContentError('Invalid leading APEv2 tag header');
+    }
+    const itemsEnd = this.tokenizer.position + header.size - TagFooter.len;
+    const fileSize = this.tokenizer.fileInfo.size;
+    if (fileSize !== undefined && itemsEnd > fileSize) {
+      throw new ApeContentError('Leading APEv2 tag exceeds file size');
+    }
+    await this.parseTags(header);
+    const padding = itemsEnd - this.tokenizer.position;
+    if (padding > 0 && (await this.tokenizer.ignore(padding)) !== padding) {
+      throw new ApeContentError('Truncated leading APEv2 tag');
+    }
+
+    // Writers disagree on the footer flag. Consume a matching footer when present.
+    const footerBytes = new Uint8Array(TagFooter.len);
+    if ((await this.tokenizer.peekBuffer(footerBytes, { mayBeLess: true })) === TagFooter.len) {
+      const footer = TagFooter.get(footerBytes, 0);
+      if (
+        footer.ID === header.ID &&
+        !footer.flags.isHeader &&
+        footer.version === header.version &&
+        footer.size === header.size &&
+        footer.fields === header.fields
+      ) {
+        await this.tokenizer.ignore(TagFooter.len);
+      }
+    }
   }
 }

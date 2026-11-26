@@ -26,19 +26,12 @@ export async function parseFile(filePath: string, options: IOptions = {}): Promi
   const parserFactory = new ParserFactory();
 
   try {
-    const parserLoader = parserFactory.findLoaderForExtension(filePath);
-    if (!parserLoader) {
-      debug('Parser could not be determined by file extension');
+    return await parserFactory.parse(fileTokenizer, options);
+  } catch (error: unknown) {
+    if (error instanceof CouldNotDetermineFileTypeError || error instanceof UnsupportedFileTypeError) {
+      error.message += `: ${filePath}`;
     }
-
-    try {
-      return await parserFactory.parse(fileTokenizer, parserLoader, options);
-    } catch (error: unknown) {
-      if (error instanceof CouldNotDetermineFileTypeError || error instanceof UnsupportedFileTypeError) {
-        error.message += `: ${filePath}`;
-      }
-      throw error;
-    }
+    throw error;
   } finally {
     await fileTokenizer.close();
   }

@@ -254,12 +254,11 @@ parseStream(stream: Readable, fileInfo?: IFileInfo | string, options?: IOptions)
 
   - `mimeType`: A string representing the [MIME-type](https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types) (e.g., `audio/mpeg`).
 
-    If provided, it is assumed the streamed file content is to be the MIME-type.
-    If not provided, the parser will attempt to determine the format based on the content of the stream.
+    The parser identifies the format from the stream content. If the signature is inconclusive, it tries the MIME type and then the filename extension.
 
   - `size`: The total size of the audio stream in bytes (useful for streams with a known length).
 
-  - `path`: A string representing the file path or filename, which can also assist in determining the format.
+  - `path`: A string representing the file path or filename.
 
 - `options`: [`IOptions`](#ioptions-interface) (optional)
 
@@ -316,12 +315,11 @@ parseWebStream(webStream: ReadableStream<Uint8Array>, fileInfo?: IFileInfo | str
 
   - `mimeType`: A string representing the [MIME-type](https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types) (e.g., `audio/mpeg`).
 
-    If provided, it is assumed the streamed file content is to be the MIME-type.
-    If not provided, the parser will attempt to determine the format based on the content of the stream.
+    The parser identifies the format from the stream content. If the signature is inconclusive, it tries the MIME type and then the filename extension.
 
   - `size`: The total size of the audio stream in bytes (useful for streams with a known length).
 
-  - `path`: A string representing the file path or filename, which can also assist in determining the format.
+  - `path`: A string representing the file path or filename.
 
 - `options`: [`IOptions`](#ioptions-interface) (optional)
 
@@ -644,7 +642,7 @@ See [Support for audio file types](#support-for-audio-file-types) for the suppor
   Must be a positive safe integer.
   Parsing rejects payloads above this limit before allocating them.
   The parser configures this limit once on its `strtok3` tokenizers, including tokenizers for embedded tags.
-  Media format detection inspects at most 4100 bytes, bounded by this limit; cover art MIME-type detection inspects the existing bytes without copying the image.
+  Reader format detection probes up to 16 bytes at a time, bounded by this limit. After a leading ID3v2 tag, the reader scans extra zero bytes with a fixed 2 KiB buffer before detecting the next tag or audio container. Cover art MIME-type detection inspects the available artwork bytes.
   Oversized tokenizer allocations or stream lookahead reject with `strtok3.BufferSizeError`.
   When using [`parseFromTokenizer()`](#parsefromtokenizer-function), also configure `maxBufferSize` on the supplied tokenizer at creation.
   Increase it for files with unusually large metadata or cover art, or lower it for constrained environments.

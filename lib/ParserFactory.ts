@@ -3,23 +3,24 @@ import initDebug from 'debug';
 import { type MediaType, parse as mimeTypeParse } from 'media-typer';
 import { type ITokenizer, isRandomAccessTokenizer } from 'strtok3';
 import { aiffParserLoader } from './aiff/AiffLoader.js';
-import { apeParserLoader } from './apev2/Apev2Loader.js';
+import { apeParserLoader, apeTagLoader } from './apev2/Apev2Loader.js';
 import { asfParserLoader } from './asf/AsfLoader.js';
 import { cafParserLoader } from './caf/CafLoader.js';
 import { getMaxChapterCount, getMaxMemoryAllocation, getMaxMetadataEntries } from './common/Allocation.js';
-import { detectImageType, detectMediaType, mediaTypeProbeLength } from './common/MediaFileType.js';
+import { detectMediaType, skipPostId3Zeros } from './common/MediaFileType.js';
 import { type INativeMetadataCollector, MetadataCollector } from './common/MetadataCollector.js';
 import { createAudioTrackInfo, finalizeContainerInfo } from './common/TrackInfo.js';
 import { scanAppendingHeaders } from './core.js';
 import { dsdiffParserLoader } from './dsdiff/DsdiffLoader.js';
 import { dsfParserLoader } from './dsf/DsfLoader.js';
 import { flacParserLoader } from './flac/FlacLoader.js';
+import { id3v2TagLoader } from './id3v2/ID3v2Loader.js';
 import { matroskaParserLoader } from './matroska/MatroskaLoader.js';
 import { mp4ParserLoader } from './mp4/Mp4Loader.js';
 import { mpegParserLoader } from './mpeg/MpegLoader.js';
 import { musepackParserLoader } from './musepack/MusepackLoader.js';
 import { oggParserLoader } from './ogg/OggLoader.js';
-import { CouldNotDetermineFileTypeError, UnsupportedFileTypeError } from './ParseError.js';
+import { CouldNotDetermineFileTypeError } from './ParseError.js';
 import { type IAudioMetadata, type IOptions, type ParserType, TrackType } from './type.js';
 import { riffParserLoader } from './wav/WaveLoader.js';
 import { wavpackParserLoader } from './wavpack/WavPackLoader.js';
@@ -35,6 +36,7 @@ export interface IParserLoader {
   mimeTypes: string[];
 
   parserType: ParserType;
+  leadingHeader?: boolean;
 
   /**
    * Lazy load the parser implementation class.
@@ -71,6 +73,8 @@ export class ParserFactory {
 
   constructor() {
     [
+      id3v2TagLoader,
+      apeTagLoader,
       flacParserLoader,
       mpegParserLoader,
       apeParserLoader,
@@ -94,59 +98,37 @@ export class ParserFactory {
     this.parsers.push(parser);
   }
 
-  async parse(
-    tokenizer: ITokenizer,
-    parserLoader: IParserLoader | undefined,
-    opts: IOptions = {}
-  ): Promise<IAudioMetadata> {
+  async parse(tokenizer: ITokenizer, opts: IOptions = {}): Promise<IAudioMetadata> {
     const maxBufferSize = getMaxMemoryAllocation(opts);
     getMaxMetadataEntries(opts);
     getMaxChapterCount(opts);
-    if (!parserLoader) {
-      if (tokenizer.fileInfo.mimeType) {
-        parserLoader = this.findLoaderForContentType(tokenizer.fileInfo.mimeType);
-      }
-      if (!parserLoader && tokenizer.fileInfo.path) {
-        parserLoader = this.findLoaderForExtension(tokenizer.fileInfo.path);
-      }
-      if (!parserLoader) {
-        // Parser could not be determined on MIME-type or extension
-        debug('Guess parser on content...');
-        const buf = new Uint8Array(Math.min(mediaTypeProbeLength, maxBufferSize));
-        const bytesRead = await tokenizer.peekBuffer(buf, { mayBeLess: true });
-
-        const header = buf.subarray(0, bytesRead);
-        const guessedType = detectMediaType(header);
-        if (!guessedType) {
-          const imageMimeType = detectImageType(header);
-          if (imageMimeType) {
-            throw new UnsupportedFileTypeError(`Guessed MIME-type not supported: ${imageMimeType}`);
-          }
-          throw new CouldNotDetermineFileTypeError('Failed to determine audio format');
-        }
-        debug(`Guessed parser type is ${guessedType}`);
-        // MPEG audio and ADTS AAC share one parser implementation.
-        const parserType = guessedType === 'adts' ? 'mpeg' : guessedType;
-        parserLoader = this.parsers.find(parser => parser.parserType === parserType);
-        if (!parserLoader) {
-          throw new UnsupportedFileTypeError(`Guessed parser type not supported: ${guessedType}`);
-        }
-      }
-    }
-    // Ogg reads its own packet metadata and never consumes appended ID3/APEv2
-    // tags. Select the parser first, including when the format is sniffed, to
-    // avoid two unrelated tail reads for Ogg files.
-    if (parserLoader.parserType !== 'ogg' && isRandomAccessTokenizer(tokenizer)) {
-      debug('tokenizer supports random-access, scanning for appending headers');
-      await scanAppendingHeaders(tokenizer, opts);
-    }
-    // Parser found, execute parser
-    debug(`Loading ${parserLoader.parserType} parser...`);
     const metadata = new MetadataCollector(opts);
-    const ParserImpl = await parserLoader.load();
-    const parser = new ParserImpl(metadata, tokenizer, opts);
-    debug(`Parser ${parserLoader.parserType} loaded`);
-    await parser.parse();
+    let parsedHeader = false;
+    while (true) {
+      const detected = await detectMediaType(tokenizer, maxBufferSize);
+      if (!detected && parsedHeader) {
+        break;
+      }
+      const loader = detected?.type
+        ? this.findLoaderForParserType(detected.type)
+        : this.findFallbackLoader(tokenizer, detected?.fallbackType);
+      if (!loader) {
+        throw new CouldNotDetermineFileTypeError('Failed to determine audio format');
+      }
+
+      if (!loader.leadingHeader && loader.parserType !== 'ogg' && isRandomAccessTokenizer(tokenizer)) {
+        await scanAppendingHeaders(tokenizer, opts);
+      }
+      const Parser = await loader.load();
+      await new Parser(metadata, tokenizer, opts).parse();
+      if (!loader.leadingHeader) {
+        break;
+      }
+      parsedHeader = true;
+      if (loader.parserType === 'id3v2') {
+        await skipPostId3Zeros(tokenizer);
+      }
+    }
     // Audio-only parsers describe their single stream through the format fields.
     // Container parsers supply their own tracks; never copy aggregate fields to them.
     if (metadata.format.trackInfo.length === 0 && metadata.format.hasAudio === true) {
@@ -162,6 +144,21 @@ export class ParserFactory {
     }
     finalizeContainerInfo(metadata, tokenizer.fileInfo.size);
     return metadata.toCommonMetadata();
+  }
+
+  private findFallbackLoader(tokenizer: ITokenizer, fallbackType?: ParserType): IParserLoader | undefined {
+    const { mimeType, path } = tokenizer.fileInfo;
+    const hint = (mimeType && this.findLoaderForContentType(mimeType)) || this.findLoaderForExtension(path);
+    if (hint) {
+      return hint;
+    }
+    // Without a hint, also allow an MPEG frame after a short run of junk bytes.
+    return fallbackType && this.findLoaderForParserType(fallbackType);
+  }
+
+  private findLoaderForParserType(type: IParserLoader['parserType']): IParserLoader | undefined {
+    const parserType = type === 'adts' ? 'mpeg' : type;
+    return this.parsers.find(loader => loader.parserType === parserType);
   }
 
   /**
