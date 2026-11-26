@@ -8,3 +8,13 @@ export const apeParserLoader: IParserLoader = {
     return (await import('./APEv2Parser.js')).APEv2Parser;
   }
 };
+
+export const apeTagLoader: IParserLoader = {
+  parserType: 'ape-tag',
+  leadingHeader: true,
+  extensions: [],
+  mimeTypes: [],
+  async load() {
+    return (await import('./APEv2Parser.js')).APEv2TagParser;
+  }
+};

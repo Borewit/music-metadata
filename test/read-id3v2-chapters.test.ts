@@ -35,7 +35,7 @@ describe('ID3v2 chapter boundaries', () => {
       const tokenizer = fromBuffer(tag);
       const metadata = new MetadataCollector(options);
       try {
-        await new ID3v2Parser().parse(metadata, tokenizer, options);
+        await new ID3v2Parser(metadata, tokenizer, options).parse();
         return metadata;
       } finally {
         await tokenizer.close();
