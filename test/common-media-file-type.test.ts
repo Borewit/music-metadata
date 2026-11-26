@@ -3,7 +3,7 @@ import { fromBuffer } from 'strtok3';
 import { describe, expect, it, vi } from 'vitest';
 import { detectImageType, detectMediaType, getId3v2HeaderLength } from '../lib/common/MediaFileType.js';
 import { MetadataCollector } from '../lib/common/MetadataCollector.js';
-import { parseBuffer, parseStream } from '../lib/index.js';
+import { parseBlob, parseBuffer, parseStream } from '../lib/index.js';
 import { ParserFactory } from '../lib/ParserFactory.js';
 import type { ParserType } from '../lib/type.js';
 import { type ContainerFormat, detectFormat } from '../lib/write/core/detect.js';
@@ -208,6 +208,13 @@ describe('Local media signature detection', () => {
     const input = makeFlac({ id3Prefix: id3() });
     expect((await parseBuffer(input)).format.container).toBe('FLAC');
     expect((await parseStream(Readable.from([input], { objectMode: false }))).format.container).toBe('FLAC');
+  });
+
+  it('looks past an ID3 tag larger than the probe window with random access', async () => {
+    const padding = 8192; // Common writer padding, larger than the 4100 byte probe
+    const input = makeFlac({ id3Prefix: Buffer.concat([id3(padding), new Uint8Array(padding)]) });
+    expect((await parseBuffer(input)).format.container).toBe('FLAC');
+    expect((await parseBlob(new Blob([Uint8Array.from(input)]))).format.container).toBe('FLAC');
   });
 });
 

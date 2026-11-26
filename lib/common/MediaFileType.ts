@@ -28,6 +28,19 @@ export function getId3v2HeaderLength(data: Uint8Array): number | undefined {
   return 10 + size + (data[3] === 4 && (data[5] & 0x10) !== 0 ? 10 : 0);
 }
 
+/** Offset past the leading ID3v2 tags; exceeds the data length when the last tag is incomplete. */
+export function getLeadingId3v2Length(data: Uint8Array): number {
+  let offset = 0;
+  while (offset < data.length) {
+    const length = getId3v2HeaderLength(data.subarray(offset));
+    if (length === undefined) {
+      break;
+    }
+    offset += length;
+  }
+  return offset;
+}
+
 /** Inspect existing bytes only: no payload copies, decompression, or size-driven allocations. */
 export function detectImageType(data: Uint8Array): string | undefined {
   if (matches(data, [0xff, 0xd8, 0xff])) {

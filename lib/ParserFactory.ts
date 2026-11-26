@@ -7,7 +7,12 @@ import { apeParserLoader } from './apev2/Apev2Loader.js';
 import { asfParserLoader } from './asf/AsfLoader.js';
 import { cafParserLoader } from './caf/CafLoader.js';
 import { getMaxChapterCount, getMaxMemoryAllocation, getMaxMetadataEntries } from './common/Allocation.js';
-import { detectImageType, detectMediaType, mediaTypeProbeLength } from './common/MediaFileType.js';
+import {
+  detectImageType,
+  detectMediaType,
+  getLeadingId3v2Length,
+  mediaTypeProbeLength
+} from './common/MediaFileType.js';
 import { type INativeMetadataCollector, MetadataCollector } from './common/MetadataCollector.js';
 import { createAudioTrackInfo, finalizeContainerInfo } from './common/TrackInfo.js';
 import { scanAppendingHeaders } from './core.js';
@@ -116,7 +121,13 @@ export class ParserFactory {
         const bytesRead = await tokenizer.peekBuffer(buf, { mayBeLess: true });
 
         const header = buf.subarray(0, bytesRead);
-        const guessedType = detectMediaType(header);
+        let guessedType = detectMediaType(header);
+        const id3Length = getLeadingId3v2Length(header);
+        if (guessedType === 'mpeg' && id3Length >= bytesRead && isRandomAccessTokenizer(tokenizer)) {
+          // The ID3v2 tag runs past the probe; look at what follows it, as the writer detection does.
+          const length = await tokenizer.peekBuffer(buf, { position: tokenizer.position + id3Length, mayBeLess: true });
+          guessedType = detectMediaType(buf.subarray(0, length)) ?? 'mpeg';
+        }
         if (!guessedType) {
           const imageMimeType = detectImageType(header);
           if (imageMimeType) {
