@@ -216,6 +216,21 @@ describe('Local media signature detection', () => {
     expect((await parseBuffer(input)).format.container).toBe('FLAC');
     expect((await parseBlob(new Blob([Uint8Array.from(input)]))).format.container).toBe('FLAC');
   });
+
+  it('looks past consecutive ID3 tags each larger than the probe window', async () => {
+    const padding = 8192;
+    const tag = Buffer.concat([id3(padding), new Uint8Array(padding)]);
+    const input = makeFlac({ id3Prefix: Buffer.concat([tag, tag]) });
+    expect((await parseBuffer(input)).format.container).toBe('FLAC');
+  });
+
+  it('parses FLAC after an ID3v2.4 tag with a footer', async () => {
+    const padding = 8192;
+    const input = makeFlac({ id3Prefix: Buffer.concat([id3(padding, true), new Uint8Array(padding + 10)]) });
+    expect((await parseBuffer(input)).format.container).toBe('FLAC');
+    const small = makeFlac({ id3Prefix: Buffer.concat([id3(0, true), new Uint8Array(10)]) });
+    expect((await parseBuffer(small)).format.container).toBe('FLAC');
+  });
 });
 
 describe('Local writer container detection', () => {

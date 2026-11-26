@@ -118,6 +118,9 @@ export class ID3v2Parser {
     this.headerType = `ID3v2.${id3Header.version.major}` as TagType;
 
     await this.parseId3Data(id3Header.size);
+    if (id3Header.version.major === 4 && id3Header.flags.footer) {
+      await this.tokenizer.ignore(10); // The footer repeats the header
+    }
 
     // Post process
     const chapters = this.mapId3v2Chapters(this.metadata.native[this.headerType]);

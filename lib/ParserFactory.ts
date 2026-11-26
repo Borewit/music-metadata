@@ -122,11 +122,20 @@ export class ParserFactory {
 
         const header = buf.subarray(0, bytesRead);
         let guessedType = detectMediaType(header);
-        const id3Length = getLeadingId3v2Length(header);
-        if (guessedType === 'mpeg' && id3Length >= bytesRead && isRandomAccessTokenizer(tokenizer)) {
-          // The ID3v2 tag runs past the probe; look at what follows it, as the writer detection does.
-          const length = await tokenizer.peekBuffer(buf, { position: tokenizer.position + id3Length, mayBeLess: true });
-          guessedType = detectMediaType(buf.subarray(0, length)) ?? 'mpeg';
+        if (isRandomAccessTokenizer(tokenizer)) {
+          // While the ID3v2 tags run past the probe, look at what follows them, as the writer detection does.
+          let offset = 0;
+          let window = header;
+          while (guessedType === 'mpeg') {
+            const id3Length = getLeadingId3v2Length(window);
+            if (id3Length === 0 || id3Length < window.length) {
+              break;
+            }
+            offset += id3Length;
+            const length = await tokenizer.peekBuffer(buf, { position: tokenizer.position + offset, mayBeLess: true });
+            window = buf.subarray(0, length);
+            guessedType = detectMediaType(window) ?? 'mpeg';
+          }
         }
         if (!guessedType) {
           const imageMimeType = detectImageType(header);
