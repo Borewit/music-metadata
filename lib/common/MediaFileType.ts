@@ -106,7 +106,7 @@ export async function detectMediaType(
   if (type) {
     return { type };
   }
-  const mimeType = detectFixedImageSignature(header);
+  const mimeType = detectImageType(header);
   if (mimeType) {
     throw new UnsupportedFileTypeError(`Guessed MIME-type not supported: ${mimeType}`);
   }
