@@ -1,9 +1,11 @@
+import { readFile } from 'node:fs/promises';
 import { Readable } from 'node:stream';
 import { fromBuffer } from 'strtok3';
 import { describe, expect, it, vi } from 'vitest';
 import { detectImageType, detectMediaSignature, skipPostId3Zeros } from '../lib/common/MediaFileType.js';
 import { MetadataCollector } from '../lib/common/MetadataCollector.js';
 import { parseBlob, parseBuffer, parseStream } from '../lib/index.js';
+import { UnsupportedFileTypeError } from '../lib/ParseError.js';
 import type { ParserType } from '../lib/type.js';
 import { type ContainerFormat, detectFormat } from '../lib/write/core/detect.js';
 import { openSource } from '../lib/write/core/source.js';
@@ -226,6 +228,46 @@ describe('Local media signature detection', () => {
     expect((await parseStream(Readable.from([input], { objectMode: false }))).format.container).toBe('FLAC');
   });
 
+  it('reads MPEG after a leading ID3v2 tag and junk without a format hint', async () => {
+    const input = await readFile(new URL('./samples/mp3/leading-junk-1024.mp3', import.meta.url));
+    const metadata = await parseBuffer(input);
+    expect(metadata.format.container).toBe('MPEG');
+    expect(metadata.common.title).toBe('TagLib parity tone');
+  });
+
+  it('returns previously read metadata when a stream ends inside a leading ID3v2 tag', async () => {
+    const frame = Buffer.concat([bytes('TIT2'), Uint8Array.of(0, 0, 0, 6, 0, 0, 3), bytes('Title')]);
+    const input = Buffer.concat([id3(frame.length), frame, id3(1000), frame]);
+    const metadata = await parseStream(Readable.from([input], { objectMode: false }));
+    expect(metadata.common.title).toBe('Title');
+    expect(metadata.format.container).toBeUndefined();
+  });
+
+  it.each(['avif', 'avis'])('reports the unsupported AVIF MIME type for %s', async brand => {
+    await expect(parseBuffer(ftyp(brand))).rejects.toThrow(UnsupportedFileTypeError);
+    await expect(parseBuffer(ftyp(brand))).rejects.toThrow('Guessed MIME-type not supported: image/avif');
+  });
+
+  it.each([
+    [8192, 8192],
+    [8192, 4088],
+    [4085, 8192]
+  ])('detects FLAC after ID3v2 tags with %i and %i bytes of padding', async (first, second) => {
+    const input = makeFlac({
+      id3Prefix: Buffer.concat([id3(first), Buffer.alloc(first), id3(second), Buffer.alloc(second)])
+    });
+    expect((await parseBuffer(input)).format.container).toBe('FLAC');
+  });
+
+  it('detects MP4 immediately after a leading ID3v2 tag', async () => {
+    const audio = await readFile(new URL('./samples/mp4/aac-faststart.m4a', import.meta.url));
+    const input = Buffer.concat([id3(), audio]);
+    const { format } = await parseBuffer(audio);
+    expect((await parseBuffer(input)).format.container).toBe(format.container);
+    const stream = Readable.from([id3(), audio.subarray(0, 5), audio.subarray(5)], { objectMode: false });
+    expect((await parseStream(stream)).format.container).toBe(format.container);
+  });
+
   it.each([11, 4097])('reads MPEG frames after %i undeclared zero bytes following ID3v2', async count => {
     const frame = Buffer.alloc(417);
     frame.set([0xff, 0xfb, 0x90, 0]);
@@ -297,11 +339,11 @@ describe('Local media signature detection', () => {
     expect(metadata.quality.warnings).toContainEqual({ message: expect.stringContaining('plain 32-bit integer') });
   });
 
-  it('parses FLAC after an ID3v2.4 footer and another leading tag', async () => {
-    const header = id3(0, true);
+  it.each([0, 8192])('parses FLAC after an ID3v2.4 footer with %i bytes of padding', async padding => {
+    const header = id3(padding, true);
     const footer = Buffer.from(header);
     footer.write('3DI');
-    const input = makeFlac({ id3Prefix: Buffer.concat([header, footer, id3()]) });
+    const input = makeFlac({ id3Prefix: Buffer.concat([header, Buffer.alloc(padding), footer, id3()]) });
     expect((await parseStream(Readable.from([input], { objectMode: false }))).format.container).toBe('FLAC');
   });
 

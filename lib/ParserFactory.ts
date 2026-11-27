@@ -1,7 +1,7 @@
 import { parse as parseContentType } from 'content-type';
 import initDebug from 'debug';
 import { type MediaType, parse as mimeTypeParse } from 'media-typer';
-import { type ITokenizer, isRandomAccessTokenizer } from 'strtok3';
+import { EndOfStreamError, type ITokenizer, isRandomAccessTokenizer } from 'strtok3';
 import { aiffParserLoader } from './aiff/AiffLoader.js';
 import { apeParserLoader, apeTagLoader } from './apev2/Apev2Loader.js';
 import { asfParserLoader } from './asf/AsfLoader.js';
@@ -104,14 +104,15 @@ export class ParserFactory {
     getMaxChapterCount(opts);
     const metadata = new MetadataCollector(opts);
     let parsedHeader = false;
+    let parsedId3 = false;
+    let detected = await detectMediaType(tokenizer, maxBufferSize);
     while (true) {
-      const detected = await detectMediaType(tokenizer, maxBufferSize);
       if (!detected && parsedHeader) {
         break;
       }
       const loader = detected?.type
         ? this.findLoaderForParserType(detected.type)
-        : this.findFallbackLoader(tokenizer, detected?.fallbackType);
+        : this.findFallbackLoader(tokenizer, detected?.fallbackType ?? (parsedId3 ? 'mpeg' : undefined));
       if (!loader) {
         throw new CouldNotDetermineFileTypeError('Failed to determine audio format');
       }
@@ -120,13 +121,25 @@ export class ParserFactory {
         await scanAppendingHeaders(tokenizer, opts);
       }
       const Parser = await loader.load();
-      await new Parser(metadata, tokenizer, opts).parse();
+      try {
+        await new Parser(metadata, tokenizer, opts).parse();
+      } catch (error) {
+        if (loader.parserType === 'id3v2' && error instanceof EndOfStreamError) {
+          break;
+        }
+        throw error;
+      }
       if (!loader.leadingHeader) {
         break;
       }
       parsedHeader = true;
+      detected = await detectMediaType(tokenizer, maxBufferSize);
       if (loader.parserType === 'id3v2') {
-        await skipPostId3Zeros(tokenizer);
+        parsedId3 = true;
+        if (detected && !detected.type) {
+          await skipPostId3Zeros(tokenizer);
+          detected = await detectMediaType(tokenizer, maxBufferSize);
+        }
       }
     }
     // Audio-only parsers describe their single stream through the format fields.
@@ -152,7 +165,7 @@ export class ParserFactory {
     if (hint) {
       return hint;
     }
-    // Without a hint, also allow an MPEG frame after a short run of junk bytes.
+    // Use the signature-derived fallback when no format hint matches.
     return fallbackType && this.findLoaderForParserType(fallbackType);
   }
 
