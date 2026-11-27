@@ -1,10 +1,9 @@
-import type { ITokenizer } from 'strtok3';
 import * as Token from 'token-types';
-
 import { getMaxChapterCount, getMaxMetadataEntries, readBuffer } from '../common/Allocation.js';
+import { BasicParser } from '../common/BasicParser.js';
 import type { TagType } from '../common/GenericTagTypes.js';
-import type { INativeMetadataCollector, IWarningCollector } from '../common/MetadataCollector.js';
-import type { AnyTagValue, IChapter, IOptions, ITag } from '../type.js';
+import type { IWarningCollector } from '../common/MetadataCollector.js';
+import type { AnyTagValue, IChapter, ITag } from '../type.js';
 import { getFrameHeaderLength, getId3v24FrameLength, readFrameHeader } from './FrameHeader.js';
 import { type Chapter, FrameParser, Id3v2ContentError, type ITextTag, type TableOfContents } from './FrameParser.js';
 import { ID3v2Header, type ID3v2MajorVersion, type IID3v2header, UINT32SYNCSAFE } from './ID3v2Token.js';
@@ -34,7 +33,7 @@ interface IFrameHeader {
   flags?: IFrameFlags;
 }
 
-export class ID3v2Parser {
+export class ID3v2Parser extends BasicParser {
   public static removeUnsyncBytes(buffer: Uint8Array): Uint8Array {
     let readI = 0;
     let writeI = 0;
@@ -87,18 +86,10 @@ export class ID3v2Parser {
     return tag + (description ? `:${description}` : '');
   }
 
-  private tokenizer: ITokenizer = undefined as unknown as ITokenizer;
-  private id3Header: IID3v2header = undefined as unknown as IID3v2header;
-  private metadata: INativeMetadataCollector = undefined as unknown as INativeMetadataCollector;
+  private id3Header!: IID3v2header;
+  private headerType!: TagType;
 
-  private headerType: TagType = undefined as unknown as TagType;
-  private options: IOptions = undefined as unknown as IOptions;
-
-  public async parse(metadata: INativeMetadataCollector, tokenizer: ITokenizer, options: IOptions): Promise<void> {
-    this.tokenizer = tokenizer;
-    this.metadata = metadata;
-    this.options = options;
-
+  public async parse(): Promise<void> {
     const id3Header = await this.tokenizer.readToken(ID3v2Header);
 
     if (id3Header.fileIdentifier !== 'ID3') {
@@ -118,6 +109,9 @@ export class ID3v2Parser {
     this.headerType = `ID3v2.${id3Header.version.major}` as TagType;
 
     await this.parseId3Data(id3Header.size);
+    if (id3Header.version.major === 4 && id3Header.flags.footer) {
+      await this.tokenizer.ignore(10); // The footer repeats the header
+    }
 
     // Post process
     const chapters = this.mapId3v2Chapters(this.metadata.native[this.headerType]);

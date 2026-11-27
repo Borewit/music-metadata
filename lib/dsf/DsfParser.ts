@@ -1,7 +1,7 @@
 import initDebug from 'debug';
 
 import { AbstractID3Parser } from '../id3v2/AbstractID3Parser.js';
-import { ID3v2Parser } from '../id3v2/ID3v2Parser.js';
+import { parseID3v2 } from '../id3v2/ID3v2Loader.js';
 import { ID3v2Header } from '../id3v2/ID3v2Token.js';
 import { makeUnexpectedFileContentError } from '../ParseError.js';
 import {
@@ -65,7 +65,7 @@ export class DsfParser extends AbstractID3Parser {
 
     await this.tokenizer.ignore(Number(metadataOffset));
 
-    return new ID3v2Parser().parse(this.metadata, this.tokenizer, this.options);
+    return parseID3v2(this.metadata, this.tokenizer, this.options);
   }
 
   private async parseChunks(bytesRemaining: bigint): Promise<void> {

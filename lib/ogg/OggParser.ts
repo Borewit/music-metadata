@@ -8,7 +8,6 @@ import type { INativeMetadataCollector } from '../common/MetadataCollector.js';
 import { createAudioTrackInfo } from '../common/TrackInfo.js';
 import { makeUnexpectedFileContentError } from '../ParseError.js';
 import { type IOptions, TrackType } from '../type.js';
-import { FlacStream } from './flac/FlacStream.js';
 import { crc } from './OggCrc.js';
 import { OggStreamMetadata } from './OggStreamMetadata.js';
 
@@ -114,10 +113,12 @@ class OggStream {
           debug('Set page consumer to Ogg/Theora');
           this.pageConsumer = new TheoraStream(this.metadata, this.options, tokenizer);
           break;
-        case 'FLAC': // Ogg/Theora
-          debug('Set page consumer to Vorbis');
+        case 'FLAC': {
+          debug('Set page consumer to Ogg/FLAC');
+          const { FlacStream } = await import('./flac/FlacStream.js');
           this.pageConsumer = new FlacStream(this.metadata, this.options, tokenizer);
           break;
+        }
         default:
           throw new OggContentError(`Ogg codec not recognized (id=${asciiId}`);
       }

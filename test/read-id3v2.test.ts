@@ -526,7 +526,7 @@ describe('ID3v2', () => {
       const metadata = new MetadataCollector({});
       const tokenizer = fromBuffer(paddingFixture(major, trailing));
       try {
-        await new ID3v2Parser().parse(metadata, tokenizer, {});
+        await new ID3v2Parser(metadata, tokenizer, {}).parse();
         assert.strictEqual(tokenizer.position, tokenizer.fileInfo.size, 'the entire tag is consumed');
         assert.strictEqual(metadata.common.title, 'Synthetic title');
         assert.deepEqual<mm.ITag[]>(metadata.native[`ID3v2.${major}`], [
@@ -622,7 +622,7 @@ describe('ID3v2', () => {
           try {
             await tokenizer.ignore(prefix.length);
             const metadata = new MetadataCollector();
-            await new ID3v2Parser().parse(metadata, tokenizer, {});
+            await new ID3v2Parser(metadata, tokenizer, {}).parse();
             assert.strictEqual(metadata.common.title, title);
             assert.strictEqual(metadata.common.artist, 'Artist');
             assert.strictEqual(tokenizer.position, prefix.length + tagLength);
@@ -644,7 +644,7 @@ describe('ID3v2', () => {
               source === 'buffer' ? fromBuffer(file) : await fromStream(Readable.from([file], { objectMode: false }));
             try {
               const metadata = new MetadataCollector(options);
-              const parse = new ID3v2Parser().parse(metadata, tokenizer, options);
+              const parse = new ID3v2Parser(metadata, tokenizer, options).parse();
               if (belowLimit) {
                 await expect(parse).rejects.toThrowError({
                   asymmetricMatch: (error: Error) =>
@@ -675,7 +675,7 @@ describe('ID3v2', () => {
                   ? fromBuffer(input)
                   : await fromStream(Readable.from([input], { objectMode: false }));
               try {
-                await expect(new ID3v2Parser().parse(new MetadataCollector(), tokenizer, {})).rejects.toThrowError({
+                await expect(new ID3v2Parser(new MetadataCollector(), tokenizer, {}).parse()).rejects.toThrowError({
                   asymmetricMatch: (error: Error) =>
                     error instanceof Id3v2ContentError &&
                     expect

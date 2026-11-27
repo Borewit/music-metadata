@@ -264,7 +264,7 @@ describe('Extract metadata from ID3v2.3 header', () => {
 
     const tokenizer = await strtok.fromFile(filePath);
     try {
-      return await new ID3v2Parser().parse(metadata, tokenizer, {}).then(() => {
+      return await new ID3v2Parser(metadata, tokenizer, {}).parse().then(() => {
         assert.strictEqual(33, metadata.native['ID3v2.3'].length);
 
         const id3v23 = metadata.nativeTyped['ID3v2.3'];

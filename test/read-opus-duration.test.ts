@@ -142,7 +142,7 @@ describe('Opus duration tail lookup', () => {
     it(`does not probe appended ID3/APEv2 tags for Ogg (${JSON.stringify(fileInfo)})`, async () => {
       const tokenizer = fromBuffer(data, { fileInfo });
       const read = vi.spyOn(tokenizer, 'readBuffer');
-      const metadata = await new ParserFactory().parse(tokenizer, undefined, { duration: true });
+      const metadata = await new ParserFactory().parse(tokenizer, { duration: true });
       assert.strictEqual(metadata.format.duration, 48);
       assert.isFalse(
         read.mock.calls.some(([, options]) => options?.position === data.length - 128),
@@ -483,7 +483,7 @@ describe('Opus duration tail lookup', () => {
       const input = Buffer.concat(pages);
       const expected = await parseSequential(input);
       const tokenizer = fromBuffer(input);
-      const actual = await new ParserFactory().parse(tokenizer, undefined, { duration: true });
+      const actual = await new ParserFactory().parse(tokenizer, { duration: true });
       if (fault === 'backwards-granule') {
         assert.strictEqual(tokenizer.position, input.length);
       }

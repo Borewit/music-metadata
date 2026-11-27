@@ -1493,6 +1493,8 @@ export interface IAudioMetadata<T extends object = INativeTagTypeMap> extends IN
  * Corresponds with parser module name
  */
 export type ParserType =
+  | 'id3v2'
+  | 'ape-tag'
   | 'mpeg'
   | 'apev2'
   | 'mp4'
@@ -1513,7 +1515,7 @@ export interface IOptions {
   /**
    * Maximum bytes buffered for a single metadata payload, accumulated Ogg packet, or tokenizer stream lookahead.
    * Defaults to 64 MiB (67108864 bytes). Must be a positive safe integer.
-   * Also caps the media format detection prefix (at most 4100 bytes). Cover art detection does not copy image data.
+   * Also caps the media format detection prefix (at most 16 bytes). Cover art detection does not copy image data.
    * This is not a limit on total process memory or the size of skipped audio/video data.
    */
   maxMemoryAllocation?: number;

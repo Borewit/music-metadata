@@ -1,10 +1,8 @@
 import { buildApeUpdate } from '../apev2/apev2.js';
 import { buildAsfUpdate } from '../asf/asf.js';
 import { buildFlacUpdate } from '../flac/flac.js';
-import { buildId3Update } from '../id3v2/id3v2.js';
 import { buildMp4Update } from '../mp4/mp4.js';
 import { buildOggUpdate } from '../ogg/ogg.js';
-import { buildWavUpdate } from '../wav/wav.js';
 import type { WriteChunk } from './chunks.js';
 import { type ContainerFormat, detectFormat } from './detect.js';
 import { InvalidPatchError, UnsupportedFeatureError, UnsupportedFormatError } from './errors.js';
@@ -33,8 +31,10 @@ export async function buildUpdate(source: ByteSource, patch: TagPatch, options: 
       return { format, ...(await buildApeUpdate(source, patch, options, format)) };
     case 'asf':
       return { format, ...(await buildAsfUpdate(source, patch, options)), stageToFile: true };
-    case 'wav':
+    case 'wav': {
+      const { buildWavUpdate } = await import('../wav/wav.js');
       return { format, ...(await buildWavUpdate(source, patch, options)) };
+    }
     case 'mp4':
       return { format, ...(await buildMp4Update(source, patch, options)), stageToFile: true };
     case 'ogg':
@@ -46,7 +46,7 @@ export async function buildUpdate(source: ByteSource, patch: TagPatch, options: 
   const update =
     format === 'flac'
       ? { ...(await buildFlacUpdate(source, patch, options)), format: 'flac' as const }
-      : await buildId3Update(source, patch, options);
+      : await (await import('../id3v2/id3v2.js')).buildId3Update(source, patch, options);
   return {
     format: update.format,
     chunks: [update.metadata, { source, offset: update.audioOffset, length: update.audioLength }],

@@ -9,7 +9,7 @@ A contributor overview of how music-metadata reads media, maps metadata, and wri
 | `node` | `lib/index.ts` | `parseFile`, `parseStream` (Node streams and files, via `strtok3` `fromFile`/`fromStream`). Also exports `MediaFile`, `updateFile`, `updateBuffer` from the writer. Re-exports everything from `core.ts`. |
 | `default` (browsers, other runtimes) | `lib/core.ts` | `parseBuffer`, `parseBlob`, `parseWebStream`, `parseFromTokenizer`, plus helpers `orderTags`, `ratingToStars`, `selectCover`, `getSupportedMimeTypes`. Re-exports `updateBuffer` (Blob/Uint8Array) from `lib/write/browser.ts`. Its `parseFile`/`parseStream` stubs always throw. |
 
-The input adapters build a `strtok3` tokenizer using `getTokenizerOptions` in [Allocation.ts](../lib/common/Allocation.ts). `parseBuffer`, `parseBlob`, `parseWebStream` and `parseStream` pass it to `parseFromTokenizer`, which delegates to `ParserFactory.parse()`. `parseFile` calls the factory directly, passing a loader if its extension is recognized.
+The input adapters build a `strtok3` tokenizer using `getTokenizerOptions` in [Allocation.ts](../lib/common/Allocation.ts). `parseBuffer`, `parseBlob`, `parseWebStream` and `parseStream` pass it to `parseFromTokenizer`, which delegates to `ParserFactory.parse()`. `parseFile` calls the factory directly with the file tokenizer.
 
 `parseFromTokenizer` accepts a caller-supplied tokenizer. The caller owns its configuration and lifecycle: `maxMemoryAllocation` still bounds parser-owned buffers, but does not set that tokenizer's `maxBufferSize`. File and stream adapters close the tokenizers they create in `finally` blocks.
 
@@ -53,9 +53,9 @@ tags to the destination container’s native representation and copies the audio
 
 ## Parser selection (`lib/ParserFactory.ts`)
 
-1. For random-access tokenizers, `scanAppendingHeaders` (in `core.ts`) looks for trailing ID3v1, Lyrics3 and APEv2 footers first.
-2. `parseFile` supplies a loader when the extension is recognized. If no loader was passed in, it is chosen by MIME type (`tokenizer.fileInfo.mimeType`), then by file extension, then by sniffing the first 4,100 bytes with `file-type`. Failure raises `CouldNotDetermineFileTypeError` or `UnsupportedFileTypeError` (`lib/ParseError.ts`).
-3. 14 loaders are registered: flac, mpeg, apev2, mp4, matroska, riff/wav, ogg, asf, aiff, wavpack, musepack, dsf, dsdiff and caf. Each format loader implements `IParserLoader` (`parserType`, `extensions`, `mimeTypes`, `load()`), and `load()` uses a dynamic `import()` to select the implementation. This defers loading parser implementations except for modules already imported eagerly, including `APEv2Parser` and the ID3v1 and Lyrics3 helpers used by `core.ts` for footer scanning.
+1. Probe up to 16 bytes at the current tokenizer position.
+2. Select the loader from the signature. For inconclusive bytes, try the supplied MIME type, then the filename extension, then look for an MPEG or ADTS sync word after up to ten leading bytes.
+3. Parse leading ID3v2 and APEv2 tags individually and repeat detection after each one. After selecting the audio parser, scan for trailing metadata on random-access inputs except Ogg.
 4. The parser is constructed with a `MetadataCollector`, the tokenizer and the options. `parse()` runs, track info is finalized (`lib/common/TrackInfo.ts`), and `metadata.toCommonMetadata()` is returned.
 
 ## From native tags to common tags

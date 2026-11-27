@@ -3,7 +3,7 @@ import { validateAllocation } from '../common/Allocation.js';
 import type { INativeMetadataCollector } from '../common/MetadataCollector.js';
 import type { IOptions } from '../type.js';
 import { Id3v2ContentError } from './FrameParser.js';
-import { ID3v2Parser } from './ID3v2Parser.js';
+import { parseID3v2 } from './ID3v2Loader.js';
 import { ID3v2Header } from './ID3v2Token.js';
 
 /** Borrow the chunk payload; consume its remainder while leaving container padding to the caller. */
@@ -23,7 +23,7 @@ export async function parseEmbeddedID3v2(
   }
   const embeddedTokenizer = createTokenizerView(tokenizer, size);
   try {
-    await new ID3v2Parser().parse(metadata, embeddedTokenizer, options);
+    await parseID3v2(metadata, embeddedTokenizer, options);
     await embeddedTokenizer.consumeRemainder();
   } catch (error) {
     if (error instanceof TokenizerBoundaryError) {
