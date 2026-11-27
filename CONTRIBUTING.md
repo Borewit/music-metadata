@@ -25,6 +25,14 @@ Existing recommended-rule warnings remain advisory; the explicitly enabled style
 For editor integration, use the Biome extension with this workspace configuration and enable Biome formatting
 and import organization on save. Avoid configuring a second formatter for these TypeScript files.
 
+## Documentation
+
+Write README content as user-facing API and how-to documentation.
+Explain how to accomplish a task with concise examples, required options, and essential caveats.
+Keep detailed field semantics and edge cases in API/type documentation, and reference it rather than duplicating it in the README.
+Integrate additions with existing guidance and avoid repeating information.
+Avoid implementation narratives, test inventories, and changelog-style explanations in the README.
+
 ## Unit tests and fixtures
 
 Add focused unit tests for new behavior and regression tests for bug fixes.

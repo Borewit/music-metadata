@@ -12,38 +12,32 @@
 <img src="image/logo-music-metadata.jpg" width="60%" style="display: block; margin: auto;" alt="logo">
 
 `music-metadata` extracts tags, cover art and audio properties from files, streams,
-buffers and Blobs.
-It provides common field names across formats, plus access to
-native tags.
-It also edits tags and cover art in supported formats without
-re-encoding audio.
+buffers and Blobs in Node.js and browsers. Read common fields or native tags, and
+edit tags and cover art in supported formats without re-encoding audio.
 
 [Features](#features) · [Compatibility](#compatibility) · [Sponsoring](#sponsoring) · [Installation](#installation) · [Reading API](#reading-metadata) · [Parsing options](#ioptions-interface) · [Writing API](#writing-metadata) · [FAQ](#frequently-asked-questions)
 
 ## Features
 
-- **Common and native tags:** Read normalized fields across formats, or access the original tags.
-- **Audio properties:** Read duration, codec, bitrate, sample rate, bit depth and track information.
-- **Flexible input:** Read files, Node.js and web streams, buffers, Blobs and custom tokenizers.
-- **Metadata editing:** Update files in Node.js or return new buffers in Node.js and browsers.
-  See [Writing metadata](#writing-metadata) for supported formats.
-- **TypeScript support:** Typed metadata and a promise-based API.
+The API is promise-based and includes TypeScript types. Audio properties include
+duration, codec, [bitrate](https://wikipedia.org/wiki/Bit_rate), sample rate,
+[bit depth](https://wikipedia.org/wiki/Audio_bit_depth), track information and
+encoding profile (e.g. [CBR](https://en.wikipedia.org/wiki/Constant_bitrate), V0, V2).
+See [audio properties](#metadataformat) for details. Custom tokenizers are also
+supported.
 
-### Common metadata across formats
-
-Readers map native tags to normalized fields in metadata.common.
-For example, APEv2 Title, Vorbis TITLE, and ID3v2 TIT2 all map to title, regardless of the original tagging format.
-
-Simply choose which fields to update, and the writer maps those changes to the conventional tag format for the file.
-This follows a straightforward philosophy: **Read the past, write the future.**
-Legacy tag formats remain readable, while new metadata is written using modern, widely adopted standards.
+Native tags map to common fields in `metadata.common`: APEv2 `Title`, Vorbis
+`TITLE` and ID3v2 `TIT2` all become `title`. Writers map common fields back to the
+file's conventional tag format. Legacy tags remain readable; new tags use current
+formats. Update files in Node.js or return new buffers in Node.js and browsers;
+see [Writing metadata](#writing-metadata) for supported formats.
 
 ![MediaFile reads native tags into common fields and saves those fields to the same audio file](./image/metadata-flow.svg)
 
 ### Support for audio file types
 
-The following formats support **reading**.
-For supported write formats and examples, see [Writing metadata](#writing-metadata).
+Supported **read** formats are listed below. See [Writing metadata](#writing-metadata)
+for write support and examples.
 
 | Audio format                                                              | Description                                               | Logo                                                                                             |
 |---------------------------------------------------------------------------|-----------------------------------------------------------|--------------------------------------------------------------------------------------------------|
@@ -89,16 +83,9 @@ Supported lyric formats:
 - Synchronized lyrics (SYLT)
 - Unsynchronized lyrics (USLT)
 
-Support for [MusicBrainz](https://musicbrainz.org/) tags as written by [Picard](https://picard.musicbrainz.org/).
-[ReplayGain](https://wiki.hydrogenaud.io/index.php?title=ReplayGain) tags are supported.
-
-### Audio format & encoding details
-
-Available [audio properties](#metadataformat) include:
-- [Bit rate](https://wikipedia.org/wiki/Bit_rate)
-- [Audio bit depth](https://wikipedia.org/wiki/Audio_bit_depth)
-- Duration
-- Encoding profile (e.g. [CBR](https://en.wikipedia.org/wiki/Constant_bitrate), V0, V2)
+Also reads [MusicBrainz](https://musicbrainz.org/) tags written by
+[Picard](https://picard.musicbrainz.org/) and
+[ReplayGain](https://wiki.hydrogenaud.io/index.php?title=ReplayGain) tags.
 
 ## Compatibility
 
@@ -112,19 +99,16 @@ Available [audio properties](#metadataformat) include:
 ## Online demos
 - [<img src="https://raw.githubusercontent.com/Borewit/audio-tag-analyzer-vite/master/public/favicon.svg" width="40" alt="Audio Tag Analyzer logo"> Audio Tag Analyzer](https://audio-tag-analyzer.netlify.app/) ([source code](https://github.com/Borewit/audio-tag-analyzer-vite))
 - [ICY Radio Stream Player](https://icy-radio-stream-player.netlify.app/)
-- Expected to be released soon: [Overtone](https://overtone.pro/) by [Johannes Schickling](https://github.com/schickling)
+- [Overtone](https://overtone.pro/) by [Johannes Schickling](https://github.com/schickling)
 
-Used by [around 50k+ GitHub projects](https://github.com/Borewit/music-metadata/network/dependents).
+See [projects using music-metadata](https://github.com/Borewit/music-metadata/network/dependents).
 
 ## Sponsoring
 
-Support the maintenance and development of `music-metadata`:
+Support maintenance and development by
+[sponsoring Borewit on GitHub](https://github.com/sponsors/Borewit) or buying me a coffee:
 
-- [Sponsor Borewit on GitHub](https://github.com/sponsors/Borewit)
-
-- Buy me a coffee:
-
-  <a href="https://www.buymeacoffee.com/borewit" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/default-orange.png" alt="Buy me A coffee" height="41" width="174"></a>
+<a href="https://www.buymeacoffee.com/borewit" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/default-orange.png" alt="Buy me A coffee" height="41" width="174"></a>
 
 <div align="center">
   <h2>Sponsors</h2>
@@ -156,8 +140,6 @@ yarn add music-metadata
 
 ### Reading metadata
 
-#### Overview
-
 Choose a function based on your input:
 
 | Input | Function | Environment |
@@ -175,8 +157,14 @@ with [common tags](#metadatacommon), [native tags](#metadatanativetyped),
 See [`IOptions`](#ioptions-interface) for parsing options and
 [Handling Parse Errors](#handling-parse-errors) for error handling.
 
+The optional `fileInfo` argument accepts a [MIME type](https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types)
+string or an `IFileInfo` object with optional `mimeType`, `size` (bytes) and `path` (filename).
+The parser detects the format from the content, falling back to the MIME type and
+then the filename extension when needed. Pass the size when known; some streamed
+formats need it to calculate duration.
+
 > [!NOTE]
-> Direct file access in Node.js is generally faster because it can 'jump' to various parts of the file without reading intermediate data.
+> File access in Node.js is generally faster than streaming because the parser can seek without reading intermediate data.
 
 #### Node.js specific functions
 These functions are available only in Node.js.
@@ -185,38 +173,17 @@ These functions are available only in Node.js.
 
 Reads metadata from a local audio file.
 
-###### Syntax
 ```ts
 parseFile(filePath: string, options?: IOptions): Promise<IAudioMetadata>
 ```
 
-###### Parameters
+`filePath` must resolve to a regular file; symlinks are supported. Directories,
+FIFOs (named pipes) and other non-regular objects reject with `NotRegularFileError`
+from `strtok3`.
+FIFOs are rejected without waiting for a writer. Use [`parseStream()`](#parsestream-function)
+for streamed audio or [parseBlob](#parseblob-function) for browser
+[File](https://developer.mozilla.org/en-US/docs/Web/API/File) objects.
 
-- `filePath`: `string`
-
-  Path to a local audio file.
-
-- `options`: [`IOptions`](#ioptions-interface) (optional)
-
-  Parsing options, such as duration calculation and skipping cover art.
-
-###### Returns
-
-- [`Promise<IAudioMetadata>`](#iaudiometadata-interface):
-
-  Parsed metadata.
-
-###### Usage Notes
-
-- The path must resolve to a regular file.
-  Symlinks to regular files are supported.
-  Directories, FIFOs (named pipes), and other non-regular filesystem objects are rejected with `NotRegularFileError` from `strtok3`.
-  FIFOs are rejected without waiting for a writer.
-  To parse streamed audio, use [`parseStream()`](#parsestream-function).
-
-- In browsers, use [parseBlob](#parseblob-function) for [File](https://developer.mozilla.org/en-US/docs/Web/API/File) objects.
-
-###### Example
 ```js
 import { parseFile } from 'music-metadata';
 import { inspect } from 'node:util';
@@ -237,40 +204,10 @@ import { inspect } from 'node:util';
 
 Reads metadata from a Node.js [`Readable`](https://nodejs.org/api/stream.html#class-streamreadable) stream.
 
-###### Syntax
 ```ts
 parseStream(stream: Readable, fileInfo?: IFileInfo | string, options?: IOptions): Promise<IAudioMetadata>
 ```
 
-###### Parameters
-- `stream`: `Readable`:
-
-  A Node.js [Readable](https://nodejs.org/api/stream.html#class-streamreadable) stream of audio bytes.
-
-- `fileInfo`: `IFileInfo` (optional)
-
-  File information or a MIME-type string.
-  The object may include:
-
-  - `mimeType`: A string representing the [MIME-type](https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types) (e.g., `audio/mpeg`).
-
-    The parser identifies the format from the stream content. If the signature is inconclusive, it tries the MIME type and then the filename extension.
-
-  - `size`: The total size of the audio stream in bytes (useful for streams with a known length).
-
-  - `path`: A string representing the file path or filename.
-
-- `options`: [`IOptions`](#ioptions-interface) (optional)
-
-  Parsing options, such as duration calculation and skipping cover art.
-
-###### Returns
-
-- [`Promise<IAudioMetadata>`](#iaudiometadata-interface):
-
-  Parsed metadata.
-
-###### Example
 ```js
 import { parseStream } from 'music-metadata';
 import { createReadStream } from 'fs';
@@ -279,14 +216,13 @@ import { createReadStream } from 'fs';
   try {
     const audioStream = createReadStream('path/to/audio/file.mp3');
 
-    const metadata = await parseStream(audioStream, { mimeType: 'audio/mpeg'});
+    const metadata = await parseStream(audioStream, { mimeType: 'audio/mpeg' });
 
     console.log(metadata);
   } catch (error) {
     console.error('Error parsing metadata:', error.message);
   }
 })();
-
 ```
 
 #### Cross-platform functions
@@ -295,43 +231,12 @@ Custom tokenizers may have their own platform requirements.
 
 ##### `parseWebStream` function
 
-Reads metadata from a web `ReadableStream`, such as a `fetch` response body.
+Reads metadata from a web [ReadableStream](https://developer.mozilla.org/en-US/docs/Web/API/ReadableStream/ReadableStream)
+of `Uint8Array` chunks, such as a `fetch` response body.
 
-###### Syntax
 ```ts
 parseWebStream(webStream: ReadableStream<Uint8Array>, fileInfo?: IFileInfo | string, options?: IOptions): Promise<IAudioMetadata>
 ```
-
-###### Parameters
-
-- `webStream`: `ReadableStream<Uint8Array>`
-
-  A [ReadableStream](https://developer.mozilla.org/en-US/docs/Web/API/ReadableStream/ReadableStream) of `Uint8Array` audio chunks.
-
-- `fileInfo`: `IFileInfo` (optional)
-
-  File information or a MIME-type string.
-  The object may include:
-
-  - `mimeType`: A string representing the [MIME-type](https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types) (e.g., `audio/mpeg`).
-
-    The parser identifies the format from the stream content. If the signature is inconclusive, it tries the MIME type and then the filename extension.
-
-  - `size`: The total size of the audio stream in bytes (useful for streams with a known length).
-
-  - `path`: A string representing the file path or filename.
-
-- `options`: [`IOptions`](#ioptions-interface) (optional)
-
-  Parsing options, such as duration calculation and skipping cover art.
-
-###### Returns
-
-- [`Promise<IAudioMetadata>`](#iaudiometadata-interface):
-
-  Parsed metadata.
-
-###### Example
 
 ```js
 import { parseWebStream } from 'music-metadata';
@@ -345,7 +250,7 @@ import { parseWebStream } from 'music-metadata';
 
     const metadata = await parseWebStream(response.body, {
       mimeType: response.headers.get('Content-Type'),
-      size // Important to pass the content-length
+      size // Pass the content length when available
     });
 
     console.log(metadata);
@@ -359,32 +264,13 @@ Pass the [`fetch`](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API) r
 
 ##### `parseBlob` function
 
-Parses metadata from an audio file represented as a [Blob](https://developer.mozilla.org/en-US/docs/Web/API/Blob).
-This function reads slices of the Blob and supports both browser File objects and Node.js Blob objects.
+Reads metadata from a [Blob](https://developer.mozilla.org/en-US/docs/Web/API/Blob)
+or browser `File` using Blob slices.
+The Blob's size and MIME type are passed to the parser.
 
-###### Syntax
 ```ts
 parseBlob(blob: Blob, options?: IOptions): Promise<IAudioMetadata>
 ```
-
-###### Parameters
-
-- `blob`: [Blob](https://developer.mozilla.org/en-US/docs/Web/API/Blob)
-
-  A Blob or user-selected File containing audio data.
-  Its size and MIME type are passed to the parser.
-
-- `options`: [`IOptions`](#ioptions-interface) (optional)
-
-  Parsing options, such as duration calculation and skipping cover art.
-
-###### Returns
-
-- [`Promise<IAudioMetadata>`](#iaudiometadata-interface):
-
-  Parsed metadata.
-
-###### Example
 
 ```js
 import { parseBlob } from 'music-metadata';
@@ -406,30 +292,9 @@ import { parseBlob } from 'music-metadata';
 
 Reads metadata from audio bytes held in a [Uint8Array](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Uint8Array) or Node.js [Buffer](https://nodejs.org/api/buffer.html).
 
-###### Syntax
 ```ts
 parseBuffer(uint8Array: Uint8Array, fileInfo?: IFileInfo | string, options?: IOptions): Promise<IAudioMetadata>
 ```
-
-###### Parameters
-- `uint8Array`: [Uint8Array](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Uint8Array)
-
-  Audio bytes as a [Uint8Array](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Uint8Array).
-
-- `fileInfo`: `IFileInfo` | `string` (optional)
-
-  File information such as `mimeType` and `size`, or a MIME-type string.
-
-- `options`: [`IOptions`](#ioptions-interface) (optional)
-
-  Parsing options, such as duration calculation and skipping cover art.
-
-###### Returns
-- [`Promise<IAudioMetadata>`](#iaudiometadata-interface):
-
-  Parsed metadata.
-
-###### Example
 
 ```js
 import { parseBuffer } from 'music-metadata';
@@ -450,29 +315,13 @@ import fs from 'fs';
 ##### `parseFromTokenizer` function
 Reads metadata through a [strtok3](https://github.com/Borewit/strtok3) `ITokenizer` for custom data sources, including S3 objects and HTTP range requests.
 
-Compatible tokenizers include:
-- [streaming-http-token-reader](https://github.com/Borewit/streaming-http-token-reader) for chunked HTTP(S) reading, using [HTTP range requests](https://developer.mozilla.org/en-US/docs/Web/HTTP/Range_requests).
+Use [streaming-http-token-reader](https://github.com/Borewit/streaming-http-token-reader)
+for chunked HTTP(S) reads with [HTTP range requests](https://developer.mozilla.org/en-US/docs/Web/HTTP/Range_requests).
 
-###### Syntax
 ```ts
 parseFromTokenizer(tokenizer: ITokenizer, options?: IOptions): Promise<IAudioMetadata>
 ```
 
-###### Parameters
-- `tokenizer: ITokenizer`
-
-  An `ITokenizer` providing access to the audio bytes.
-
-- `options`: [`IOptions`](#ioptions-interface) (optional)
-
-  Parsing options, such as duration calculation and skipping cover art.
-
-###### Returns
-- [`Promise<IAudioMetadata>`](#iaudiometadata-interface):
-
-  Parsed metadata.
-
-###### Example
 ````js
 import { fromNodeProviderChain } from '@aws-sdk/credential-providers';
 import { S3Client } from '@aws-sdk/client-s3';
@@ -505,20 +354,17 @@ async function readMetadata() {
 
 readMetadata();
 ````
-###### Additional Resources
-- [strtok3](https://github.com/Borewit/strtok3) - Learn more about the `ITokenizer` interface and how to implement it for various use cases.
-- [AWS SDK for JavaScript](https://aws.amazon.com/sdk-for-javascript/) - Documentation on using the AWS SDK to interact with S3 and other AWS services.
-- [@tokenizer/s3](https://github.com/Borewit/tokenizer-s3) - Example of `ITokenizer` implementation.
+
+See [strtok3](https://github.com/Borewit/strtok3) for the `ITokenizer` interface,
+and [@tokenizer/s3](https://github.com/Borewit/tokenizer-s3) and the
+[AWS SDK for JavaScript](https://aws.amazon.com/sdk-for-javascript/) for S3 access.
 
 #### Handling Parse Errors
 
-`music-metadata` exports custom error classes that extend JavaScript `Error`.
-Parsing can also reject with other errors, such as filesystem, stream, or tokenizer errors.
-Handle caught values as `unknown` in TypeScript and narrow them before accessing error properties.
-
-##### Union of Parse Errors
-
-The `UnionOfParseErrors` type groups the following library error classes; it does not describe every possible rejection:
+Parsing can reject with the library's exported `Error` subclasses or filesystem,
+stream and tokenizer errors. In TypeScript, treat caught values as `unknown` and
+narrow them before accessing properties. `UnionOfParseErrors` covers only the
+library errors, not every possible rejection:
 ```ts
 export type UnionOfParseErrors =
   | CouldNotDetermineFileTypeError
@@ -528,13 +374,11 @@ export type UnionOfParseErrors =
   | InternalParserError;
 ```
 
-##### Error Types
-
-- `CouldNotDetermineFileTypeError`: Raised when the file type cannot be determined.
-- `UnsupportedFileTypeError`: Raised when an unsupported file type is encountered.
-- `UnexpectedFileContentError`: Raised when the file content does not match the expected format.
-- `FieldDecodingError`: Raised when a specific field in the file cannot be decoded.
-- `InternalParserError`: Raised for internal parser errors.
+- `CouldNotDetermineFileTypeError`: The file type could not be detected.
+- `UnsupportedFileTypeError`: The detected file type is unsupported.
+- `UnexpectedFileContentError`: The content does not match the expected format.
+- `FieldDecodingError`: A metadata field could not be decoded.
+- `InternalParserError`: An internal parser error occurred.
 
 #### Other functions
 
@@ -547,23 +391,16 @@ Each value is an array of tag values.
 orderTags(nativeTags: ITag[]): INativeTagDict
 ```
 
-Known identifiers in every supported native tag format have value types: ID3v1,
-ID3v2.2/2.3/2.4, Vorbis (including FLAC/Opus/Speex), APEv2, ASF, MP4/iTunes,
-RIFF INFO/BWF (`exif`), Matroska, AIFF and CAF.
-Passing a typed native list to
-`orderTags` preserves those types: ID3 `TIT2` and Vorbis `TITLE` values are strings,
-ID3 `APIC` values are pictures, and `MCDI` values are `Uint8Array`s.
-ASF, APEv2,
-MP4 and Matroska can store different datatypes under the same identifier, so their
-value types include the corresponding alternatives and may need narrowing.
+Typed lists retain their value types: ID3 `TIT2` and Vorbis `TITLE` are strings,
+`APIC` values are pictures and `MCDI` values are `Uint8Array`s. Known identifiers
+are typed for ID3v1, ID3v2.2/2.3/2.4, Vorbis (FLAC/Opus/Speex), APEv2, ASF,
+MP4/iTunes, RIFF INFO/BWF (`exif`), Matroska, AIFF and CAF. ASF, APEv2, MP4 and
+Matroska allow multiple value types per identifier, which may need narrowing.
 
-The original `metadata.native` lists keep unrestricted identifiers and `unknown`
-values for backward compatibility.
-For typed access to parsed metadata, use the
-always-present [`metadata.nativeTyped`](#metadatanativetyped) dictionary view.
-`orderTags` still groups raw lists without guessing their value types.
-Custom maps can be
-supplied through `INativeTag` and `INativeTagDict` generics.
+Raw `metadata.native` lists retain `unknown` values for backward compatibility;
+`orderTags` groups them without inferring types. For typed parsed tags, use
+[`metadata.nativeTyped`](#metadatanativetyped). Custom type maps are supported
+through the `INativeTag` and `INativeTagDict` generics.
 
 ```js
 import { parseFile, orderTags } from 'music-metadata';
@@ -582,14 +419,17 @@ import { inspect } from 'util';
 
 ##### `ratingToStars` function
 
-   Can be used to convert the normalized rating value to the 0..5 stars, where 0 an undefined rating, 1 the star the lowest rating and 5 the highest rating.
+Converts a normalized rating to 0–5 stars: 0 means unrated, 1 is the lowest rating
+and 5 is the highest.
 
-   ```ts
-   ratingToStars(rating: number | undefined): number
-   ```
+```ts
+ratingToStars(rating: number | undefined): number
+```
+
 ##### `selectCover` function
 
-Select a [cover image](#access-cover-art) based on image type, otherwise the first picture in the file.
+Selects a [cover image](#access-cover-art) by picture type, falling back to the
+first picture.
 
 ```ts
 export function selectCover(pictures?: IPicture[]): IPicture | null
@@ -599,119 +439,101 @@ export function selectCover(pictures?: IPicture[]): IPicture | null
 import { parseFile, selectCover } from 'music-metadata';
 
 (async () => {
-  const {common} = await parseFile(filePath);
-  const cover = selectCover(common.picture); // pick the cover image
-}
-)();
- ```
+  const { common } = await parseFile(filePath);
+  const cover = selectCover(common.picture);
+})();
+```
 
 ##### `getSupportedMimeTypes` function
 
-Returns a list of supported MIME-types.
-This may include some MIME-types which are not formally recognized.
+Returns supported MIME types, including some unofficial types.
 See [Support for audio file types](#support-for-audio-file-types) for the supported formats.
 
 #### `IOptions` Interface
 - `duration`: `boolean` (default: `false`)
 
-  When `true`, the parser will read the entire media file _if necessary_ to determine the duration.
-  This is only applicable in cases where duration cannot be reliably inferred without full file analysis.
-  Note that enabling this option **does not guarantee** that duration will be available,
-  only that the parser will attempt to calculate it when possible, even if it requires reading the full file.
+  Allows extra scanning, up to the entire file, to calculate duration when needed.
+  [`format.duration`](#metadataformat) may already be available without this option;
+  enabling it does not guarantee a result.
 
-  For Matroska/WebM files, including `MediaRecorder` recordings, this recovers missing duration from block timestamps while skipping encoded frame data.
-  Existing duration metadata is preserved, and recovered track durations appear in [`format.trackInfo`](#metadataformattrackinfo).
-  Estimates may be approximate; a single block without duration information remains unknown.
+  For Matroska/WebM, including `MediaRecorder` recordings, missing duration is
+  estimated from block timestamps without reading encoded frames. Existing
+  duration is preserved; recovered track durations appear in
+  [`format.trackInfo`](#metadataformattrackinfo). Estimates may be approximate;
+  a single block without duration information remains unknown.
 
 - `includeChapters`: `boolean` (default: `false`)
-  When `true`, the MP4 parser reads [QuickTime chapter tracks and Nero `chpl` chapter lists](#metadataformatchapters).
-  A usable QuickTime chapter track takes precedence over a Nero list.
-  Files, buffers, and Blobs support chapters whether `moov` appears before or after `mdat`.
-  For forward-only streams, `moov` must appear before the chapter data.
+  Reads MP4 [QuickTime chapter tracks and Nero `chpl` lists](#metadataformatchapters),
+  preferring a usable QuickTime track. Files, buffers and Blobs support either
+  `moov`/`mdat` order; forward-only streams require `moov` before the chapter data.
 
 - `maxChapterCount`: `number` (default: `1000`)
 
-  Maximum chapters returned from QuickTime/Nero MP4 and ID3v2 chapter lists.
-  Must be a positive safe integer.
-  Excess chapters are omitted with a warning.
-  MP4 chapters still require `includeChapters: true`.
+  Maximum chapters returned from QuickTime/Nero MP4 and ID3v2 lists. Must be a
+  positive safe integer; excess chapters are omitted with a warning. MP4 chapters
+  also require `includeChapters: true`.
 
 - `maxMemoryAllocation`: `number` (default: `67108864`, 64 MiB)
 
-  Maximum bytes buffered for a single metadata payload, accumulated Ogg packet, or tokenizer stream lookahead.
-  Must be a positive safe integer.
-  Parsing rejects payloads above this limit before allocating them.
-  The parser configures this limit once on its `strtok3` tokenizers, including tokenizers for embedded tags.
-  Reader format detection probes up to 16 bytes at a time, bounded by this limit. After a leading ID3v2 tag, the reader scans extra zero bytes with a fixed 2 KiB buffer before detecting the next tag or audio container. Cover art MIME-type detection inspects the available artwork bytes.
-  Oversized tokenizer allocations or stream lookahead reject with `strtok3.BufferSizeError`.
-  When using [`parseFromTokenizer()`](#parsefromtokenizer-function), also configure `maxBufferSize` on the supplied tokenizer at creation.
-  Increase it for files with unusually large metadata or cover art, or lower it for constrained environments.
-  Audio/video data that is skipped does not count toward this limit.
-  This does not cap total process memory:
-  decoded metadata, multiple retained tags, and temporary copies can require additional memory.
+  Maximum bytes buffered for one metadata payload, accumulated Ogg packet or
+  tokenizer stream lookahead. Must be a positive safe integer. Oversized payloads
+  are rejected before allocation; tokenizer allocations and lookahead reject with
+  `strtok3.BufferSizeError`.
+
+  The limit applies to the parser's `strtok3` tokenizers, including embedded tags.
+  With [`parseFromTokenizer()`](#parsefromtokenizer-function), also set
+  `maxBufferSize` when creating the supplied tokenizer. Increase the limit for
+  large metadata or cover art, or lower it in memory-constrained environments.
+  Skipped audio/video data does not count. This is not a total memory cap:
+  decoded metadata, retained tags and temporary copies need additional memory.
 
 - `maxMetadataEntries`: `number` (default: `100000`)
 
-  Maximum entries in an individual decoded user metadata list or table.
-  Must be a positive safe integer.
-  This count is independent of `maxMemoryAllocation` and does not limit total collected metadata or process memory.
+  Maximum entries per decoded user metadata list or table. Must be a positive
+  safe integer. Independent of `maxMemoryAllocation`; it does not cap total
+  collected metadata or process memory.
 
 - `mkvUseIndex`: `boolean` (default: `false`)
 
-  When `true`, the parser uses the SeekHead index in Matroska (MKV) files to skip segment and cluster elements.
-  This experimental feature can improve performance, but:
-  - Metadata not listed in the SeekHead may be skipped.
-  - If the SeekHead is missing, this option has no effect.
+  Uses Matroska's SeekHead index to skip segment and cluster elements. Experimental:
+  metadata absent from the index may be missed; without a SeekHead, it has no effect.
 
-  For large MKV files on network shares, use `parseFile(filePath, { mkvUseIndex: true })`
-  when the file's SeekHead index is reliable.
-  The default traversal reads every cluster header,
-  so network latency can dominate even though the audio/video payloads are skipped.
+  Useful for large MKV files on network shares with a reliable index. Default
+  traversal reads every cluster header, so network latency can dominate even
+  though audio/video payloads are skipped.
 
 - `observer`: `(update: IMetadataEvent) => void`:
 
-  Callback function triggered when common tags or format properties are updated during parsing.
-  Allows real-time monitoring of metadata as it becomes available.
-  The callback runs synchronously after the update; returned promises are not awaited.
-  Repeated assignments of unchanged primitive format values do not trigger callbacks.
-  Keep callback work lightweight, or batch expensive operations in the consuming application.
+  Called synchronously after common tags or format properties change. Returned
+  promises are not awaited; unchanged primitive format values do not trigger
+  callbacks. Keep it lightweight or batch expensive work in your application.
 
 - `skipCovers`: `boolean` (default: `false`)
 
-  When `true`, embedded cover art (images) will not be extracted.
-  Useful for reducing memory and processing when cover images are unnecessary.
-  MP4 JPEG/PNG bodies are skipped before buffering, so skipped artwork may exceed
-  `maxMemoryAllocation`.
-  Buffered metadata values remain subject to that limit.
+  Skips embedded cover art to reduce memory use and processing. MP4 JPEG/PNG data
+  is skipped before buffering and may exceed `maxMemoryAllocation`; buffered
+  metadata remains subject to the limit.
 
 - `skipPostHeaders`: `boolean` (default: `false`)
-  When `true`, tag headers located at the end of the file will not be read.
-  This is particularly beneficial for streaming input, as it avoids the need to read the entire stream.
-
-> [!NOTE]
-> - [`format.duration`](#metadataformat) may be available without enabling `duration`.
->   Set `duration: true` to allow additional scanning when needed; duration can still be unavailable.
-> - Using `mkvUseIndex` can improve performance in Matroska files, but be aware of potential side effects, such as missing metadata due to skipped elements.
+  Skips tags at the end of the file, avoiding a full-stream read when those tags
+  are not needed.
 
 #### `IAudioMetadata` interface
 
 The returned `IAudioMetadata` object contains:
-- [`metadata.format`](#metadataformat) Audio format information
-- [`metadata.common`](#metadatacommon) Normalized tag fields shared across formats.
-- [`metadata.format.trackInfo`](#metadataformattrackinfo) Describes individual audio and video tracks when available.
-- `metadata.native` Maps each tag format to an array of native (original) tags found in the parsed audio file.
-- [`metadata.nativeTyped`](#metadatanativetyped) Provides typed dictionaries of the same native values, grouped by format and identifier.
-- `metadata.quality.warnings` Contains non-fatal parsing warnings, each with a `message` string.
+- [`metadata.format`](#metadataformat): Audio properties.
+- [`metadata.common`](#metadatacommon): Normalized tags shared across formats.
+- [`metadata.format.trackInfo`](#metadataformattrackinfo): Individual audio and video tracks, when available.
+- `metadata.native`: Original tag arrays, grouped by format.
+- [`metadata.nativeTyped`](#metadatanativetyped): Typed dictionaries of the same values, grouped by format and identifier.
+- `metadata.quality.warnings`: Non-fatal parsing warnings with a `message` string.
 
 ##### `metadata.nativeTyped`
 
-This property is always available, even when no native tags were found.
-Known
-identifiers have format-specific types; custom identifiers and formats remain
-accessible with `unknown` values.
-Each entry is an array, preserving duplicate
-values in their original order.
-Missing formats and identifiers are `undefined`.
+Always present, even when no native tags were found. Known identifiers have
+format-specific types; custom identifiers and formats have `unknown` values.
+Each entry is an array that preserves duplicates and their order. Missing formats
+and identifiers are `undefined`.
 
 ```ts
 const metadata = await parseFile(filePath);
@@ -720,29 +542,21 @@ const pictures = metadata.nativeTyped['ID3v2.4']?.APIC; // IPicture[] | undefine
 const custom = metadata.nativeTyped.vorbis?.MY_CUSTOM_TAG; // unknown[] | undefined
 ```
 
-The view is built lazily on each property access, including in observer callbacks.
-Read it once and reuse the snapshot when performing several lookups.
-Dictionaries
-and arrays are newly allocated; pictures, binary data and other structured values
-are shared with `native`, not copied.
-Changing a snapshot's grouping arrays does
-not change the raw lists.
-Subsequent reads reflect the current raw lists.
+Each access builds a fresh snapshot of the current `native` lists, including in
+observer callbacks. Read it once for multiple lookups. Grouping dictionaries and
+arrays are new, but pictures, binary data and other objects are shared with
+`native`. Changing grouping arrays does not change the raw lists.
 
 `ITypedNativeTags`, `ITypedNativeTagDict`, `INativeAudioMetadata` and
 [`IAudioMetadata`](#iaudiometadata-interface) accept custom type maps.
-Native values are not converted or validated by this view.
-Adding the required `nativeTyped` property means manually
-constructed metadata objects and mocks must provide it as well.
+The view does not convert or validate values. Manually constructed metadata and
+mocks must also provide the required `nativeTyped` property.
 
 ##### `metadata.format`
 
-A `?` marks an optional property.
-
-Audio format information.
-Defined in the TypeScript `IFormat` interface:
+Audio properties from `IFormat`; `?` marks optional fields:
 - `format.container?: string` Audio encoding format. e.g.: 'flac'
-- `format.codec?` Name of the codec (algorithm used for the audio compression)
+- `format.codec?` Codec name
 - `format.codecProfile?: string` Codec profile / settings
 - `format.tagTypes?: TagType[]`  List of tagging formats found in parsed audio file
 - `format.duration?: number` Duration in seconds (existing audio/container summary; complete presentation duration for video-only files)
@@ -751,7 +565,7 @@ Defined in the TypeScript `IFormat` interface:
 - `format.overallBitrate?: number` Average bitrate of the entire file in bits per second, including container overhead; requires a known file size and presentation duration
 - `format.sampleRate?: number` Sampling rate in Samples per second (S/s)
 - `format.bitsPerSample?: number` Audio bit depth
-- `format.lossless?: boolean` True if lossless,  false for lossy encoding
+- `format.lossless?: boolean` `true` for lossless, `false` for lossy encoding
 - `format.numberOfChannels?: number` Number of audio channels
 - `format.creationTime?: Date` Track creation time
 - `format.modificationTime?: Date` Track modification / tag update time
@@ -761,17 +575,12 @@ Defined in the TypeScript `IFormat` interface:
 
 ##### `metadata.format.chapters`
 
-Chapters use the `IChapter` interface.
-For MP4 QuickTime and Nero chapter lists,
-set [`includeChapters: true`](#ioptions-interface) when parsing.
-Each chapter has a `title` (which can be empty), a `start` timestamp, and an optional `end` timestamp.
+Each `IChapter` has a `title` (possibly empty), `start` and optional `end`.
+For MP4 QuickTime and Nero lists, set [`includeChapters: true`](#ioptions-interface).
 
-Use the chapter's own `timeScale` to convert both timestamps to seconds.
-When
-`timeScale` is omitted, its default is **1**: timestamps are already in seconds.
-Do not assume that every chapter uses milliseconds or the audio sample rate.
-A QuickTime chapter track with a missing or zero timescale is rejected; an
-available Nero chapter list is used instead.
+Divide timestamps by the chapter's `timeScale` to get seconds; omitted `timeScale`
+means **1** (seconds), not milliseconds or the audio sample rate. QuickTime tracks
+with a missing or zero timescale are rejected, falling back to Nero if available.
 
 | Chapter source | Timestamp units | `timeScale` |
 | --- | --- | --- |
@@ -793,20 +602,15 @@ const chapters = (format.chapters ?? []).map(chapter => {
 });
 ```
 
-An omitted `end` means the parser did not provide an end timestamp.
-Applications
-that need chapter ends must choose how to derive missing values.
-`sampleOffset`,
-when present, is a separate audio sample position; it is not the timestamp scale.
+If `end` is omitted, derive it in your application if needed.
+`sampleOffset`, when present, is an audio sample position, not a timestamp scale.
 For editing chapters, see [MP4 chapters](#mp4-chapters).
 
 ##### `metadata.format.trackInfo`
 
-`metadata.format.trackInfo` provides the same track abstraction for single-stream audio files and
-multi-track containers (MPEG-4, Matroska, ASF, and Ogg).
-Tracks can carry audio, video, subtitles, or
-metadata.
-Import `TrackType` from `music-metadata` to select tracks without knowing the container:
+An array of [trackInfo](#trackinfo) objects for single-stream files and multi-track
+containers (MPEG-4, Matroska, ASF and Ogg), empty when no track information is
+available. Use `TrackType` to select audio, video, subtitle or metadata tracks:
 
 ```js
 import { parseFile, TrackType } from 'music-metadata';
@@ -821,25 +625,14 @@ for (const track of videoTracks) {
 console.log(format.containerDuration, format.overallBitrate);
 ```
 
-Each entry describes one track, with its codec, language, duration, bitrate and
-available audio or video properties.
-Choose tracks by type, language and selection
-flags; their order does not indicate a preferred track.
-
-Track properties describe the individual stream, and fields may be absent when
-information is unavailable.
-Set [`duration: true`](#ioptions-interface) when you need timing information;
-this can require reading beyond the initial metadata.
-
-Use `format.containerDuration` and `format.overallBitrate` for the complete file's
-duration and average bitrate.
-
-`metadata.format.trackInfo` is an array of [trackInfo](#trackinfo) objects, empty when no track information is available.
+Track fields may be absent. Select by type, language and flags, not array order.
+Set [`duration: true`](#ioptions-interface) to allow extra scanning for timing
+information. For whole-file duration and average bitrate, use
+`format.containerDuration` and `format.overallBitrate`.
 
 ###### trackInfo
 
-Individual track information.
-Defined in the TypeScript `ITrackInfo` interface:
+Per-track properties from `ITrackInfo`:
 - `trackInfo.id?: number` Container track ID/number, or Ogg stream serial number; only meaningful within the file
 - `trackInfo.type?: TrackType` Track type (`audio`, `video`, `subtitle`, `metadata`, or other known types)
 - `trackInfo.codecId?: string` Container-specific codec identifier, such as `mp4a`, `A_AAC`, or ASF audio format tag `0x0161`
@@ -883,18 +676,20 @@ Defined in the TypeScript `ITrackInfo` interface:
 
 ##### `metadata.common`
 
-[Common tag documentation](doc/common_metadata.md) is automatically generated.
+See the generated [common tag reference](doc/common_metadata.md).
 
-Artist display credits (`artist`, `albumArtist`) and individual-name lists (`artists`, `albumArtists`) are independent when writing.
-Setting or removing a list does not replace a separately stored display credit, and editing a display credit does not erase a stored list.
-The writers use Picard-compatible `ARTISTS` and `ALBUMARTISTS` fields (ID3 TXXX frames, MP4 iTunes freeform atoms, Vorbis/APEv2 tags and ASF `WM/` attributes).
-Legacy list aliases remain readable and are replaced when their common list is explicitly edited.
-If a file contains only a list, the reader derives a display credit from its names.
-A list clear removes the explicit list fields and their aliases.
-Legacy repeated display values can still supply a list on read.
-To remove that fallback while keeping a credit, write a single display credit in the same patch as the list clear.
+Artist credits (`artist`, `albumArtist`) and name lists (`artists`, `albumArtists`)
+are independent when writing: editing one does not change the other. Writers use
+Picard-compatible `ARTISTS` and `ALBUMARTISTS` fields in ID3 TXXX frames, MP4 iTunes
+freeform atoms, Vorbis/APEv2 tags and ASF `WM/` attributes. Legacy list aliases are
+readable and replaced when the list is edited.
 
-The common result also provides normalized artist accessors:
+If only a list is stored, the reader derives a display credit from it. Clearing a
+list removes its fields and aliases, but repeated legacy display values can still
+produce a list on read. To prevent that fallback while keeping the credit, write
+a single display credit in the same patch.
+
+Artist accessors provide fallbacks without changing the fields:
 
 - `common.getArtist(): string | undefined` returns `common.artist` when present,
   otherwise joins `common.artists` as `"A & B"` or `"A, B & C"`.
@@ -902,12 +697,9 @@ The common result also provides normalized artist accessors:
   otherwise returns `[common.artist]`.
   A credit such as `"A feat. B"` is not split.
 
-Both return `undefined` when there is no corresponding value or fallback (an empty
-artist list produces no display credit).
-They read the current fields without
-changing them, so a single credit still leaves `common.artists` undefined.
-The methods are non-enumerable: spreading or JSON-serializing `common` copies only
-its tag fields, not the accessors.
+Both return `undefined` when no value or fallback exists; an empty list produces
+no display credit. A single credit leaves `common.artists` undefined. The methods
+are non-enumerable, so spreading or JSON-serializing `common` includes only tag fields.
 
 ```ts
 const metadata = await parseFile('audio.mp3');
@@ -918,10 +710,8 @@ const artists = metadata.common.getArtists();
 
 #### Examples
 
-Some streamed formats require the file size to determine duration.
-Pass it in bytes
-to [`parseStream`](#parsestream-function), along with the
-[`duration`](#ioptions-interface) parsing option:
+For streamed formats that need file size to calculate duration, pass the size in
+bytes to [`parseStream`](#parsestream-function) with [`duration: true`](#ioptions-interface):
 ```js
 import { parseStream } from 'music-metadata';
 import { inspect } from 'util';
@@ -939,26 +729,11 @@ import { inspect } from 'util';
 `metadata.common.picture` contains embedded pictures, when present:
 
 ```ts
-/**
- * Attached picture, typically used for cover art
- */
 export interface IPicture {
-  /**
-   * Image mime type
-   */
-  format: string;
-  /**
-   * Image data
-   */
-  data: Uint8Array;
-  /**
-   * Optional description
-   */
+  format: string; // Image MIME type
+  data: Uint8Array; // Image bytes
   description?: string;
-  /**
-   * Picture type
-   */
-  type?: string;
+  type?: string; // Picture type, e.g. front cover
 }
 ```
 
@@ -976,91 +751,59 @@ For the internal design and dependencies, see the [architecture guide](doc/archi
 
 ### Writing metadata
 
-Import the write API from `music-metadata` to edit FLAC, Ogg Vorbis/Opus,
-MP3, ADTS AAC, WAV, WMA/ASF, MP4/M4A/M4B, Monkey’s Audio, WavPack and Musepack metadata without re-encoding audio.
+Write tags without re-encoding audio in FLAC, Ogg Vorbis/Opus, MP3, ADTS AAC,
+WAV, WMA/ASF, MP4/M4A/M4B, Monkey’s Audio, WavPack and Musepack files.
+
+#### Update existing metadata
+
+Read the existing tags with [`parseFile`](#parsefile-function), then pass the
+fields you want to change to `updateFile`:
 
 ```js
-import { updateFile, updateBuffer } from 'music-metadata';
+import { parseFile, updateFile } from 'music-metadata';
+
+const metadata = await parseFile('track.flac');
+console.log(metadata.common);
 
 await updateFile('track.flac', {
   title: 'New title',
   artists: ['Artist A'],
-  trackNumber: 4,
-  trackTotal: 12
+  genres: null // Remove the genres
 }, { backup: true });
-
-const updated = await updateBuffer(originalBytes, { album: 'New album' });
 ```
 
-Omitted fields are preserved; `null` removes a field.
-For MP3 and ADTS AAC,
-`null` removes only the ID3v2 field; a trailing ID3v1 tag remains unchanged unless
-`replaceId3: true` is enabled.
-File updates use atomic
-replacement by default.
-Options include `backup`, `dryRun` and `atomic`.
-When the planned output is byte-identical, the writer leaves the file and any existing backup untouched.
-Both a write and a dry run then return `bytesWritten: 0` and `atomic: false`.
-`updateBuffer` returns a new `Uint8Array` without modifying its input; the browser
-entry point also accepts a `Blob`.
-`updateFile` is available only in Node.js.
-Conditional root exports select the
-appropriate implementation; named imports allow bundlers to remove unused reading
-or writing code.
-To read the updated metadata, use the [reading API](#reading-metadata).
+Use [common field names](doc/common_metadata.md) such as `title`, `artists` and
+`album`. Supplied fields are added or updated, omitted fields are preserved, and
+`null` removes a field. You can skip reading if you already know the changes.
 
-MP3, ADTS AAC and WAV write ID3v2.4; replacing ID3v2.2/2.3 requires `replaceId3: true`.
-For raw `.aac` files, writing supports ADTS MPEG-2/MPEG-4 streams, not ADIF or
-LOAS/LATM.
-The writer validates the first ADTS frame header and copies the audio
-unchanged; it does not decode frames or validate audio CRCs.
-`WriteResult.format`
-is `'aac'` for ADTS AAC, including files with a leading ID3 tag.
-`replaceId3: true` discards unspecified ID3v2 fields and, for MP3/ADTS AAC,
-removes a trailing ID3v1 tag; other trailing metadata is preserved unchanged.
-MP4 writing supports non-fragmented, self-contained files with iTunes metadata.
-Common-field writing includes AcoustID/MusicIP identifiers and fingerprints, MusicBrainz TRM IDs, DJ mixers, TV/podcast metadata and structured ReplayGain min/max and undo values.
-TV season and episode numbers must be non-negative safe integers; podcast flags must be booleans.
-Monkey’s Audio 3.98+ (`.ape`), WavPack (`.wv`) and Musepack SV7/SV8 (`.mpc`)
-write APEv2 tail tags, supporting [common fields](doc/common_metadata.md), native fields and front/back cover
-art.
-Existing trailing ID3v1 tags are preserved.
-APEv1 and files with leading ID3
-tags are not supported for writing.
+#### Native fields
 
-Consumers migrating from `music-metadata-editor` should import the write functions
-and types from `music-metadata`.
-
-#### Editing a local file with MediaFile (Node.js)
-
-`MediaFile.open(path, readOptions?)` reads a file with the same options as `parseFile`.
-Edit `file.metadata.common`, then call `file.save(writeOptions?)` to apply the current common tags
-to the same path.
-It accepts the same options and returns the same `WriteResult` as `updateFile`.
-
-For example, to edit the title of an ID3v2.3 MP3 and write its common tags back as ID3v2.4:
+For format-specific fields, inspect `metadata.native` and use the tag's native
+name. For example, update a FLAC Vorbis comment:
 
 ```js
-import { MediaFile } from 'music-metadata';
+console.log(metadata.native.vorbis);
 
-const file = await MediaFile.open('track.mp3');
-file.metadata.common.title = 'New title';
-await file.save({ replaceId3: true });
+await updateFile('track.flac', {
+  native: { MY_FIELD: 'New value' }
+});
 ```
 
-Replacement preserves the audio payload and discards old ID3 frames without a writable common equivalent.
-To apply tags from another source, assign its parsed `common` object to `file.metadata.common` before saving.
-The native tags and format information describe the original read.
-Reopen the file to inspect the saved tags.
+The `native` patch is a dictionary of tag names and values, not the reader's
+format-grouped `metadata.native` object. Native fields are applied after common
+fields; `null` removes a named field.
 
-#### WMA / ASF
+For FLAC, use Vorbis comment keys such as `MY_FIELD`. For MP3, ADTS AAC and WAV,
+use ID3 frame IDs, or `TXXX:description` for user text. MP4 uses four-character
+item names or `----:mean:name` for freeform fields. Monkey’s Audio, WavPack and
+Musepack use APEv2 item names.
 
-WMA writing supports complete, unencrypted, audio-only ASF files and returns
-`WriteResult.format: 'asf'`.
-Common fields use the same ASF names as the reader;
-unsupported fields are rejected.
+WMA/ASF uses attribute names. Values can be strings, binary `Uint8Array`s or
+typed objects:
 
 ```js
+import { updateFile } from 'music-metadata';
+
 await updateFile('track.wma', {
   title: '作品 🎵',
   native: {
@@ -1071,19 +814,115 @@ await updateFile('track.wma', {
 });
 ```
 
-Native values can be strings, `Uint8Array` for binary data, or typed
-`{ type, value }` objects (`unicode`, `binary`, `bool`, `word`, `dword`,
-`qword`, `guid`).
-Optional `language` and `stream` select the ASF language
-index and audio stream.
-Use `{ padding: n }` to set header padding; an empty
-patch leaves the file byte-identical unless padding is specified.
+Typed objects accept `unicode`, `binary`, `bool`, `word`, `dword`, `qword` or
+`guid`. Optional `language` and `stream` select the ASF language index and audio
+stream.
+
+#### Add metadata
+
+To add new metadata to an existing, untagged audio file, use the same API:
+
+```js
+await updateFile('untagged.flac', {
+  title: 'First track',
+  artists: ['Artist A'],
+  album: 'New album',
+  trackNumber: 1,
+  trackTotal: 12
+});
+```
+
+#### Update a buffer
+
+`updateFile` is Node.js-only and replaces the file atomically by default.
+For bytes in Node.js or browsers, `updateBuffer` returns a new `Uint8Array`
+without changing the input; it also accepts a `Blob` in browsers:
+
+```js
+import { updateBuffer } from 'music-metadata';
+
+const updatedBytes = await updateBuffer(originalBytes, { album: 'New album' });
+```
+
+#### API and options
+
+`updateFile(path, patch, options?)` updates a local file in Node.js and returns a
+`WriteResult` with `format`, `bytesWritten`, `paddingBytes` and `atomic`.
+`updateBuffer(bytes, patch, options?)` returns a new `Uint8Array`; it also accepts
+a `Blob` in browsers. The input is unchanged. Root exports select the
+implementation for your environment, and named imports allow tree-shaking.
+
+Omitted or `undefined` fields are preserved; `null` removes a field. Common fields
+use the [reader's field names](doc/common_metadata.md). Writable fields include
+AcoustID/MusicIP identifiers and fingerprints, MusicBrainz TRM IDs, DJ mixers,
+TV/podcast metadata, and ReplayGain min/max and undo values. TV season and episode
+numbers must be non-negative safe integers; podcast flags must be booleans.
+
+File writes use atomic replacement by default. Set `backup: true` to keep a
+backup, `dryRun: true` to report the planned byte count without writing, or
+`atomic: false` to overwrite the file in place. Byte-identical updates leave the
+file and any backup untouched, returning `bytesWritten: 0` and `atomic: false`,
+including for dry runs.
+
+`padding` sets metadata padding in bytes, defaulting to 8192 where supported.
+Ogg, MP4 and APEv2 writers reject this option. For ASF, it adds header padding;
+an empty patch leaves the bytes unchanged unless padding is specified.
+
+If migrating from `music-metadata-editor`, import the write functions and types
+from `music-metadata` instead.
+
+#### Read, edit and save with MediaFile
+
+`MediaFile` is a Node.js wrapper around `parseFile` and `updateFile`.
+`MediaFile.open(path, readOptions?)` reads the file; edit `file.metadata.common`
+and call `file.save(writeOptions?)` to save to the same path. Saving uses
+`updateFile`'s options and `WriteResult`.
+
+To edit an ID3v2.3 MP3 and save its common tags as ID3v2.4:
+
+```js
+import { MediaFile } from 'music-metadata';
+
+const file = await MediaFile.open('track.mp3');
+file.metadata.common.title = 'New title';
+await file.save({ replaceId3: true });
+```
+
+Replacement preserves audio but discards old ID3 frames without a writable
+common equivalent. To copy tags from another source, assign its parsed `common`
+object to `file.metadata.common` before saving. Native tags and format properties
+still describe the original file; reopen it to inspect saved tags.
+
+#### Format limits
+
+MP3, ADTS AAC and WAV write ID3v2.4. Existing ID3v2.2/2.3 tags require
+`replaceId3: true`, which discards unspecified ID3v2 fields and removes trailing
+ID3v1 tags from MP3/ADTS AAC; other trailing metadata is preserved. Without this
+option, `null` only removes the ID3v2 field, so a value may remain in ID3v1.
+
+Raw `.aac` writing supports ADTS MPEG-2/MPEG-4, not ADIF or LOAS/LATM. It validates
+the first ADTS header without decoding frames or checking audio CRCs. The result
+has `format: 'aac'`, including for files with leading ID3 tags.
+
+MP4 writing requires non-fragmented, self-contained files and uses iTunes
+metadata.
+
+Monkey’s Audio 3.98+ (`.ape`), WavPack (`.wv`) and Musepack SV7/SV8 (`.mpc`) write
+APEv2 tail tags with common fields, native fields and front/back cover art.
+Trailing ID3v1 tags are preserved. APEv1 and files with leading ID3 tags are not
+supported for writing.
+
+WMA writing supports complete, unencrypted, audio-only ASF files and returns
+`format: 'asf'`. Common fields use the reader's ASF mappings; unsupported fields
+are rejected.
 
 #### MP4 chapters
 
 Use `chapters` to replace MP4/M4A/M4B chapters with a Nero `chpl` list:
 
 ```js
+import { updateFile } from 'music-metadata';
+
 await updateFile('audiobook.m4b', {
   chapters: [
     { title: 'Opening', start: 0 },
@@ -1092,24 +931,19 @@ await updateFile('audiobook.m4b', {
 });
 ```
 
-Timestamps use each chapter's `timeScale`, defaulting to seconds when omitted.
-[Chapter arrays](#metadataformatchapters) returned by [`parseFile`](#parsefile-function)
-with [`includeChapters: true`](#ioptions-interface) can be passed directly only
-when they meet the Nero writer limits below, including the 255-chapter maximum.
-Omitted `chapters` preserves existing chapters; `null` or `[]` removes them.
-Lists support at most 255 chapters and 255 UTF-8 bytes per title.
-Starts
-must increase and precede the movie duration.
-Explicit ends must match the next
-start or the movie duration; chapter URLs and pictures are unsupported.
+Timestamps use each chapter's `timeScale`, defaulting to seconds. You can pass
+[chapters](#metadataformatchapters) read with
+[`parseFile`](#parsefile-function) and
+[`includeChapters: true`](#ioptions-interface) if they meet the Nero
+limits: at most 255 chapters and 255 UTF-8 bytes per title. Starts must increase
+and precede the movie duration; explicit ends must match the next start or movie
+duration. Chapter URLs and pictures are unsupported. Omitted `chapters` preserves
+existing chapters; `null` or `[]` removes them.
 
-Replacement/removal also retires referenced, dedicated QuickTime chapter tracks,
-but does not erase their payload bytes from `mdat`.
-Tracks shared with other
-purposes are rejected rather than deleted.
-The writer does not generate
-QuickTime chapter tracks, so Nero replacements may not display in QuickTime-only
-players.
+Replacing or removing chapters retires dedicated QuickTime chapter tracks but
+leaves their payload bytes in `mdat`. Tracks shared with other purposes are
+rejected, not deleted. The writer only generates Nero lists, which may not
+display in QuickTime-only players.
 
 ## Frequently Asked Questions
 
@@ -1147,45 +981,18 @@ Await each [`parseFile`](#parsefile-function) call before starting the next file
 or limit concurrency.
 Starting a parse for every file at once can exhaust memory or file handles.
 
-Sequential examples:
+Process files sequentially with [async/await](https://javascript.info/async-await):
 
-1.  Using recursion
+```js
+import { parseFile } from 'music-metadata';
 
-    ```js
-    import { parseFile } from 'music-metadata';
-
-    function parseFiles(audioFiles) {
-
-      const audioFile = audioFiles.shift();
-
-      if (audioFile) {
-        return parseFile(audioFile).then(metadata => {
-          // Do great things with the metadata
-          return parseFiles(audioFiles); // process rest of the files AFTER we are finished
-        })
-      }
-    }
-
-    ```
-
-1. Use async/await
-
-   Use [async/await](https://javascript.info/async-await)
-
-   ```js
-   import { parseFile } from 'music-metadata';
-
-   // it is required to declare the function 'async' to allow the use of await
-   async function parseFiles(audioFiles) {
-
-       for (const audioFile of audioFiles) {
-
-           // await will ensure the metadata parsing is completed before we move on to the next file
-           const metadata = await parseFile(audioFile);
-           // Do great things with the metadata
-       }
-   }
-   ```
+async function parseFiles(audioFiles) {
+  for (const audioFile of audioFiles) {
+    const metadata = await parseFile(audioFile);
+    console.log(metadata);
+  }
+}
+```
 
 ### Using music-metadata with TypeScript and module-resolution set to bundler.
 
